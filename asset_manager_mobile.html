@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>AssetFlow</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body {
+    background:#111; color:#fff;
+    font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;
+    min-height:100vh; padding-bottom:40px;
+  }
+
+  /* ── 사용자 선택 바 ── */
+  .user-bar {
+    display:flex; gap:8px; padding:8px 20px 12px;
+    overflow-x:auto; scrollbar-width:none;
+  }
+  .user-bar::-webkit-scrollbar { display:none; }
+  .user-btn {
+    display:flex; align-items:center; gap:7px;
+    background:#1a1a1a; border:2px solid transparent;
+    border-radius:20px; color:#888; font-size:13px; font-weight:500;
+    padding:7px 14px; cursor:pointer; white-space:nowrap; flex-shrink:0;
+    transition:all 0.18s;
+  }
+  .user-btn:active { opacity:0.7; }
+  .user-btn.u1.active  { border-color:#4da3ff; color:#4da3ff; background:rgba(77,163,255,0.1); }
+  .user-btn.u2.active  { border-color:#f472b6; color:#f472b6; background:rgba(244,114,182,0.1); }
+  .user-btn.all.active { border-color:#4ade80; color:#4ade80; background:rgba(74,222,128,0.1); }
+
+  /* 사용자 이름 편집 힌트 */
+  .user-edit-hint { font-size:11px; color:#444; padding:0 20px 8px; }
+
+  /* ── 총자산 ── */
+  .asset-header { padding:4px 20px 16px; }
+  .ah-label {
+    font-size:13px; color:#888; margin-bottom:8px;
+    display:flex; align-items:center; gap:6px;
+  }
+  .ah-dot   { width:7px; height:7px; border-radius:50%; }
+  .ah-dot.u1  { background:#4da3ff; }
+  .ah-dot.u2  { background:#f472b6; }
+  .ah-dot.all { background:#4ade80; }
+  .ah-amount {
+    font-size:36px; font-weight:700; letter-spacing:-1px; line-height:1.1;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .ah-change { font-size:14px; margin-top:6px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .ah-change-val { font-weight:600; }
+  .ah-change-val.pos { color:#4ade80; }
+  .ah-change-val.neg { color:#f87171; }
+  .ah-change-sub { font-size:13px; color:#555; }
+
+  /* ── 도넛 카드 ── */
+  .donut-card { margin:0 16px 16px; background:#1a1a1a; border-radius:20px; padding:20px; }
+  .donut-wrap { display:flex; align-items:center; gap:18px; }
+  .donut-canvas-wrap { position:relative; width:140px; height:140px; flex-shrink:0; }
+  .donut-center {
+    position:absolute; inset:0;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    pointer-events:none;
+  }
+  .dc-label  { font-size:10px; color:#666; margin-bottom:3px; }
+  .dc-amount { font-size:13px; font-weight:700; }
+  .dc-amount.pos { color:#4ade80; }
+  .dc-amount.neg { color:#f87171; }
+  .donut-legend { flex:1; display:flex; flex-direction:column; gap:10px; }
+  .dl-item  { display:flex; align-items:center; justify-content:space-between; }
+  .dl-left  { display:flex; align-items:center; gap:7px; }
+  .dl-dot   { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .dl-name  { font-size:12px; color:#aaa; }
+  .dl-amt   { font-size:13px; font-weight:600; color:#fff; }
+  .dl-amt.neg { color:#f87171; }
+
+  /* ── 섹션 헤더 ── */
+  .section-hd { display:flex; justify-content:space-between; align-items:center; padding:4px 20px 10px; }
+  .sh-title { font-size:15px; font-weight:700; }
+
+  /* ── 그리드 ── */
+  .asset-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:0 16px 16px; }
+  .grid-item {
+    background:#1a1a1a; border-radius:14px; padding:14px 10px;
+    text-align:center; cursor:pointer; transition:opacity 0.15s;
+  }
+  .grid-item:active { opacity:0.6; }
+  .gi-label { font-size:11px; color:#666; margin-bottom:4px; }
+  .gi-value { font-size:12px; font-weight:600; color:#eee; line-height:1.3; }
+  .gi-value.red   { color:#f87171; }
+  .gi-value.green { color:#4ade80; }
+
+  /* ── 구분선 ── */
+  .sep { height:1px; background:#222; margin:0 16px 16px; }
+
+  /* ── 수입/지출 ── */
+  .inout-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:0 16px 16px; }
+  .inout-card { background:#1a1a1a; border-radius:14px; padding:16px; }
+  .ic-label  { font-size:12px; color:#888; margin-bottom:8px; display:flex; align-items:center; gap:5px; }
+  .ic-dot    { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+  .ic-amount { font-size:20px; font-weight:700; }
+  .ic-sub    { font-size:11px; color:#555; margin-top:4px; }
+
+  /* ── 저축 ── */
+  .saving-card {
+    margin:0 16px 16px; background:#1a1a1a; border-radius:14px; padding:14px 16px;
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .sc-left   { font-size:13px; color:#888; }
+  .sc-right  { text-align:right; }
+  .sc-amount { font-size:16px; font-weight:700; color:#4da3ff; }
+  .sc-rate   { font-size:12px; color:#555; margin-top:2px; }
+
+  /* ── 분석 ── */
+  .analysis-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:0 16px 16px; }
+
+  /* ── 사용자 이름 설정 모달 ── */
+  .name-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:200; align-items:flex-end; }
+  .name-overlay.active { display:flex; }
+  .name-sheet { background:#1e1e1e; border-radius:24px 24px 0 0; width:100%; padding:20px 20px 40px; animation:slideUp 0.25s ease; }
+  @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+  .ns-handle { width:36px; height:4px; background:#444; border-radius:2px; margin:0 auto 20px; }
+  .ns-title  { font-size:17px; font-weight:700; margin-bottom:20px; }
+  .ns-form   { display:flex; flex-direction:column; gap:12px; }
+  .ns-label  { font-size:13px; color:#888; margin-bottom:4px; }
+  .ns-input  {
+    width:100%; background:#2a2a2a; border:1px solid #333;
+    border-radius:10px; color:#fff; font-size:15px;
+    padding:13px 14px; outline:none;
+  }
+  .ns-input:focus { border-color:#007aff; }
+  .ns-btn-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:4px; }
+  .ns-save   { background:#007aff; border:none; border-radius:12px; color:#fff; font-size:15px; font-weight:600; padding:14px; cursor:pointer; }
+  .ns-cancel { background:#2a2a2a; border:none; border-radius:12px; color:#aaa; font-size:15px; padding:14px; cursor:pointer; }
+</style>
+</head>
+<body>
+
+
+
+<!-- 사용자 선택 바 -->
+<div class="user-bar">
+  <button class="user-btn u1 active" id="btn-u1" onclick="switchUser('u1')">
+        <span id="name-u1">사용자1</span>
+  </button>
+  <button class="user-btn u2" id="btn-u2" onclick="switchUser('u2')">
+        <span id="name-u2">사용자2</span>
+  </button>
+  <button class="user-btn all" id="btn-all" onclick="switchUser('all')">
+<span>통합</span>
+  </button>
+  <button class="user-btn" onclick="openNameModal()" style="border-color:#333;color:#555;padding:7px 12px">✏️</button>
+</div>
+
+<!-- 총자산 -->
+<div class="asset-header">
+  <div class="ah-label">
+    <div class="ah-dot" id="ahDot"></div>
+    <span id="ahLabelText">총 자산</span>
+  </div>
+  <div class="ah-amount" id="totalAsset">—</div>
+  <div class="ah-change">
+    <span class="ah-change-val" id="changeVal">—</span>
+    <span class="ah-change-sub" id="changeSub">투자수익 기준</span>
+  </div>
+</div>
+
+<!-- 도넛 -->
+<div class="donut-card">
+  <div class="donut-wrap">
+    <div class="donut-canvas-wrap">
+      <canvas id="donutChart" width="140" height="140"></canvas>
+      <div class="donut-center">
+        <div class="dc-label">순자산</div>
+        <div class="dc-amount" id="netAmountCenter">—</div>
+      </div>
+    </div>
+    <div class="donut-legend" id="donutLegend"></div>
+  </div>
+</div>
+
+<!-- 내 자산 -->
+<div class="section-hd"><span class="sh-title" id="assetGridTitle">내 자산</span></div>
+<div class="asset-grid" id="assetGrid"></div>
+<div class="sep"></div>
+
+<!-- 이번 달 -->
+<div class="section-hd"><span class="sh-title">이번 달</span></div>
+<div class="inout-grid">
+  <div class="inout-card">
+    <div class="ic-label"><div class="ic-dot" style="background:#4ade80"></div>수입</div>
+    <div class="ic-amount" style="color:#4ade80" id="incomeAmt">—</div>
+    <div class="ic-sub" id="incomeSub">—</div>
+  </div>
+  <div class="inout-card">
+    <div class="ic-label"><div class="ic-dot" style="background:#f87171"></div>고정지출</div>
+    <div class="ic-amount" style="color:#f87171" id="expenseAmt">—</div>
+    <div class="ic-sub" id="expenseSub">—</div>
+  </div>
+</div>
+<div class="saving-card">
+  <span class="sc-left">예상 저축</span>
+  <div class="sc-right">
+    <div class="sc-amount" id="savingAmt">—</div>
+    <div class="sc-rate"   id="savingRate">—</div>
+  </div>
+</div>
+<div class="sep"></div>
+
+<!-- 분석 -->
+<div class="section-hd"><span class="sh-title">분석</span></div>
+<div class="analysis-grid" id="analysisGrid"></div>
+
+<!-- 이름 설정 모달 -->
+<div class="name-overlay" id="nameOverlay" onclick="if(event.target===this)closeNameModal()">
+  <div class="name-sheet">
+    <div class="ns-handle"></div>
+    <div class="ns-title">사용자 이름 설정</div>
+    <div class="ns-form">
+      <div>
+        <div class="ns-label">사용자1 이름</div>
+        <input class="ns-input" id="nsInput1" type="text" placeholder="예) 동현" maxlength="6">
+      </div>
+      <div>
+        <div class="ns-label">사용자2 이름</div>
+        <input class="ns-input" id="nsInput2" type="text" placeholder="예) 배우자" maxlength="6">
+      </div>
+    </div>
+    <div class="ns-btn-row">
+      <button class="ns-cancel" onclick="closeNameModal()">취소</button>
+      <button class="ns-save"   onclick="saveNames()">저장</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════
+   사용자 시스템
+   currentUser: 'u1' | 'u2' | 'all'
+   prefix:       'u1_' | 'u2_'
+   통합(all) 시 두 prefix 모두 읽어서 합산
+══════════════════════════════════════ */
+let currentUser = localStorage.getItem('af_current_user')||'u1';
+
+function getNames(){
+  return {
+    u1: localStorage.getItem('af_name_u1')||'사용자1',
+    u2: localStorage.getItem('af_name_u2')||'사용자2',
+  };
+}
+
+function applyUserUI(){
+  const names = getNames();
+  document.getElementById('name-u1').textContent = names.u1;
+  document.getElementById('name-u2').textContent = names.u2;
+
+  ['u1','u2','all'].forEach(u=>{
+    document.getElementById('btn-'+u).classList.toggle('active', currentUser===u);
+  });
+
+  // ah-dot 색상
+  const dotEl = document.getElementById('ahDot');
+  dotEl.className = 'ah-dot '+(currentUser==='u2'?'u2':currentUser==='all'?'all':'u1');
+
+  // 라벨
+  const labelMap = {u1:names.u1+'의 자산', u2:names.u2+'의 자산', all:'통합 자산'};
+  document.getElementById('ahLabelText').textContent = labelMap[currentUser];
+  document.getElementById('assetGridTitle').textContent = currentUser==='all'?'통합 자산':'내 자산';
+}
+
+function switchUser(u){
+  currentUser = u;
+  localStorage.setItem('af_current_user', u);
+  // 그리드들이 읽을 활성 prefix 저장
+  if(u!=='all') localStorage.setItem('af_active_prefix', u+'_');
+  else           localStorage.setItem('af_active_prefix', 'u1_'); // all일땐 u1 기준(그리드)
+  applyUserUI();
+  render();
+}
+
+/* ══════════════════════════════════════
+   데이터 집계 (prefix 기반)
+══════════════════════════════════════ */
+const NOW=new Date(), CY=NOW.getFullYear(), CM=NOW.getMonth()+1;
+function monthKey(y,m){ return `${y}-${String(m).padStart(2,'0')}`; }
+
+function safe(key, fallback=[]){
+  try{ return JSON.parse(localStorage.getItem(key)||'null')||fallback; } catch{ return fallback; }
+}
+function safeObj(key){ try{ return JSON.parse(localStorage.getItem(key)||'null')||{}; } catch{ return {}; } }
+
+function calcAssetsForPrefix(p){
+  const accounts = safe(p+'af_accounts');
+  const invest   = safe(p+'af_invest');
+  const loans    = safe(p+'af_loans');
+  const ins      = safe(p+'af_ins_meta');
+  const acc   = accounts.reduce((s,a)=>s+(a.balance||0),0);
+  const inv   = invest.reduce((s,a)=>s+(a.balance||0),0);
+  const loan  = loans.reduce((s,l)=>s+(l.balance||0),0);
+  const insMo = ins.filter(x=>!x.isPaid).reduce((s,x)=>s+(x.premium||0),0);
+  const pension = accounts.filter(a=>a.cat==='pension').reduce((s,a)=>s+(a.balance||0),0);
+  const invGain = invest.reduce((s,a)=>s+(a.gainAmt||0),0);
+  const cars = safe(p+'af_cars');
+  return { acc, inv, loan, insMo, pension, invGain,
+           total:acc+inv, net:acc+inv-loan, cars };
+}
+
+function calcIncomeForPrefix(p){
+  const meta  = safe(p+'af_inc_meta');
+  const spend = safeObj(p+'af_inc_spend');
+  const ms    = spend[monthKey(CY,CM)]||{};
+  return meta.reduce((s,it)=>s+(ms[it.id]!=null?ms[it.id]:(it.amount||0)),0);
+}
+
+function calcExpenseForPrefix(p){
+  const FREQ={monthly:12,bi2:6,q:4,semi:2,once:1};
+  return safe(p+'af_expense').reduce((s,x)=>{
+    const t=FREQ[x.freq]||12;
+    return s+(x.type==='monthly'?x.amount:Math.round((x.amount||0)*t/12));
+  },0);
+}
+
+function calcCardSpendForPrefix(p){
+  const meta  = safe(p+'af_cards_meta');
+  const spend = safeObj(p+'af_cards_spend');
+  const ms    = spend[monthKey(CY,CM)]||{};
+  return meta.reduce((s,c)=>s+(ms[c.id]||0),0);
+}
+
+function getAggregated(){
+  if(currentUser==='all'){
+    const a1=calcAssetsForPrefix('u1_'), a2=calcAssetsForPrefix('u2_');
+    const i1=calcIncomeForPrefix('u1_'),  i2=calcIncomeForPrefix('u2_');
+    const e1=calcExpenseForPrefix('u1_'), e2=calcExpenseForPrefix('u2_');
+    const e1ins=a1.insMo, e2ins=a2.insMo;
+    const c1=calcCardSpendForPrefix('u1_'), c2=calcCardSpendForPrefix('u2_');
+    return {
+      acc:a1.acc+a2.acc, inv:a1.inv+a2.inv,
+      loan:a1.loan+a2.loan, insMo:a1.insMo+a2.insMo,
+      pension:a1.pension+a2.pension, invGain:a1.invGain+a2.invGain,
+      total:a1.total+a2.total, net:a1.net+a2.net,
+      cars:a1.cars,
+      income:i1+i2, expense:e1+e1ins+e2+e2ins,
+      cardSpend:c1+c2, isAll:true
+    };
+  } else {
+    const p=currentUser+'_';
+    const a=calcAssetsForPrefix(p);
+    const income  = calcIncomeForPrefix(p);
+    const expense = calcExpenseForPrefix(p)+a.insMo;
+    const cardSpend = calcCardSpendForPrefix(p);
+    return {...a, income, expense, cardSpend, isAll:false};
+  }
+}
+
+/* 포맷 */
+function fmt(n){ return Math.round(Math.abs(n)).toLocaleString('ko-KR')+'원'; }
+function fmtShort(n){
+  const abs=Math.abs(Math.round(n)), sign=n<0?'-':'';
+  if(abs>=100000000){
+    const uk=Math.floor(abs/100000000), man=Math.floor((abs%100000000)/10000);
+    return man>0?`${sign}${uk}억 ${man}만`:`${sign}${uk}억`;
+  }
+  if(abs>=10000) return `${sign}${Math.floor(abs/10000)}만`;
+  return sign+abs.toLocaleString('ko-KR');
+}
+
+/* ══════════════════════════════════════
+   렌더링
+══════════════════════════════════════ */
+let donutInst=null;
+
+function render(){
+  const D = getAggregated();
+  const { acc, inv, loan, insMo, pension, invGain, total, net,
+          cars, income, expense, cardSpend } = D;
+  const saving  = income-expense;
+  const savRate = income>0?Math.round(saving/income*100):0;
+
+
+  // 총자산
+  document.getElementById('totalAsset').textContent = fmt(total);
+
+  // 변화
+  const chEl = document.getElementById('changeVal');
+  chEl.textContent = (invGain>=0?'+':'')+fmt(invGain);
+  chEl.className = 'ah-change-val '+(invGain>=0?'pos':'neg');
+
+  // 순자산
+  const ncEl = document.getElementById('netAmountCenter');
+  ncEl.textContent = fmtShort(net);
+  ncEl.className = 'dc-amount '+(net>=0?'pos':'neg');
+
+  // 도넛
+  const segments = [
+    {label:'계좌', value:acc,    color:'#4ade80'},
+    {label:'투자', value:inv,    color:'#4da3ff'},
+    {label:'연금', value:pension, color:'#a855f7'},
+    {label:'대출', value:loan,   color:'#374151', neg:true},
+  ].filter(s=>s.value>0);
+
+  if(donutInst) donutInst.destroy();
+  donutInst = new Chart(document.getElementById('donutChart').getContext('2d'),{
+    type:'doughnut',
+    data:{ datasets:[{
+      data:segments.map(s=>s.value),
+      backgroundColor:segments.map(s=>s.color),
+      borderWidth:0, hoverOffset:6,
+    }]},
+    options:{
+      cutout:'72%',
+      plugins:{legend:{display:false}, tooltip:{
+        backgroundColor:'rgba(20,20,30,0.95)',
+        padding:10, cornerRadius:10,
+        callbacks:{label:i=>' '+fmt(segments[i.dataIndex].value)}
+      }},
+      animation:{duration:700}
+    }
+  });
+
+  document.getElementById('donutLegend').innerHTML = segments.map(s=>`
+    <div class="dl-item">
+      <div class="dl-left">
+        <div class="dl-dot" style="background:${s.color}"></div>
+        <span class="dl-name">${s.label}</span>
+      </div>
+      <span class="dl-amt ${s.neg?'neg':''}">${s.neg?'-':''}${fmtShort(s.value)}</span>
+    </div>`).join('');
+
+  // 자산 그리드 (통합 시 그리드 클릭 → u1 기준)
+  const cars0 = cars[0];
+  document.getElementById('assetGrid').innerHTML=`
+    <div class="grid-item" onclick="goGrid('account_page.html')">
+      <div class="gi-label">계좌</div>
+      <div class="gi-value">${fmtShort(acc)}</div>
+    </div>
+    <div class="grid-item" onclick="goGrid('card_page.html')">
+      <div class="gi-label">카드</div>
+      <div class="gi-value">${cardSpend>0?fmtShort(cardSpend)+' 사용':'이번달'}</div>
+    </div>
+    <div class="grid-item" onclick="goGrid('investment_page.html')">
+      <div class="gi-label">투자</div>
+      <div class="gi-value">${fmtShort(inv)}</div>
+    </div>
+    <div class="grid-item" onclick="goGrid('loan_page.html')">
+      <div class="gi-label">대출</div>
+      <div class="gi-value red">${loan>0?'-'+fmtShort(loan):'없음'}</div>
+    </div>
+    <div class="grid-item" onclick="goGrid('insurance_page.html')">
+      <div class="gi-label">보험</div>
+      <div class="gi-value">${insMo>0?fmtShort(insMo)+'/월':'등록없음'}</div>
+    </div>
+    <div class="grid-item" onclick="goGrid('car_page.html')">
+      <div class="gi-label">자동차</div>
+      <div class="gi-value">${cars0?cars0.plate:'등록없음'}</div>
+    </div>`;
+
+  // 수입/지출
+  document.getElementById('incomeAmt').textContent  = income>0?fmtShort(income):'미입력';
+  document.getElementById('incomeSub').textContent  = income>0?'근로·임대·투자':'수입 페이지에서 입력';
+  document.getElementById('expenseAmt').textContent = expense>0?fmtShort(expense):'미입력';
+  document.getElementById('expenseSub').textContent = expense>0?`보험 ${fmtShort(insMo)} 포함`:'지출 페이지에서 입력';
+  document.getElementById('savingAmt').textContent  = income>0?fmtShort(saving):'—';
+  document.getElementById('savingRate').textContent = income>0?`저축률 ${savRate}%`:'수입을 입력하면 계산돼요';
+
+  // 분석
+  document.getElementById('analysisGrid').innerHTML=`
+    <div class="grid-item" onclick="goGrid('income_page.html')">
+      <div class="gi-label">수입</div>
+      <div class="gi-value green">${income>0?fmtShort(income):'입력'}</div>
+    </div>
+    <div class="grid-item" onclick="goGrid('expense_page.html')">
+      <div class="gi-label">지출</div>
+      <div class="gi-value red">${expense>0?fmtShort(expense):'입력'}</div>
+    </div>
+    <div class="grid-item" onclick="goGrid('trend_page.html')">
+      <div class="gi-label">월별추이</div>
+      <div class="gi-value">보기</div>
+    </div>`;
+}
+
+/* 그리드 이동 시 prefix 저장 */
+function goGrid(page){
+  // 통합 뷰에서 그리드 이동 시 u1 기준
+  const prefix = currentUser==='all'?'u1_':currentUser+'_';
+  localStorage.setItem('af_active_prefix', prefix);
+  location.href = page;
+}
+
+/* 이름 모달 */
+function openNameModal(){
+  const names = getNames();
+  document.getElementById('nsInput1').value = names.u1;
+  document.getElementById('nsInput2').value = names.u2;
+  document.getElementById('nameOverlay').classList.add('active');
+}
+function closeNameModal(){ document.getElementById('nameOverlay').classList.remove('active'); }
+function saveNames(){
+  const n1 = document.getElementById('nsInput1').value.trim()||'사용자1';
+  const n2 = document.getElementById('nsInput2').value.trim()||'사용자2';
+  localStorage.setItem('af_name_u1', n1);
+  localStorage.setItem('af_name_u2', n2);
+  closeNameModal();
+  applyUserUI();
+  render();
+}
+
+/* 초기화 */
+// 최초 접속 시 u1_ prefix 설정
+if(!localStorage.getItem('af_active_prefix')){
+  localStorage.setItem('af_active_prefix', 'u1_');
+}
+applyUserUI();
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>보험 관리 - AssetFlow</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: #1a1a1a;
+    color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+    min-height: 100vh;
+    padding-bottom: 100px;
+  }
+
+  /* ── 헤더 ── */
+  .header {
+    display: flex; align-items: center;
+    padding: 16px 20px;
+    position: sticky; top: 0;
+    background: #1a1a1a; z-index: 100;
+  }
+  .back-btn { background:none; border:none; color:#fff; font-size:22px; cursor:pointer; padding:4px 8px 4px 0; line-height:1; }
+  .header-title { font-size:17px; font-weight:600; margin-left:4px; }
+
+  /* ── 월 선택 레이블 ── */
+  .month-label-btn {
+    background: none; border: none;
+    padding: 4px 20px 14px;
+    display: flex; align-items: center; gap: 6px;
+    cursor: pointer; width: 100%;
+  }
+  .month-label-btn .label-text { font-size: 15px; font-weight: 600; color: #fff; }
+  .month-label-btn .label-arrow { font-size: 10px; color: #555; margin-top: 2px; }
+
+  /* ── 보험료 총액 ── */
+  .premium-total {
+    padding: 0 20px 20px;
+  }
+  .pt-amount { font-size: 28px; font-weight: 700; color: #fff; letter-spacing: -0.5px; }
+  .pt-sub    { font-size: 13px; color: #666; margin-top: 4px; }
+
+  /* ── 보험 리스트 ── */
+  .insurance-list { padding: 0 20px; display: flex; flex-direction: column; }
+
+  .ins-item {
+    display: flex; align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid #2a2a2a;
+    cursor: pointer; transition: opacity 0.15s;
+  }
+  .ins-item:last-child { border-bottom: none; }
+  .ins-item:active { opacity: 0.7; }
+
+  /* 아이콘 */
+  .ins-icon {
+    width: 44px; height: 44px; border-radius: 12px;
+    margin-right: 14px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 20px;
+  }
+  /* 보험사별 색상 */
+  .ic-samsung  { background: #1428a015; }
+  .ic-hanwha   { background: #e8360015; }
+  .ic-db       { background: #00388615; }
+  .ic-hyundai  { background: #00205b15; }
+  .ic-kb       { background: #f5c51815; }
+  .ic-lotte    { background: #ed1c2415; }
+  .ic-meritz   { background: #e8690015; }
+  .ic-carrot   { background: #ff640015; }
+  .ic-kakao    { background: #fee50015; }
+  .ic-toss     { background: #0064ff15; }
+  .ic-default  { background: #2e2e2e; }
+
+  .ins-info { flex: 1; min-width: 0; }
+  .ins-name {
+    font-size: 15px; font-weight: 600; color: #fff;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    margin-bottom: 3px;
+  }
+  .ins-sub { font-size: 12px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .ins-right { text-align: right; flex-shrink: 0; margin-left: 10px; }
+  .ins-premium {
+    font-size: 16px; font-weight: 600; color: #fff; white-space: nowrap;
+  }
+  .ins-premium.paid { font-size: 14px; color: #4ade80; font-weight: 500; }
+  .ins-status { font-size: 12px; color: #666; margin-top: 2px; }
+
+  /* 빈 화면 */
+  .empty-state { text-align: center; padding: 60px 0 32px; color: #444; }
+  .empty-icon  { font-size: 40px; margin-bottom: 12px; }
+  .empty-text  { font-size: 14px; line-height: 1.6; }
+
+  /* ── 하단 버튼 ── */
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: rgba(26,26,26,0.97); backdrop-filter: blur(10px);
+    padding: 12px 20px 28px;
+  }
+  .nav-btn {
+    width: 100%; background: #2e2e2e; border: none; border-radius: 12px;
+    color: #fff; font-size: 14px; font-weight: 500; padding: 14px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .nav-btn:active { background: #383838; }
+
+  /* ── 월 선택 바텀시트 ── */
+  .sheet-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7); z-index: 300; align-items: flex-end;
+  }
+  .sheet-overlay.active { display: flex; }
+  .sheet-inner {
+    background: #242424; border-radius: 24px 24px 0 0;
+    width: 100%; padding: 20px 20px 40px;
+    animation: slideUp 0.25s ease;
+  }
+  @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+  .sheet-handle { width:36px; height:4px; background:#444; border-radius:2px; margin:0 auto 20px; }
+  .sheet-title  { font-size:16px; font-weight:700; margin-bottom:20px; }
+  .year-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+  .year-nav { background:#333; border:none; color:#fff; font-size:18px; width:36px; height:36px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .year-nav:disabled { color:#444; cursor:default; }
+  .year-lbl { font-size:16px; font-weight:600; }
+  .month-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+  .m-chip {
+    background:#333; border:2px solid transparent; border-radius:10px;
+    color:#aaa; font-size:14px; padding:11px 0;
+    cursor:pointer; text-align:center; transition:all 0.15s; line-height:1.4;
+  }
+  .m-chip.sel    { border-color:#007aff; color:#007aff; background:rgba(0,122,255,0.1); font-weight:600; }
+  .m-chip.future { color:#333; pointer-events:none; }
+  .m-dot { font-size:8px; color:#555; margin-top:2px; }
+  .m-chip.sel .m-dot { color:#4da3ff; }
+
+  /* ── 편집 모달 ── */
+  .edit-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.75); z-index: 200; align-items: flex-end;
+  }
+  .edit-overlay.active { display: flex; }
+  .edit-sheet {
+    background: #242424; border-radius: 24px 24px 0 0;
+    width: 100%; max-height: 92vh; overflow-y: auto;
+    padding: 20px 20px 40px; animation: slideUp 0.28s ease;
+  }
+  .modal-handle { width:36px; height:4px; background:#444; border-radius:2px; margin:0 auto 20px; }
+  .modal-title  { font-size:18px; font-weight:700; margin-bottom:24px; }
+
+  .edit-list { display:flex; flex-direction:column; gap:10px; }
+  .edit-item {
+    background: #2e2e2e; border-radius: 14px;
+    padding: 14px 16px; display: flex; align-items: center; gap: 12px;
+  }
+  .ei-icon { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
+  .ei-info { flex:1; min-width:0; }
+  .ei-name { font-size:14px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .ei-sub  { font-size:12px; color:#666; margin-top:2px; }
+  .ei-actions { display:flex; gap:8px; flex-shrink:0; }
+  .btn-ea { background:#3a3a3a; border:none; border-radius:8px; color:#ccc; font-size:12px; padding:6px 10px; cursor:pointer; }
+  .btn-ea.del { color:#ff6b6b; }
+
+  .btn-add {
+    margin-top:16px; width:100%;
+    background:#007aff; border:none; border-radius:14px;
+    color:#fff; font-size:15px; font-weight:600; padding:16px;
+    cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;
+  }
+
+  /* 폼 */
+  .add-form { display:flex; flex-direction:column; gap:14px; }
+  .f-label  { font-size:13px; color:#888; margin-bottom:4px; }
+  .f-input  {
+    width:100%; background:#2e2e2e; border:1px solid #3a3a3a;
+    border-radius:10px; color:#fff; font-size:15px;
+    padding:13px 14px; outline:none; transition:border-color 0.2s;
+    -webkit-appearance:none;
+  }
+  .f-input:focus { border-color:#007aff; }
+  .f-row   { display:flex; flex-direction:column; gap:4px; }
+  .f-row-2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+
+  .type-grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+  .type-btn {
+    background:#2e2e2e; border:2px solid transparent;
+    border-radius:10px; color:#aaa; font-size:13px;
+    padding:10px 4px; cursor:pointer; text-align:center; transition:all 0.15s; line-height:1.4;
+  }
+  .type-btn.active { border-color:#007aff; color:#007aff; background:rgba(0,122,255,0.08); }
+
+  .form-section-label {
+    font-size:12px; color:#555; font-weight:600; letter-spacing:0.5px;
+    padding:6px 0 2px; border-top:1px solid #333; margin-top:2px;
+  }
+  .form-section-label:first-child { border-top:none; margin-top:0; }
+
+  .btn-submit {
+    margin-top:8px; width:100%;
+    background:#007aff; border:none; border-radius:14px;
+    color:#fff; font-size:15px; font-weight:600; padding:16px; cursor:pointer;
+  }
+  .btn-cancel {
+    width:100%; background:#333; border:none; border-radius:14px;
+    color:#aaa; font-size:15px; padding:14px; cursor:pointer; margin-top:6px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <button class="back-btn" onclick="location.href='asset_manager_mobile.html'">‹</button>
+  <span class="header-title">보험</span>
+</div>
+
+<!-- 월 선택 -->
+<button class="month-label-btn" onclick="openMonthSheet()">
+  <span class="label-text" id="monthLabelText">—</span>
+  <span class="label-arrow">▼</span>
+</button>
+
+<!-- 보험료 총액 -->
+<div class="premium-total">
+  <div class="pt-amount" id="premiumTotal">—</div>
+  <div class="pt-sub"   id="premiumSub">—</div>
+</div>
+
+<!-- 보험 목록 -->
+<div class="insurance-list" id="insuranceList"></div>
+
+<!-- 하단 -->
+<div class="bottom-nav">
+  <button class="nav-btn" onclick="openEditModal()">⚙️ 자산 편집하기</button>
+</div>
+
+<!-- 월 선택 시트 -->
+<div class="sheet-overlay" id="monthSheetOv" onclick="if(event.target===this)closeMonthSheet()">
+  <div class="sheet-inner">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">월 선택</div>
+    <div class="year-row">
+      <button class="year-nav" id="yearPrev" onclick="changeYear(-1)">‹</button>
+      <span class="year-lbl" id="sheetYearLbl"></span>
+      <button class="year-nav" id="yearNext" onclick="changeYear(1)">›</button>
+    </div>
+    <div class="month-grid" id="monthGrid"></div>
+  </div>
+</div>
+
+<!-- 편집 모달 -->
+<div class="edit-overlay" id="editOverlay" onclick="if(event.target===this)closeEditModal()">
+  <div class="edit-sheet">
+    <div class="modal-handle"></div>
+    <div id="editContent"></div>
+  </div>
+</div>
+
+<script>
+
+/* ── 사용자 prefix 시스템 ── */
+function getPrefix(){
+  return localStorage.getItem('af_active_prefix')||'u1_';
+}
+function pk(key){ return getPrefix()+key; }
+/* ══════════════════════════════════════
+   상수 & 데이터 구조
+   af_insurance_meta  : [{id, name, company, companyIcon, companyClass, insType, premium, isPaid, startDate, endDate}]
+   af_insurance_spend : {"YYYY-MM": {id: premium}} — 월별 실납부액 오버라이드
+══════════════════════════════════════ */
+
+const NOW       = new Date();
+const CUR_YEAR  = NOW.getFullYear();
+const CUR_MONTH = NOW.getMonth() + 1;
+
+const INS_TYPES = ['건강·의료', '자동차', '생명', '화재·재물', '여행·레저', '기타'];
+
+const COMPANY_MAP = {
+  '삼성화재': { icon:'🔵', cls:'ic-samsung'  },
+  '삼성생명': { icon:'🔵', cls:'ic-samsung'  },
+  '한화생명': { icon:'🟠', cls:'ic-hanwha'   },
+  'DB손해보험': { icon:'🟦', cls:'ic-db'     },
+  '현대해상': { icon:'🚗', cls:'ic-hyundai'  },
+  'KB손해보험': { icon:'⭐', cls:'ic-kb'     },
+  '롯데손해보험': { icon:'🔴', cls:'ic-lotte' },
+  '메리츠화재': { icon:'🟧', cls:'ic-meritz' },
+  '캐롯손해보험': { icon:'🥕', cls:'ic-carrot' },
+  '카카오페이보험': { icon:'💛', cls:'ic-kakao' },
+  '토스보험': { icon:'🔵', cls:'ic-toss'    },
+};
+
+function monthKey(y, m){ return `${y}-${String(m).padStart(2,'0')}`; }
+
+const DEFAULT_META = [
+  { id:1, name:'아이(I)러브(LOVE)건강보험1808', company:'삼성화재',   companyIcon:'🔵', companyClass:'ic-samsung', insType:'건강·의료', premium:67740, isPaid:false, startDate:'2018-08-01', endDate:'' },
+  { id:2, name:'실손의료비보험1904',             company:'삼성화재',   companyIcon:'🔵', companyClass:'ic-samsung', insType:'건강·의료', premium:17340, isPaid:false, startDate:'2019-04-01', endDate:'' },
+  { id:3, name:'캐롯 운전자보험 무배당',         company:'캐롯손해보험', companyIcon:'🥕', companyClass:'ic-carrot',  insType:'자동차',   premium:3334,  isPaid:false, startDate:'2023-01-01', endDate:'' },
+  { id:4, name:'애니카다이렉트_개인용',          company:'삼성화재',   companyIcon:'🔵', companyClass:'ic-samsung', insType:'자동차',   premium:0,     isPaid:true,  startDate:'2020-01-01', endDate:'2024-01-01' },
+];
+
+function loadMeta()   { try{ const s=localStorage.getItem(pk('af_ins_meta'));  return s?JSON.parse(s):DEFAULT_META;  } catch{ return DEFAULT_META;  } }
+function saveMeta(d)  { localStorage.setItem(pk('af_ins_meta'),  JSON.stringify(d)); }
+
+let meta   = loadMeta();
+let selY   = CUR_YEAR;
+let selM   = CUR_MONTH;
+let sheetY = CUR_YEAR;
+
+/* ══════════════════════
+   렌더링
+══════════════════════ */
+function renderPage(){
+  const isCurrent = selY===CUR_YEAR && selM===CUR_MONTH;
+  document.getElementById('monthLabelText').textContent = `${selM}월 보험료`;
+
+  // 납입완료(isPaid) 제외한 활성 보험만 합산
+  const active = meta.filter(ins => {
+    if(ins.isPaid) return false;
+    // 기간 체크: startDate~endDate 사이인지
+    if(ins.startDate){
+      const start = new Date(ins.startDate);
+      const cur   = new Date(selY, selM-1, 1);
+      if(cur < start) return false;
+    }
+    if(ins.endDate){
+      const end = new Date(ins.endDate);
+      const cur = new Date(selY, selM-1, 1);
+      if(cur >= end) return false;
+    }
+    return true;
+  });
+
+  const total = active.reduce((s,ins)=>s+ins.premium,0);
+  document.getElementById('premiumTotal').textContent = fmt(total);
+  document.getElementById('premiumSub').textContent   = `활성 보험 ${active.length}건`;
+
+  const listEl = document.getElementById('insuranceList');
+  if(!meta.length){
+    listEl.innerHTML=`<div class="empty-state"><div class="empty-icon">🛡️</div><div class="empty-text">등록된 보험이 없어요<br><span style="font-size:12px;color:#555">자산 편집하기에서 추가해보세요</span></div></div>`;
+    return;
+  }
+
+  // 활성 보험 → 납입완료 보험 순서로 표시
+  const sorted = [
+    ...meta.filter(i=>!i.isPaid).sort((a,b)=>b.premium-a.premium),
+    ...meta.filter(i=>i.isPaid),
+  ];
+
+  listEl.innerHTML = sorted.map(ins => {
+    const isPaid = ins.isPaid;
+    const premiumDisp = isPaid
+      ? `<div class="ins-premium paid">납입완료</div>`
+      : `<div class="ins-premium">${fmt(ins.premium)}</div>`;
+
+    const endDisp = ins.endDate
+      ? `<div class="ins-status">${ins.endDate.slice(0,7)} 종료</div>`
+      : `<div class="ins-status">${ins.insType}</div>`;
+
+    return `
+      <div class="ins-item">
+        <div class="ins-icon ${ins.companyClass||'ic-default'}">${ins.companyIcon||'🛡️'}</div>
+        <div class="ins-info">
+          <div class="ins-name">${ins.name}</div>
+          <div class="ins-sub">${ins.company} · ${ins.insType}</div>
+        </div>
+        <div class="ins-right">
+          ${premiumDisp}
+          ${endDisp}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function fmt(n){ return Math.round(n).toLocaleString('ko-KR')+'원'; }
+
+/* ══════════════════════
+   월 선택 시트
+══════════════════════ */
+function openMonthSheet(){ sheetY=selY; renderSheetGrid(); document.getElementById('monthSheetOv').classList.add('active'); }
+function closeMonthSheet(){ document.getElementById('monthSheetOv').classList.remove('active'); }
+function changeYear(d){ sheetY=Math.min(CUR_YEAR, sheetY+d); renderSheetGrid(); }
+function renderSheetGrid(){
+  document.getElementById('sheetYearLbl').textContent = sheetY+'년';
+  document.getElementById('yearPrev').disabled = (sheetY<=CUR_YEAR-5);
+  document.getElementById('yearNext').disabled = (sheetY>=CUR_YEAR);
+  document.getElementById('monthGrid').innerHTML = Array.from({length:12},(_,i)=>{
+    const m=i+1;
+    const future = sheetY===CUR_YEAR && m>CUR_MONTH;
+    const isSel  = sheetY===selY && m===selM;
+    return `<button class="m-chip ${isSel?'sel':''} ${future?'future':''}" onclick="pickMonth(${m})">${m}월<div class="m-dot"></div></button>`;
+  }).join('');
+}
+function pickMonth(m){ selY=sheetY; selM=m; closeMonthSheet(); renderPage(); }
+
+/* ══════════════════════
+   편집 모달
+══════════════════════ */
+function openEditModal(){ showEditMain(); document.getElementById('editOverlay').classList.add('active'); }
+function closeEditModal(){ document.getElementById('editOverlay').classList.remove('active'); }
+
+function showEditMain(){
+  const listHTML = meta.length ? meta.map(ins=>`
+    <div class="edit-item">
+      <div class="ei-icon ${ins.companyClass||'ic-default'}">${ins.companyIcon||'🛡️'}</div>
+      <div class="ei-info">
+        <div class="ei-name">${ins.name}</div>
+        <div class="ei-sub">${ins.company} · ${ins.isPaid?'납입완료':fmt(ins.premium)+'/월'}</div>
+      </div>
+      <div class="ei-actions">
+        <button class="btn-ea" onclick="showForm(${ins.id})">수정</button>
+        <button class="btn-ea del" onclick="deleteIns(${ins.id})">삭제</button>
+      </div>
+    </div>`).join('')
+    : '<div style="color:#555;font-size:13px;padding:8px 0">등록된 보험이 없어요</div>';
+
+  document.getElementById('editContent').innerHTML=`
+    <div class="modal-title">보험 편집</div>
+    <div class="edit-list">${listHTML}</div>
+    <button class="btn-add" onclick="showForm(null)">＋ 보험 추가하기</button>`;
+}
+
+/* ── 추가/수정 폼 ── */
+function showForm(id){
+  const p = id ? meta.find(x=>x.id===id) : {};
+  const isEdit = !!id;
+
+  document.getElementById('editContent').innerHTML=`
+    <div class="modal-title">${isEdit?'보험 수정':'보험 추가'}</div>
+    <div class="add-form">
+
+      <div class="form-section-label">보험 종류</div>
+      <div class="f-row">
+        <div class="f-label">보험 유형</div>
+        <div class="type-grid-3" id="typeGrid">
+          ${INS_TYPES.map(t=>`
+            <button class="type-btn ${(p.insType||INS_TYPES[0])===t?'active':''}"
+                    data-v="${t}" onclick="pickType(this)">${t}</button>`).join('')}
+        </div>
+      </div>
+
+      <div class="form-section-label">기본 정보</div>
+
+      <div class="f-row">
+        <div class="f-label">보험명</div>
+        <input class="f-input" id="fName" type="text" placeholder="예) 실손의료비보험1904" value="${p.name||''}">
+      </div>
+      <div class="f-row">
+        <div class="f-label">보험사</div>
+        <input class="f-input" id="fCompany" type="text" placeholder="예) 삼성화재" value="${p.company||''}" oninput="autoIcon()">
+      </div>
+
+      <div class="form-section-label">납부 정보</div>
+
+      <div class="f-row">
+        <div class="f-label">월 보험료 (원)</div>
+        <input class="f-input" id="fPremium" type="number" inputmode="numeric"
+               placeholder="납입완료면 0" value="${p.premium||0}"
+               ${p.isPaid?'disabled style="opacity:0.4"':''}>
+      </div>
+
+      <div class="f-row">
+        <div class="f-label">납입 상태</div>
+        <div class="type-grid-3" id="paidGrid">
+          <button class="type-btn ${!p.isPaid?'active':''}" data-v="active" onclick="pickPaid(this)">납입 중</button>
+          <button class="type-btn ${p.isPaid?'active':''}"  data-v="paid"   onclick="pickPaid(this)">납입완료</button>
+        </div>
+      </div>
+
+      <div class="form-section-label">기간</div>
+      <div class="f-row-2">
+        <div class="f-row">
+          <div class="f-label">시작일</div>
+          <input class="f-input" id="fStart" type="date" value="${p.startDate||''}">
+        </div>
+        <div class="f-row">
+          <div class="f-label">종료일 (선택)</div>
+          <input class="f-input" id="fEnd" type="date" value="${p.endDate||''}">
+        </div>
+      </div>
+
+      <button class="btn-submit" onclick="${isEdit?`updateIns(${id})`:'addIns()'}">
+        ${isEdit?'저장하기':'추가하기'}
+      </button>
+      <button class="btn-cancel" onclick="showEditMain()">취소</button>
+    </div>`;
+}
+
+function pickType(btn){
+  document.querySelectorAll('#typeGrid .type-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+function pickPaid(btn){
+  document.querySelectorAll('#paidGrid .type-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const isPaid = btn.dataset.v==='paid';
+  const premInput = document.getElementById('fPremium');
+  if(premInput){ premInput.disabled=isPaid; premInput.style.opacity=isPaid?'0.4':'1'; }
+}
+function autoIcon(){
+  // 보험사 입력 시 아이콘 자동 매핑 (UI 힌트용, 저장 시 적용)
+}
+
+/* CRUD */
+function readForm(){
+  const name    = document.getElementById('fName').value.trim();
+  const company = document.getElementById('fCompany').value.trim();
+  const premium = parseInt(document.getElementById('fPremium').value)||0;
+  const insType = document.querySelector('#typeGrid .type-btn.active')?.dataset.v||INS_TYPES[0];
+  const isPaid  = document.querySelector('#paidGrid .type-btn.active')?.dataset.v==='paid';
+  const start   = document.getElementById('fStart').value;
+  const end     = document.getElementById('fEnd').value;
+
+  const cm = COMPANY_MAP[company]||{ icon:'🛡️', cls:'ic-default' };
+
+  if(!name)   { alert('보험명을 입력해주세요.'); return null; }
+  if(!company){ alert('보험사를 입력해주세요.'); return null; }
+
+  return { name, company, companyIcon:cm.icon, companyClass:cm.cls, insType, premium:isPaid?0:premium, isPaid, startDate:start, endDate:end };
+}
+
+function addIns(){
+  const ins=readForm(); if(!ins) return;
+  ins.id=Date.now(); meta.push(ins);
+  saveMeta(meta); showEditMain(); renderPage();
+}
+function updateIns(id){
+  const ins=readForm(); if(!ins) return;
+  const idx=meta.findIndex(x=>x.id===id);
+  if(idx!==-1) meta[idx]={...meta[idx],...ins};
+  saveMeta(meta); showEditMain(); renderPage();
+}
+function deleteIns(id){
+  meta = meta.filter(x => Number(x.id) !== Number(id));
+  saveMeta(meta); showEditMain(); renderPage();
+}
+
+renderPage();
+</script>
+</body>
+</html>

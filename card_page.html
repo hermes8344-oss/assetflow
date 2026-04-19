@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>카드 관리 - AssetFlow</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: #1a1a1a;
+    color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+    min-height: 100vh;
+    padding-bottom: 100px;
+  }
+
+  /* ── 헤더 ── */
+  .header {
+    display: flex;
+    align-items: center;
+    padding: 16px 20px;
+    position: sticky;
+    top: 0;
+    background: #1a1a1a;
+    z-index: 100;
+  }
+  .back-btn {
+    background: none; border: none;
+    color: #fff; font-size: 22px;
+    cursor: pointer; padding: 4px 8px 4px 0; line-height: 1;
+  }
+  .header-title { font-size: 17px; font-weight: 600; margin-left: 4px; }
+
+  /* ── "X월에 쓴 돈" 클릭 가능한 레이블 ── */
+  .month-label-btn {
+    background: none; border: none;
+    padding: 4px 20px 14px;
+    display: flex; align-items: center; gap: 6px;
+    cursor: pointer; width: 100%;
+  }
+  .month-label-btn .label-text { font-size: 15px; font-weight: 600; color: #fff; }
+  .month-label-btn .label-arrow { font-size: 10px; color: #555; margin-top: 2px; }
+
+  /* ── 카드 리스트 ── */
+  .card-list { padding: 0 20px; display: flex; flex-direction: column; }
+  .card-item {
+    display: flex; align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid #2a2a2a;
+    cursor: pointer; transition: opacity 0.15s;
+  }
+  .card-item:last-child { border-bottom: none; }
+  .card-item:active { opacity: 0.7; }
+
+  /* 카드 아이콘 */
+  .card-icon {
+    width: 48px; height: 32px; border-radius: 6px;
+    margin-right: 14px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; overflow: hidden;
+  }
+  .card-kb        { background: linear-gradient(135deg,#f5c518,#e6a800); color:#000; }
+  .card-toss-black{ background: linear-gradient(135deg,#333,#111); color:#fff; position:relative; overflow:hidden; }
+  .card-toss-check{ background: linear-gradient(135deg,#ff7043,#e64a19); color:#fff; }
+  .card-kfirst    { background: linear-gradient(135deg,#1a1a2e,#16213e); color:#ccc; border:1px solid #333; }
+  .card-hipoint   { background: linear-gradient(135deg,#4a1942,#2d1b3d); color:#e8c9e5; }
+  .card-generic   { background: #2e2e2e; color:#888; border:1px solid #3a3a3a; }
+
+  .card-toss-black::before {
+    content:''; position:absolute; inset:0;
+    background-image: repeating-conic-gradient(#555 0% 25%,#222 0% 50%);
+    background-size: 8px 8px; opacity:0.5;
+  }
+  .card-toss-black .card-label { position:relative; z-index:1; }
+  .card-label { font-size:10px; font-weight:700; letter-spacing:-0.3px; text-align:center; }
+
+  .card-info { flex:1; min-width:0; }
+  .card-name {
+    font-size:15px; font-weight:500; color:#eee;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:2px;
+  }
+  .card-sub { font-size:12px; color:#666; }
+
+  .card-amount { text-align:right; flex-shrink:0; margin-left:8px; }
+  .card-amount .amount { font-size:15px; font-weight:600; color:#fff; white-space:nowrap; }
+  .card-amount .amount.zero { color:#444; }
+
+  /* 데이터 없음 */
+  .empty-month { text-align:center; padding:48px 0 32px; color:#444; }
+  .empty-icon  { font-size:36px; margin-bottom:12px; }
+  .empty-text  { font-size:14px; line-height:1.6; }
+
+  /* 합계 */
+  .total-row {
+    display:flex; justify-content:space-between; align-items:center;
+    padding:14px 20px; margin-top:4px;
+    border-top:1px solid #2a2a2a;
+  }
+  .total-row .t-label { font-size:14px; color:#888; }
+  .total-row .t-value { font-size:17px; font-weight:700; color:#fff; }
+
+  /* ── 하단 버튼 ── */
+  .bottom-nav {
+    position:fixed; bottom:0; left:0; right:0;
+    background:rgba(26,26,26,0.97);
+    backdrop-filter:blur(10px);
+    padding:12px 20px 28px;
+  }
+  .nav-btn {
+    width:100%; background:#2e2e2e; border:none;
+    border-radius:12px; color:#fff;
+    font-size:14px; font-weight:500; padding:14px;
+    cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;
+  }
+  .nav-btn:active { background:#383838; }
+
+  /* ── 월 선택 바텀시트 ── */
+  .sheet-overlay {
+    display:none; position:fixed; inset:0;
+    background:rgba(0,0,0,0.7); z-index:300; align-items:flex-end;
+  }
+  .sheet-overlay.active { display:flex; }
+  .sheet-inner {
+    background:#242424; border-radius:24px 24px 0 0;
+    width:100%; padding:20px 20px 40px;
+    animation:slideUp 0.25s ease;
+  }
+  @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+  .sheet-handle { width:36px; height:4px; background:#444; border-radius:2px; margin:0 auto 20px; }
+  .sheet-title  { font-size:16px; font-weight:700; margin-bottom:20px; }
+
+  .year-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+  .year-nav {
+    background:#333; border:none; color:#fff;
+    font-size:18px; width:36px; height:36px;
+    border-radius:50%; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .year-nav:disabled { color:#444; cursor:default; }
+  .year-lbl { font-size:16px; font-weight:600; }
+
+  .month-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+  .m-chip {
+    background:#333; border:2px solid transparent;
+    border-radius:10px; color:#aaa;
+    font-size:14px; padding:11px 0;
+    cursor:pointer; text-align:center; transition:all 0.15s; line-height:1.4;
+  }
+  .m-chip.sel    { border-color:#007aff; color:#007aff; background:rgba(0,122,255,0.1); font-weight:600; }
+  .m-chip.future { color:#444; pointer-events:none; }
+  .m-dot { font-size:8px; color:#555; margin-top:2px; }
+  .m-chip.sel .m-dot { color:#4da3ff; }
+
+  /* ── 편집 모달 ── */
+  .edit-overlay {
+    display:none; position:fixed; inset:0;
+    background:rgba(0,0,0,0.7); z-index:200; align-items:flex-end;
+  }
+  .edit-overlay.active { display:flex; }
+  .edit-sheet {
+    background:#242424; border-radius:24px 24px 0 0;
+    width:100%; max-height:85vh; overflow-y:auto;
+    padding:20px 20px 40px; animation:slideUp 0.28s ease;
+  }
+  .modal-handle { width:36px; height:4px; background:#444; border-radius:2px; margin:0 auto 20px; }
+  .modal-title  { font-size:18px; font-weight:700; margin-bottom:24px; }
+
+  .edit-list { display:flex; flex-direction:column; gap:10px; }
+  .edit-item {
+    background:#2e2e2e; border-radius:14px;
+    padding:14px 16px; display:flex; align-items:center; gap:12px;
+  }
+  .edit-item .card-icon { margin-right:0; }
+  .ei-info { flex:1; }
+  .ei-name { font-size:14px; font-weight:500; }
+  .ei-sub  { font-size:12px; color:#666; margin-top:2px; }
+  .ei-actions { display:flex; gap:8px; }
+  .btn-ea { background:#3a3a3a; border:none; border-radius:8px; color:#ccc; font-size:12px; padding:6px 10px; cursor:pointer; }
+  .btn-ea.del { color:#ff6b6b; }
+
+  .btn-add-card {
+    margin-top:16px; width:100%;
+    background:#007aff; border:none; border-radius:14px;
+    color:#fff; font-size:15px; font-weight:600; padding:16px;
+    cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;
+  }
+
+  /* 폼 */
+  .add-form { display:flex; flex-direction:column; gap:14px; }
+  .f-label  { font-size:13px; color:#888; margin-bottom:4px; }
+  .f-input  {
+    width:100%; background:#2e2e2e; border:1px solid #3a3a3a;
+    border-radius:10px; color:#fff; font-size:15px;
+    padding:13px 14px; outline:none; transition:border-color 0.2s;
+  }
+  .f-input:focus { border-color:#007aff; }
+  .type-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .type-btn {
+    background:#2e2e2e; border:2px solid transparent;
+    border-radius:10px; color:#aaa; font-size:14px;
+    padding:12px; cursor:pointer; text-align:center; transition:all 0.15s;
+  }
+  .type-btn.active { border-color:#007aff; color:#007aff; background:rgba(0,122,255,0.08); }
+  .f-row { display:flex; flex-direction:column; gap:4px; }
+  .btn-submit {
+    margin-top:8px; width:100%;
+    background:#007aff; border:none; border-radius:14px;
+    color:#fff; font-size:15px; font-weight:600; padding:16px; cursor:pointer;
+  }
+  .btn-cancel {
+    width:100%; background:#333; border:none; border-radius:14px;
+    color:#aaa; font-size:15px; padding:14px; cursor:pointer; margin-top:6px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <button class="back-btn" onclick="location.href='asset_manager_mobile.html'">‹</button>
+  <span class="header-title">카드</span>
+</div>
+
+<button class="month-label-btn" onclick="openMonthSheet()">
+  <span class="label-text" id="monthLabelText">—</span>
+  <span class="label-arrow">▼</span>
+</button>
+
+<div class="card-list" id="cardList"></div>
+
+<div class="total-row">
+  <span class="t-label" id="totalLabel">총 지출</span>
+  <span class="t-value" id="totalValue">—</span>
+</div>
+
+<div class="bottom-nav">
+  <button class="nav-btn" onclick="openEditModal()">⚙️ 자산 편집하기</button>
+</div>
+
+<!-- 월 선택 시트 -->
+<div class="sheet-overlay" id="monthSheetOv" onclick="if(event.target===this)closeMonthSheet()">
+  <div class="sheet-inner">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">월 선택</div>
+    <div class="year-row">
+      <button class="year-nav" id="yearPrev" onclick="changeYear(-1)">‹</button>
+      <span class="year-lbl" id="sheetYearLbl"></span>
+      <button class="year-nav" id="yearNext" onclick="changeYear(1)">›</button>
+    </div>
+    <div class="month-grid" id="monthGrid"></div>
+  </div>
+</div>
+
+<!-- 편집 모달 -->
+<div class="edit-overlay" id="editOverlay" onclick="if(event.target===this)closeEditModal()">
+  <div class="edit-sheet">
+    <div class="modal-handle"></div>
+    <div id="editContent"></div>
+  </div>
+</div>
+
+<script>
+
+/* ── 사용자 prefix 시스템 ── */
+function getPrefix(){
+  return localStorage.getItem('af_active_prefix')||'u1_';
+}
+function pk(key){ return getPrefix()+key; }
+const NOW = new Date();
+const CUR_YEAR = NOW.getFullYear(), CUR_MONTH = NOW.getMonth()+1;
+function monthKey(y,m){ return `${y}-${String(m).padStart(2,'0')}`; }
+
+const DEFAULT_META = [
+  {id:1, name:'KB국민 Liiv M 체크카드(RF)', type:'체크카드', color:'card-kb',        label:'KB\n국민'},
+  {id:2, name:'토스뱅크 모임카드',           type:'체크카드', color:'card-toss-black', label:'TOSS\nBANK'},
+  {id:3, name:'토스뱅크 체크카드',            type:'체크카드', color:'card-toss-check', label:'TOSS'},
+  {id:4, name:'K-First 카드(바로_신용)',      type:'신용카드', color:'card-kfirst',     label:'K-First\nVISA'},
+  {id:5, name:'HI-POINT',                    type:'신용카드', color:'card-hipoint',    label:'HI\nPOINT'},
+];
+const k0=monthKey(CUR_YEAR,CUR_MONTH);
+const k1=CUR_MONTH===1?monthKey(CUR_YEAR-1,12):monthKey(CUR_YEAR,CUR_MONTH-1);
+const k2=CUR_MONTH<=2?monthKey(CUR_YEAR-1,CUR_MONTH+10):monthKey(CUR_YEAR,CUR_MONTH-2);
+const DEFAULT_SPEND={
+  [k0]:{1:402268,2:376740,3:191290,4:91700,5:85080},
+  [k1]:{1:380000,2:320000,3:150000,4:75000,5:92000},
+  [k2]:{1:410000,2:290000,4:68000,5:78000},
+};
+
+function loadMeta()   { try{const s=localStorage.getItem(pk('af_cards_meta'));  return s?JSON.parse(s):DEFAULT_META;}  catch{return DEFAULT_META;} }
+function saveMeta(d)  { localStorage.setItem(pk('af_cards_meta'),JSON.stringify(d)); }
+function loadSpend()  { try{const s=localStorage.getItem(pk('af_cards_spend')); return s?JSON.parse(s):DEFAULT_SPEND;} catch{return DEFAULT_SPEND;} }
+function saveSpend(d) { localStorage.setItem(pk('af_cards_spend'),JSON.stringify(d)); }
+
+let meta=loadMeta(), spend=loadSpend();
+let selY=CUR_YEAR, selM=CUR_MONTH, sheetY=CUR_YEAR;
+
+function renderPage(){
+  const isCur=(selY===CUR_YEAR&&selM===CUR_MONTH);
+  document.getElementById('monthLabelText').textContent=`${selM}월에 쓴 돈`;
+  document.getElementById('totalLabel').textContent=isCur?'이번 달 총 지출':`${selM}월 총 지출`;
+  const ms=spend[monthKey(selY,selM)]||{};
+  const rows=meta.map(c=>({...c,amount:ms[c.id]||0})).filter(c=>c.amount>0).sort((a,b)=>b.amount-a.amount);
+  const el=document.getElementById('cardList');
+  if(!rows.length){
+    el.innerHTML=`<div class="empty-month"><div class="empty-icon">💳</div><div class="empty-text">${selY}년 ${selM}월 카드 데이터가 없어요<br><span style="font-size:12px;color:#555">자산 편집하기에서 지출을 입력해보세요</span></div></div>`;
+    document.getElementById('totalValue').textContent='0원'; return;
+  }
+  el.innerHTML=rows.map(c=>`
+    <div class="card-item">
+      <div class="card-icon ${c.color}"><span class="card-label">${c.label.replace(/\n/g,'<br>')}</span></div>
+      <div class="card-info"><div class="card-name">${c.name}</div><div class="card-sub">${c.type}</div></div>
+      <div class="card-amount"><div class="amount">${fmt(c.amount)}</div></div>
+    </div>`).join('');
+  document.getElementById('totalValue').textContent=fmt(rows.reduce((s,c)=>s+c.amount,0));
+}
+function fmt(n){ return n.toLocaleString('ko-KR')+'원'; }
+
+function openMonthSheet(){ sheetY=selY; renderSheetGrid(); document.getElementById('monthSheetOv').classList.add('active'); }
+function closeMonthSheet(){ document.getElementById('monthSheetOv').classList.remove('active'); }
+function changeYear(d){ sheetY=Math.min(CUR_YEAR,sheetY+d); renderSheetGrid(); }
+function renderSheetGrid(){
+  document.getElementById('sheetYearLbl').textContent=sheetY+'년';
+  document.getElementById('yearPrev').disabled=(sheetY<=CUR_YEAR-5);
+  document.getElementById('yearNext').disabled=(sheetY>=CUR_YEAR);
+  document.getElementById('monthGrid').innerHTML=Array.from({length:12},(_,i)=>{
+    const m=i+1;
+    const future=sheetY===CUR_YEAR&&m>CUR_MONTH;
+    const isSel=sheetY===selY&&m===selM;
+    const hasDot=spend[monthKey(sheetY,m)]&&Object.values(spend[monthKey(sheetY,m)]).some(v=>v>0);
+    return `<button class="m-chip ${isSel?'sel':''} ${future?'future':''}" onclick="pickMonth(${m})">${m}월<div class="m-dot">${hasDot?'●':''}</div></button>`;
+  }).join('');
+}
+function pickMonth(m){ selY=sheetY; selM=m; closeMonthSheet(); renderPage(); }
+
+function openEditModal(){ showEditMain(); document.getElementById('editOverlay').classList.add('active'); }
+function closeEditModal(){ document.getElementById('editOverlay').classList.remove('active'); }
+function showEditMain(){
+  document.getElementById('editContent').innerHTML=`
+    <div class="modal-title">카드 편집</div>
+    <div class="edit-list" id="editList"></div>
+    <button class="btn-add-card" onclick="showAddForm()">＋ 카드 추가하기</button>`;
+  document.getElementById('editList').innerHTML=meta.map(c=>`
+    <div class="edit-item">
+      <div class="card-icon ${c.color}"><span class="card-label">${c.label.replace(/\n/g,'<br>')}</span></div>
+      <div class="ei-info"><div class="ei-name">${c.name}</div><div class="ei-sub">${c.type}</div></div>
+      <div class="ei-actions">
+        <button class="btn-ea" onclick="showEditForm(${c.id})">수정</button>
+        <button class="btn-ea del" onclick="deleteCard(${c.id})">삭제</button>
+      </div>
+    </div>`).join('');
+}
+function showAddForm(){
+  document.getElementById('editContent').innerHTML=`
+    <div class="modal-title">카드 추가</div>
+    <div class="add-form">
+      <div class="f-row"><div class="f-label">카드 종류</div>
+        <div class="type-grid" id="typeGrid">
+          ${['체크카드','신용카드','선불카드','법인카드'].map((t,i)=>`<button class="type-btn ${i===0?'active':''}" data-type="${t}" onclick="selType(this)">${t}</button>`).join('')}
+        </div></div>
+      <div class="f-row"><div class="f-label">카드명</div><input class="f-input" id="newName" type="text" placeholder="예) 토스뱅크 체크카드"></div>
+      <div class="f-row"><div class="f-label">${selM}월 지출액 (원)</div><input class="f-input" id="newSpent" type="number" inputmode="numeric" placeholder="0"></div>
+      <button class="btn-submit" onclick="addCard()">추가하기</button>
+      <button class="btn-cancel" onclick="showEditMain()">취소</button>
+    </div>`;
+}
+function selType(btn){ document.querySelectorAll('#typeGrid .type-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
+function addCard(){
+  const name=document.getElementById('newName').value.trim();
+  const amt=parseInt(document.getElementById('newSpent').value)||0;
+  const type=document.querySelector('#typeGrid .type-btn.active')?.dataset.type||'체크카드';
+  if(!name){alert('카드명을 입력해주세요.');return;}
+  const id=Date.now();
+  meta.push({id,name,type,color:'card-generic',label:name.slice(0,4)});
+  saveMeta(meta);
+  if(amt>0){ const k=monthKey(selY,selM); if(!spend[k])spend[k]={}; spend[k][id]=amt; saveSpend(spend); }
+  showEditMain(); renderPage();
+}
+function showEditForm(id){
+  const c=meta.find(x=>x.id===id); if(!c)return;
+  const cur=(spend[monthKey(selY,selM)]||{})[id]||0;
+  document.getElementById('editContent').innerHTML=`
+    <div class="modal-title">카드 수정</div>
+    <div class="add-form">
+      <div class="f-row"><div class="f-label">카드 종류</div>
+        <div class="type-grid" id="typeGrid">
+          ${['체크카드','신용카드','선불카드','법인카드'].map(t=>`<button class="type-btn ${t===c.type?'active':''}" data-type="${t}" onclick="selType(this)">${t}</button>`).join('')}
+        </div></div>
+      <div class="f-row"><div class="f-label">카드명</div><input class="f-input" id="editName" type="text" value="${c.name}"></div>
+      <div class="f-row"><div class="f-label">${selM}월 지출액 (원)</div><input class="f-input" id="editSpent" type="number" inputmode="numeric" value="${cur}"></div>
+      <button class="btn-submit" onclick="updateCard(${id})">저장하기</button>
+      <button class="btn-cancel" onclick="showEditMain()">취소</button>
+    </div>`;
+}
+function updateCard(id){
+  const name=document.getElementById('editName').value.trim();
+  const amt=parseInt(document.getElementById('editSpent').value)||0;
+  const type=document.querySelector('#typeGrid .type-btn.active')?.dataset.type||'체크카드';
+  if(!name){alert('카드명을 입력해주세요.');return;}
+  const idx=meta.findIndex(x=>x.id===id);
+  if(idx!==-1)meta[idx]={...meta[idx],name,type};
+  saveMeta(meta);
+  const k=monthKey(selY,selM); if(!spend[k])spend[k]={}; spend[k][id]=amt; saveSpend(spend);
+  showEditMain(); renderPage();
+}
+function deleteCard(id){
+  if(!confirm('이 카드를 삭제할까요?'))return;
+  meta=meta.filter(x=>Number(x.id)!==Number(id)); saveMeta(meta);
+  Object.keys(spend).forEach(k=>{delete spend[k][id];}); saveSpend(spend);
+  showEditMain(); renderPage();
+}
+
+renderPage();
+</script>
+</body>
+</html>

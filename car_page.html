@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>자동차 - AssetFlow</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body {
+    background:#1a1a1a; color:#fff;
+    font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;
+    min-height:100vh;
+  }
+
+  /* ── 뷰 전환 ── */
+  .view { display:none; min-height:100vh; padding-bottom:100px; }
+  .view.active { display:block; }
+
+  /* ── 공통 헤더 ── */
+  .header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 20px; position:sticky; top:0; background:#1a1a1a; z-index:100;
+  }
+  .header-left { display:flex; align-items:center; }
+  .back-btn { background:none; border:none; color:#fff; font-size:22px; cursor:pointer; padding:4px 8px 4px 0; line-height:1; }
+  .header-title { font-size:17px; font-weight:600; }
+  .header-action { background:none; border:none; color:#007aff; font-size:14px; font-weight:600; cursor:pointer; }
+
+  /* ══════════════════
+     자동차 뷰
+  ══════════════════ */
+  .empty-state { text-align:center; padding:80px 20px; color:#444; }
+  .empty-icon  { font-size:48px; margin-bottom:16px; }
+  .empty-text  { font-size:15px; line-height:1.7; color:#555; }
+
+  .car-list { padding:0 20px; display:flex; flex-direction:column; gap:14px; }
+  .car-card { background:#242424; border-radius:18px; overflow:hidden; }
+
+  .car-card-header { padding:18px 18px 14px; }
+  .car-header-top  { display:flex; align-items:flex-start; justify-content:space-between; }
+  .car-model-line  { font-size:12px; color:#888; margin-bottom:4px; }
+  .car-plate       { font-size:24px; font-weight:700; letter-spacing:1px; }
+  .car-year-badge  { display:inline-block; background:#2e2e2e; border-radius:6px; padding:3px 8px; font-size:12px; color:#888; margin-top:6px; }
+
+  .btn-maintenance {
+    background:#007aff; border:none; border-radius:10px;
+    color:#fff; font-size:13px; font-weight:600;
+    padding:8px 14px; cursor:pointer; white-space:nowrap; flex-shrink:0;
+  }
+  .btn-maintenance:active { background:#0056cc; }
+
+  .car-info-list { border-top:1px solid #2e2e2e; }
+  .car-info-row  { display:flex; align-items:center; justify-content:space-between; padding:13px 18px; border-bottom:1px solid #2a2a2a; }
+  .car-info-row:last-child { border-bottom:none; }
+  .cir-left  { display:flex; align-items:center; gap:12px; }
+  .cir-icon  { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
+  .ic-mileage{ background:#16a34a22; }
+  .ic-inspect{ background:#7c3aed22; }
+  .ic-tax    { background:#0891b222; }
+  .cir-label { font-size:13px; color:#888; }
+  .cir-value { font-size:15px; font-weight:600; color:#fff; }
+  .cir-value.sub { font-size:13px; color:#555; font-weight:400; }
+  .dday { font-size:11px; font-weight:600; padding:2px 7px; border-radius:6px; margin-left:6px; }
+  .dday.urgent { background:#f8717122; color:#f87171; }
+  .dday.warn   { background:#fb923c22; color:#fb923c; }
+  .dday.ok     { background:#4ade8022; color:#4ade80; }
+
+  /* ══════════════════
+     정비 뷰
+  ══════════════════ */
+  .car-summary { margin:4px 20px 20px; background:#242424; border-radius:16px; padding:18px 20px; }
+  .cs-plate { font-size:20px; font-weight:700; letter-spacing:1px; }
+  .cs-info  { font-size:13px; color:#888; margin-top:3px; }
+  .cs-mileage-row { display:flex; align-items:center; justify-content:space-between; margin-top:12px; }
+  .cs-km       { font-size:20px; font-weight:700; }
+  .cs-km-label { font-size:12px; color:#666; margin-top:2px; }
+  .btn-edit-km { background:#2e2e2e; border:none; border-radius:8px; color:#888; font-size:12px; padding:6px 12px; cursor:pointer; }
+
+  .km-edit-row { display:flex; gap:8px; align-items:center; margin-top:10px; }
+  .km-edit-input { flex:1; background:#2e2e2e; border:1px solid #3a3a3a; border-radius:10px; color:#fff; font-size:15px; padding:10px 12px; outline:none; }
+  .km-edit-input:focus { border-color:#007aff; }
+  .km-edit-ok  { background:#007aff; border:none; border-radius:10px; color:#fff; font-size:13px; font-weight:600; padding:10px 14px; cursor:pointer; }
+  .km-edit-no  { background:#2e2e2e; border:none; border-radius:10px; color:#aaa; font-size:13px; padding:10px 14px; cursor:pointer; }
+
+  .section-title { font-size:16px; font-weight:700; padding:8px 20px 12px; }
+
+  /* 정비 카드 */
+  .maint-list { padding:0 20px; display:flex; flex-direction:column; gap:12px; }
+  .maint-card { background:#242424; border-radius:16px; padding:16px; cursor:pointer; }
+  .maint-card:active { opacity:0.8; }
+
+  .mc-top { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+  .mc-icon { width:42px; height:42px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
+  .mc-title-wrap { flex:1; min-width:0; }
+  .mc-name { font-size:15px; font-weight:600; color:#eee; }
+  .mc-last { font-size:12px; color:#666; margin-top:2px; }
+  .mc-right { display:flex; flex-direction:column; align-items:flex-end; gap:4px; flex-shrink:0; }
+  .mc-next-km { font-size:13px; font-weight:600; color:#007aff; }
+
+  .status-badge { font-size:11px; font-weight:600; padding:3px 8px; border-radius:6px; }
+  .sb-ok     { background:#007aff22; color:#4da3ff; }
+  .sb-warn   { background:#fb923c22; color:#fb923c; }
+  .sb-urgent { background:#f8717122; color:#f87171; }
+  .sb-none   { background:#2e2e2e;   color:#666; }
+
+  .mc-bar-track { height:6px; background:#2e2e2e; border-radius:3px; overflow:hidden; margin-bottom:6px; }
+  .mc-bar-fill  { height:100%; border-radius:3px; }
+  .bar-ok     { background:linear-gradient(90deg,#007aff,#4da3ff); }
+  .bar-warn   { background:linear-gradient(90deg,#fb923c,#fbbf24); }
+  .bar-urgent { background:linear-gradient(90deg,#f87171,#fb923c); }
+
+  .mc-prog-labels { display:flex; justify-content:space-between; font-size:11px; color:#555; margin-bottom:5px; }
+  .mc-cycle { font-size:12px; color:#555; display:flex; gap:12px; margin-top:2px; }
+
+  /* ══════════════════
+     상세 뷰 (슬라이드)
+  ══════════════════ */
+  .detail-overlay {
+    display:none; position:fixed; inset:0; background:#1a1a1a;
+    z-index:300; overflow-y:auto; padding-bottom:40px;
+  }
+  .detail-overlay.active { display:block; animation:slideInRight 0.28s ease; }
+  @keyframes slideInRight { from{transform:translateX(100%)} to{transform:translateX(0)} }
+
+  .dv-header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; position:sticky; top:0; background:#1a1a1a; z-index:10; }
+  .dv-back     { background:none; border:none; color:#fff; font-size:22px; cursor:pointer; padding:4px 8px 4px 0; line-height:1; }
+  .dv-cycle-btn{ background:none; border:none; color:#007aff; font-size:14px; font-weight:600; cursor:pointer; }
+
+  .dv-title { padding:8px 20px 20px; }
+  .dv-name   { font-size:22px; font-weight:700; margin-bottom:4px; }
+  .dv-status { font-size:15px; }
+  .dv-status.ok     { color:#4da3ff; }
+  .dv-status.warn   { color:#fb923c; }
+  .dv-status.urgent { color:#f87171; }
+  .dv-status.none   { color:#666; }
+
+  .dv-prog-card { margin:0 20px 16px; background:#242424; border-radius:16px; padding:18px; }
+  .dv-prog-row  { margin-bottom:16px; }
+  .dv-prog-row:last-child { margin-bottom:0; }
+  .dv-prog-labels { display:flex; justify-content:space-between; margin-bottom:8px; }
+  .dv-prog-l { font-size:13px; color:#aaa; }
+  .dv-prog-r { font-size:13px; font-weight:600; color:#007aff; }
+  .dv-bar-track { height:8px; background:#2e2e2e; border-radius:4px; overflow:hidden; margin-bottom:5px; }
+  .dv-bar-fill  { height:100%; border-radius:4px; }
+  .dv-prog-sub  { font-size:12px; color:#555; }
+
+  .dv-records { margin:0 20px; }
+  .dv-rec-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+  .dv-rec-title  { font-size:16px; font-weight:700; }
+  .dv-rec-add    { background:none; border:none; color:#007aff; font-size:14px; font-weight:600; cursor:pointer; }
+
+  .record-item { background:#242424; border-radius:14px; padding:14px 16px; display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+  .record-icon { width:36px; height:36px; background:#2e2e2e; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
+  .record-info { flex:1; }
+  .record-place{ font-size:14px; font-weight:500; color:#eee; }
+  .record-meta { font-size:12px; color:#666; margin-top:2px; }
+  .record-cost { font-size:13px; font-weight:600; color:#aaa; white-space:nowrap; }
+  .record-del  { background:none; border:none; color:#555; font-size:20px; cursor:pointer; padding:4px; flex-shrink:0; }
+
+  .empty-records { color:#555; font-size:13px; text-align:center; padding:24px 0; }
+
+  /* ══════════════════
+     모달 공통
+  ══════════════════ */
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:500; align-items:flex-end; }
+  .modal-overlay.active { display:flex; }
+  .modal-sheet { background:#242424; border-radius:24px 24px 0 0; width:100%; max-height:90vh; overflow-y:auto; padding:20px 20px 40px; animation:slideUp 0.28s ease; }
+  @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+  .modal-handle { width:36px; height:4px; background:#444; border-radius:2px; margin:0 auto 20px; }
+  .modal-title  { font-size:18px; font-weight:700; margin-bottom:24px; }
+
+  /* 편집 관련 */
+  .edit-list { display:flex; flex-direction:column; gap:10px; }
+  .edit-item { background:#2e2e2e; border-radius:14px; padding:14px 16px; display:flex; align-items:center; gap:12px; }
+  .ei-icon { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
+  .ei-info { flex:1; min-width:0; }
+  .ei-name { font-size:15px; font-weight:600; }
+  .ei-sub  { font-size:12px; color:#666; margin-top:2px; }
+  .ei-actions { display:flex; gap:8px; }
+  .btn-ea { background:#3a3a3a; border:none; border-radius:8px; color:#ccc; font-size:12px; padding:6px 10px; cursor:pointer; }
+  .btn-ea.del { color:#ff6b6b; }
+  .btn-add { margin-top:16px; width:100%; background:#007aff; border:none; border-radius:14px; color:#fff; font-size:15px; font-weight:600; padding:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; }
+
+  /* 폼 */
+  .add-form { display:flex; flex-direction:column; gap:14px; }
+  .f-label  { font-size:13px; color:#888; margin-bottom:4px; }
+  .f-input  { width:100%; background:#2e2e2e; border:1px solid #3a3a3a; border-radius:10px; color:#fff; font-size:15px; padding:13px 14px; outline:none; transition:border-color 0.2s; -webkit-appearance:none; }
+  .f-input:focus { border-color:#007aff; }
+  .f-row   { display:flex; flex-direction:column; gap:4px; }
+  .f-row-2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .fuel-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+  .type-btn { background:#2e2e2e; border:2px solid transparent; border-radius:10px; color:#aaa; font-size:13px; padding:10px 4px; cursor:pointer; text-align:center; transition:all 0.15s; }
+  .type-btn.active { border-color:#007aff; color:#007aff; background:rgba(0,122,255,0.08); }
+  .fsec { font-size:12px; color:#555; font-weight:600; letter-spacing:0.5px; padding:6px 0 2px; border-top:1px solid #333; margin-top:2px; }
+  .fsec:first-child { border-top:none; margin-top:0; }
+  .btn-submit { margin-top:8px; width:100%; background:#007aff; border:none; border-radius:14px; color:#fff; font-size:15px; font-weight:600; padding:16px; cursor:pointer; }
+  .btn-cancel { width:100%; background:#333; border:none; border-radius:14px; color:#aaa; font-size:15px; padding:14px; cursor:pointer; margin-top:6px; }
+
+  /* 하단 네비 */
+  .bottom-nav { position:fixed; bottom:0; left:0; right:0; background:rgba(26,26,26,0.97); backdrop-filter:blur(10px); padding:12px 20px 28px; }
+  .nav-btn { width:100%; background:#2e2e2e; border:none; border-radius:12px; color:#fff; font-size:14px; font-weight:500; padding:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; }
+  .nav-btn:active { background:#383838; }
+  .nav-btn.blue { background:#007aff; font-weight:600; }
+  .nav-btn.blue:active { background:#0056cc; }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════
+     VIEW 1: 자동차 목록
+════════════════════════════ -->
+<div class="view active" id="viewCar">
+  <div class="header">
+    <div class="header-left">
+      <button class="back-btn" onclick="location.href='asset_manager_mobile.html'">‹</button>
+      <span class="header-title">자동차</span>
+    </div>
+  </div>
+  <div id="carListEl"></div>
+  <div class="bottom-nav">
+    <button class="nav-btn" onclick="openCarEditModal()">⚙️ 자산 편집하기</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════
+     VIEW 2: 정비 목록
+════════════════════════════ -->
+<div class="view" id="viewMaint">
+  <div class="header">
+    <div class="header-left">
+      <button class="back-btn" onclick="showView('car')">‹</button>
+      <span class="header-title">정비 목록</span>
+    </div>
+    <button class="header-action" onclick="openRecordModal(null)">+ 기록하기</button>
+  </div>
+  <div class="car-summary" id="maintCarSummary"></div>
+  <div class="section-title">관리 중인 항목</div>
+  <div class="maint-list" id="maintListEl"></div>
+  <div class="bottom-nav">
+    <button class="nav-btn blue" onclick="openRecordModal(null)">＋ 정비 기록 추가하기</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════
+     상세 오버레이 (정비 항목별)
+════════════════════════════ -->
+<div class="detail-overlay" id="detailOverlay">
+  <div class="dv-header">
+    <button class="dv-back" onclick="closeDetail()">‹</button>
+    <button class="dv-cycle-btn" onclick="openCycleModal()">주기설정</button>
+  </div>
+  <div class="dv-title">
+    <div class="dv-name"   id="dvName">—</div>
+    <div class="dv-status" id="dvStatus">—</div>
+  </div>
+  <div class="dv-prog-card" id="dvProgCard"></div>
+  <div class="dv-records">
+    <div class="dv-rec-header">
+      <span class="dv-rec-title">최근 기록</span>
+      <button class="dv-rec-add" onclick="openRecordModal(currentItemKey)">+ 새 정비 기록</button>
+    </div>
+    <div id="dvRecordList"></div>
+  </div>
+</div>
+
+<!-- 차량 편집 모달 -->
+<div class="modal-overlay" id="carEditModal" onclick="if(event.target===this)closeCarEditModal()">
+  <div class="modal-sheet"><div class="modal-handle"></div><div id="carEditContent"></div></div>
+</div>
+
+<!-- 정비 기록 추가 모달 -->
+<div class="modal-overlay" id="recordModal" onclick="if(event.target===this)closeRecordModal()">
+  <div class="modal-sheet"><div class="modal-handle"></div><div id="recordModalContent"></div></div>
+</div>
+
+<!-- 주기 설정 모달 -->
+<div class="modal-overlay" id="cycleModal" onclick="if(event.target===this)closeCycleModal()">
+  <div class="modal-sheet"><div class="modal-handle"></div><div id="cycleModalContent"></div></div>
+</div>
+
+<script>
+
+/* ── 사용자 prefix 시스템 ── */
+function getPrefix(){
+  return localStorage.getItem('af_active_prefix')||'u1_';
+}
+function pk(key){ return getPrefix()+key; }
+/* ═══════════════════════════════════════
+   정비 항목 마스터
+═══════════════════════════════════════ */
+const MAINT_ITEMS = [
+  {key:'engine_oil',   name:'엔진오일',           icon:'🛢️', color:'#f59e0b', kmCycle:10000,  monthCycle:12},
+  {key:'mission_oil',  name:'미션오일',            icon:'⚙️', color:'#8b5cf6', kmCycle:60000,  monthCycle:48},
+  {key:'brake_oil',    name:'브레이크오일',         icon:'🔴', color:'#ef4444', kmCycle:40000,  monthCycle:24},
+  {key:'brake_pad',    name:'브레이크 패드·디스크', icon:'🔧', color:'#64748b', kmCycle:50000,  monthCycle:36},
+  {key:'wiper',        name:'와이퍼 블레이드',      icon:'🌧️', color:'#0ea5e9', kmCycle:20000,  monthCycle:12},
+  {key:'air_filter',   name:'에어필터',             icon:'💨', color:'#22c55e', kmCycle:20000,  monthCycle:12},
+  {key:'cabin_filter', name:'에어컨 필터',          icon:'❄️', color:'#06b6d4', kmCycle:15000,  monthCycle:12},
+  {key:'timing_belt',  name:'타이밍벨트',           icon:'🔩', color:'#f97316', kmCycle:100000, monthCycle:60},
+  {key:'coolant',      name:'냉각수',               icon:'🌊', color:'#3b82f6', kmCycle:40000,  monthCycle:24},
+  {key:'spark_plug',   name:'점화플러그',            icon:'⚡', color:'#eab308', kmCycle:30000,  monthCycle:24},
+  {key:'tire',         name:'타이어 교체·로테이션',  icon:'🔄', color:'#6b7280', kmCycle:40000,  monthCycle:36},
+  {key:'fuel_filter',  name:'연료필터',             icon:'🔋', color:'#a3e635', kmCycle:60000,  monthCycle:36},
+  {key:'drive_belt',   name:'구동벨트',             icon:'🔗', color:'#fb923c', kmCycle:60000,  monthCycle:36},
+  {key:'damper',       name:'댐퍼폴리',             icon:'🛠️', color:'#94a3b8', kmCycle:100000, monthCycle:60},
+  {key:'diff_oil',     name:'디퍼오일',             icon:'🏎️', color:'#84cc16', kmCycle:60000,  monthCycle:36},
+];
+
+const FUEL_TYPES = ['가솔린','디젤','LPG','전기·하이브리드'];
+
+/* ─── 스토리지 ─── */
+function loadCars(){
+  try{const s=localStorage.getItem(pk('af_cars')); if(s){const d=JSON.parse(s); if(d.length)return d;}} catch{}
+  const def=[{id:1,plate:'56너 9618',model:'3시리즈 (6세대)',maker:'BMW',year:2018,fuel:'가솔린',mileage:87000,inspectDate:'2025-10-15',taxDate:6}];
+  localStorage.setItem(pk('af_cars'),JSON.stringify(def));
+  return def;
+}
+function saveCars(d){ localStorage.setItem(pk('af_cars'),JSON.stringify(d)); }
+
+function maintKey(carId){ return `af_maint_${carId}`; }
+function loadMaint(carId){
+  try{const s=localStorage.getItem(maintKey(carId)); if(s)return JSON.parse(s);} catch{}
+  const d={};
+  MAINT_ITEMS.forEach(it=>{ d[it.key]={kmCycle:it.kmCycle,monthCycle:it.monthCycle,records:[]}; });
+  return d;
+}
+function saveMaint(carId,d){ localStorage.setItem(maintKey(carId),JSON.stringify(d)); }
+
+/* ─── 상태 ─── */
+let cars        = loadCars();
+let currentCar  = null;   // 선재 정비 뷰 차량
+let maintData   = {};
+let currentItemKey = null;
+let kmEditing   = false;
+
+/* ─── 뷰 전환 ─── */
+function showView(v){
+  document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
+  document.getElementById('viewCar').style.display  = v==='car'  ? 'block':'none';
+  document.getElementById('viewMaint').style.display= v==='maint'? 'block':'none';
+  if(v==='car')   { document.getElementById('viewCar').classList.add('active');   renderCarList(); }
+  if(v==='maint') { document.getElementById('viewMaint').classList.add('active'); renderMaintView(); }
+}
+
+/* ═══════════════════════════════════════
+   자동차 뷰
+═══════════════════════════════════════ */
+function renderCarList(){
+  const el=document.getElementById('carListEl');
+  if(!cars.length){
+    el.innerHTML=`<div class="empty-state"><div class="empty-icon">🚗</div><div class="empty-text">등록된 차량이 없어요<br><span style="font-size:13px;color:#444">자산 편집하기에서 추가해보세요</span></div></div>`;
+    return;
+  }
+  el.innerHTML=`<div class="car-list">${cars.map(c=>{
+    const inspBadge = ddayBadge(c.inspectDate);
+    return `
+    <div class="car-card">
+      <div class="car-card-header">
+        <div class="car-header-top">
+          <div>
+            <div class="car-model-line">${c.maker} ${c.model}</div>
+            <div class="car-plate">${c.plate}</div>
+            <div class="car-year-badge">${c.year}년식 · ${c.fuel}</div>
+          </div>
+          <button class="btn-maintenance" onclick="goMaint(${c.id})">🔧 정비</button>
+        </div>
+      </div>
+      <div class="car-info-list">
+        <div class="car-info-row">
+          <div class="cir-left"><div class="cir-icon ic-mileage">🛣️</div><span class="cir-label">주행거리</span></div>
+          ${c.mileage?`<span class="cir-value">${fmtKm(c.mileage)}</span>`:`<span class="cir-value sub">미입력</span>`}
+        </div>
+        <div class="car-info-row">
+          <div class="cir-left"><div class="cir-icon ic-inspect">📋</div><span class="cir-label">검사 만료일</span></div>
+          <div style="display:flex;align-items:center;gap:4px">
+            ${c.inspectDate?`<span class="cir-value">${c.inspectDate.slice(0,7)}</span>${inspBadge}`:`<span class="cir-value sub">미입력</span>`}
+          </div>
+        </div>
+        <div class="car-info-row">
+          <div class="cir-left"><div class="cir-icon ic-tax">🧾</div><span class="cir-label">자동차세</span></div>
+          ${c.taxDate?`<span class="cir-value">${c.taxDate}월 납부</span>`:`<span class="cir-value sub">미입력</span>`}
+        </div>
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function goMaint(carId){
+  currentCar  = cars.find(c=>Number(c.id)===Number(carId));
+  if(!currentCar) return;
+  maintData   = loadMaint(currentCar.id);
+  kmEditing   = false;
+  showView('maint');
+}
+
+/* ─── 유틸 ─── */
+function fmtKm(n){ return Number(n).toLocaleString('ko-KR')+'km'; }
+function fmtMon(n){ return Number(n).toLocaleString('ko-KR')+'원'; }
+function fmtDate(s){ return s?s.slice(2).replaceAll('-','.'):'—'; }
+
+function ddayBadge(ds){
+  if(!ds)return '';
+  const d=Math.ceil((new Date(ds)-new Date())/(864e5));
+  let cls='ok',lbl=`D-${d}`;
+  if(d<0){cls='urgent';lbl=`D+${Math.abs(d)}`;}
+  else if(d===0){cls='urgent';lbl='D-DAY';}
+  else if(d<=30){cls='warn';}
+  return `<span class="dday ${cls}">${lbl}</span>`;
+}
+
+function getProgress(itemKey, km){
+  const data=maintData[itemKey];
+  if(!data||!data.records||!data.records.length)return null;
+  const last = data.records[data.records.length-1];
+  const lastKm=last.km||0, lastDate=new Date(last.date||Date.now()), now=new Date();
+  const kmElapsed   = km-lastKm;
+  const kmPct       = data.kmCycle?Math.min(100,kmElapsed/data.kmCycle*100):0;
+  const nextKm      = lastKm+(data.kmCycle||0);
+  const moElapsed   = (now-lastDate)/(864e5*30.44);
+  const moPct       = data.monthCycle?Math.min(100,moElapsed/data.monthCycle*100):0;
+  const maxPct      = Math.max(kmPct,moPct);
+  const status      = maxPct>=100?'urgent':maxPct>=80?'warn':'ok';
+  return {kmElapsed,kmPct,nextKm,moElapsed,moPct,maxPct,status,last,kmCycle:data.kmCycle,monthCycle:data.monthCycle};
+}
+function barCls(s){ return s==='urgent'?'bar-urgent':s==='warn'?'bar-warn':'bar-ok'; }
+function sbCls(s){  return s==='urgent'?'sb-urgent':s==='warn'?'sb-warn':'sb-ok'; }
+function sbLabel(s){ return s==='urgent'?'점검필요':s==='warn'?'점검권장':'양호'; }
+
+/* ═══════════════════════════════════════
+   정비 뷰
+═══════════════════════════════════════ */
+function renderMaintView(){
+  renderMaintSummary();
+  renderMaintList();
+}
+
+function renderMaintSummary(){
+  const el=document.getElementById('maintCarSummary');
+  const km=currentCar.mileage||0;
+  if(kmEditing){
+    el.innerHTML=`
+      <div class="cs-plate">${currentCar.plate}</div>
+      <div class="cs-info">${currentCar.maker} ${currentCar.model} · ${currentCar.year}년식</div>
+      <div class="km-edit-row">
+        <input class="km-edit-input" id="kmInput" type="number" inputmode="numeric" value="${km}" placeholder="현재 주행거리">
+        <button class="km-edit-ok" onclick="saveKm()">저장</button>
+        <button class="km-edit-no" onclick="cancelKm()">취소</button>
+      </div>`;
+  } else {
+    el.innerHTML=`
+      <div class="cs-plate">${currentCar.plate}</div>
+      <div class="cs-info">${currentCar.maker} ${currentCar.model} · ${currentCar.year}년식</div>
+      <div class="cs-mileage-row">
+        <div><div class="cs-km">${fmtKm(km)}</div><div class="cs-km-label">현재 주행거리</div></div>
+        <button class="btn-edit-km" onclick="editKm()">✏️ 수정</button>
+      </div>`;
+  }
+}
+function editKm(){ kmEditing=true; renderMaintSummary(); }
+function cancelKm(){ kmEditing=false; renderMaintSummary(); }
+function saveKm(){
+  const v=parseInt(document.getElementById('kmInput').value)||0;
+  currentCar.mileage=v;
+  const idx=cars.findIndex(c=>Number(c.id)===Number(currentCar.id));
+  if(idx!==-1)cars[idx].mileage=v;
+  saveCars(cars); kmEditing=false; renderMaintSummary(); renderMaintList();
+}
+
+function renderMaintList(){
+  const km=currentCar.mileage||0;
+  document.getElementById('maintListEl').innerHTML=MAINT_ITEMS.map(item=>{
+    const data=maintData[item.key];
+    const prog=getProgress(item.key,km);
+    let progressHTML='',nextKmDisp='—',lastDisp='기록 없음',badge=`<span class="status-badge sb-none">기록없음</span>`;
+    if(prog){
+      badge=`<span class="status-badge ${sbCls(prog.status)}">${sbLabel(prog.status)}</span>`;
+      nextKmDisp=fmtKm(prog.nextKm);
+      lastDisp=`${fmtDate(prog.last.date)} · ${fmtKm(prog.last.km)}`;
+      progressHTML=`
+        <div class="mc-prog-labels"><span>${fmtKm(prog.kmElapsed)} 경과</span><span>${fmtKm(data.kmCycle)}마다</span></div>
+        <div class="mc-bar-track"><div class="mc-bar-fill ${barCls(prog.status)}" style="width:${prog.kmPct.toFixed(1)}%"></div></div>`;
+    }
+    return `
+      <div class="maint-card" onclick="openDetail('${item.key}')">
+        <div class="mc-top">
+          <div class="mc-icon" style="background:${item.color}22">${item.icon}</div>
+          <div class="mc-title-wrap">
+            <div class="mc-name">${item.name}</div>
+            <div class="mc-last">${lastDisp}</div>
+          </div>
+          <div class="mc-right">
+            <div class="mc-next-km">${nextKmDisp}</div>
+            ${badge}
+          </div>
+        </div>
+        ${progressHTML}
+        <div class="mc-cycle"><span>🔄 ${data?.kmCycle?fmtKm(data.kmCycle):'—'}마다</span><span>📅 ${data?.monthCycle?data.monthCycle+'개월':'—'}마다</span></div>
+      </div>`;
+  }).join('');
+}
+
+/* ═══════════════════════════════════════
+   상세 오버레이
+═══════════════════════════════════════ */
+function openDetail(itemKey){
+  currentItemKey=itemKey;
+  renderDetail();
+  document.getElementById('detailOverlay').classList.add('active');
+}
+function closeDetail(){
+  document.getElementById('detailOverlay').classList.remove('active');
+  currentItemKey=null;
+}
+function renderDetail(){
+  const item=MAINT_ITEMS.find(x=>x.key===currentItemKey);
+  const data=maintData[currentItemKey];
+  const km=currentCar.mileage||0;
+  const prog=getProgress(currentItemKey,km);
+
+  document.getElementById('dvName').textContent=item.name;
+  const st=document.getElementById('dvStatus');
+  if(!prog){ st.textContent='기록이 없어요'; st.className='dv-status none'; }
+  else if(prog.status==='urgent'){ st.textContent='점검해야 해요'; st.className='dv-status urgent'; }
+  else if(prog.status==='warn')  { st.textContent='점검이 필요해요'; st.className='dv-status warn'; }
+  else                           { st.textContent='양호해요'; st.className='dv-status ok'; }
+
+  const pc=document.getElementById('dvProgCard');
+  if(!prog){
+    pc.innerHTML=`<div style="color:#555;font-size:14px;text-align:center;padding:16px 0">정비 기록을 추가하면<br>진행 상태를 확인할 수 있어요</div>`;
+  } else {
+    const kmLeft=Math.max(0,data.kmCycle-prog.kmElapsed);
+    const moLeft=Math.max(0,data.monthCycle-prog.moElapsed);
+    const moLeftStr=moLeft<1?'만료':moLeft<2?`${Math.round(moLeft*30)}일 남음`:`${moLeft.toFixed(1)}개월 남음`;
+    const barColor=(pct)=>pct>=100?'#f87171':pct>=80?'#fb923c':item.color;
+    pc.innerHTML=`
+      <div class="dv-prog-row">
+        <div class="dv-prog-labels"><span class="dv-prog-l">${fmtKm(prog.kmElapsed)} 경과</span><span class="dv-prog-r">${fmtKm(data.kmCycle)}마다</span></div>
+        <div class="dv-bar-track"><div class="dv-bar-fill" style="width:${prog.kmPct.toFixed(1)}%;background:${barColor(prog.kmPct)}"></div></div>
+        <div class="dv-prog-sub">${kmLeft>0?fmtKm(kmLeft)+' 남음 · ':''}다음 정비 ${fmtKm(prog.nextKm)}</div>
+      </div>
+      <div class="dv-prog-row">
+        <div class="dv-prog-labels"><span class="dv-prog-l">${prog.moElapsed.toFixed(1)}개월 경과</span><span class="dv-prog-r">${data.monthCycle}개월마다</span></div>
+        <div class="dv-bar-track"><div class="dv-bar-fill" style="width:${prog.moPct.toFixed(1)}%;background:${barColor(prog.moPct)}"></div></div>
+        <div class="dv-prog-sub">${moLeftStr}</div>
+      </div>`;
+  }
+
+  const records=[...(data?.records||[])].reverse();
+  const rl=document.getElementById('dvRecordList');
+  if(!records.length){ rl.innerHTML=`<div class="empty-records">정비 기록이 없어요</div>`; return; }
+  rl.innerHTML=records.map((r,i)=>`
+    <div class="record-item">
+      <div class="record-icon">🔧</div>
+      <div class="record-info">
+        <div class="record-place">${r.place||'정비소'}</div>
+        <div class="record-meta">${r.date||'—'} · 누적 ${fmtKm(r.km)}</div>
+      </div>
+      ${r.cost?`<span class="record-cost">${fmtMon(r.cost)}</span>`:''}
+      <button class="record-del" onclick="deleteRecord(${records.length-1-i})">×</button>
+    </div>`).join('');
+}
+
+function deleteRecord(idx){
+  maintData[currentItemKey].records.splice(idx,1);
+  saveMaint(currentCar.id,maintData);
+  renderDetail(); renderMaintList();
+}
+
+/* ═══════════════════════════════════════
+   정비 기록 추가 모달
+═══════════════════════════════════════ */
+function openRecordModal(itemKey){
+  const sel=itemKey||currentItemKey||MAINT_ITEMS[0].key;
+  document.getElementById('recordModalContent').innerHTML=`
+    <div class="modal-title">정비 기록 추가</div>
+    <div class="add-form">
+      <div class="f-row"><div class="f-label">정비 항목</div>
+        <select class="f-input" id="rItem" style="color:#fff;background:#2e2e2e">
+          ${MAINT_ITEMS.map(it=>`<option value="${it.key}" ${it.key===sel?'selected':''}>${it.name}</option>`).join('')}
+        </select>
+      </div>
+      <div class="f-row"><div class="f-label">정비일</div><input class="f-input" id="rDate" type="date" value="${new Date().toISOString().slice(0,10)}"></div>
+      <div class="f-row"><div class="f-label">정비 시 주행거리 (km)</div><input class="f-input" id="rKm" type="number" inputmode="numeric" placeholder="예) 87000" value="${currentCar?.mileage||''}"></div>
+      <div class="f-row"><div class="f-label">정비소 (선택)</div><input class="f-input" id="rPlace" type="text" placeholder="예) BMW 서비스센터"></div>
+      <div class="f-row"><div class="f-label">비용 (원, 선택)</div><input class="f-input" id="rCost" type="number" inputmode="numeric" placeholder="0"></div>
+      <div class="f-row"><div class="f-label">메모 (선택)</div><input class="f-input" id="rNote" type="text" placeholder="특이사항"></div>
+      <button class="btn-submit" onclick="saveRecord()">기록 추가</button>
+      <button class="btn-cancel" onclick="closeRecordModal()">취소</button>
+    </div>`;
+  document.getElementById('recordModal').classList.add('active');
+}
+function closeRecordModal(){ document.getElementById('recordModal').classList.remove('active'); }
+function saveRecord(){
+  const itemKey=document.getElementById('rItem').value;
+  const date=document.getElementById('rDate').value;
+  const km=parseInt(document.getElementById('rKm').value)||0;
+  const place=document.getElementById('rPlace').value.trim();
+  const cost=parseInt(document.getElementById('rCost').value)||0;
+  const note=document.getElementById('rNote').value.trim();
+  if(!date){alert('정비일을 입력해주세요.');return;}
+  if(!km)  {alert('정비 시 주행거리를 입력해주세요.');return;}
+  if(!maintData[itemKey]) maintData[itemKey]={kmCycle:MAINT_ITEMS.find(x=>x.key===itemKey)?.kmCycle||10000,monthCycle:12,records:[]};
+  maintData[itemKey].records.push({date,km,place,cost,note});
+  maintData[itemKey].records.sort((a,b)=>new Date(a.date)-new Date(b.date));
+  saveMaint(currentCar.id,maintData);
+  closeRecordModal();
+  renderMaintList();
+  if(currentItemKey) renderDetail();
+}
+
+/* ═══════════════════════════════════════
+   주기 설정 모달
+═══════════════════════════════════════ */
+function openCycleModal(){
+  if(!currentItemKey)return;
+  const item=MAINT_ITEMS.find(x=>x.key===currentItemKey);
+  const data=maintData[currentItemKey];
+  document.getElementById('cycleModalContent').innerHTML=`
+    <div class="modal-title">${item.name} 주기 설정</div>
+    <div class="add-form">
+      <div class="f-row"><div class="f-label">km 주기 (몇 km마다)</div><input class="f-input" id="cKm" type="number" inputmode="numeric" value="${data?.kmCycle||item.kmCycle}"></div>
+      <div class="f-row"><div class="f-label">기간 주기 (몇 개월마다)</div><input class="f-input" id="cMo" type="number" inputmode="numeric" value="${data?.monthCycle||item.monthCycle}"></div>
+      <button class="btn-submit" onclick="saveCycle()">저장하기</button>
+      <button class="btn-cancel" onclick="closeCycleModal()">취소</button>
+    </div>`;
+  document.getElementById('cycleModal').classList.add('active');
+}
+function closeCycleModal(){ document.getElementById('cycleModal').classList.remove('active'); }
+function saveCycle(){
+  const km=parseInt(document.getElementById('cKm').value)||0;
+  const mo=parseInt(document.getElementById('cMo').value)||0;
+  if(!maintData[currentItemKey]) maintData[currentItemKey]={records:[]};
+  maintData[currentItemKey].kmCycle=km;
+  maintData[currentItemKey].monthCycle=mo;
+  saveMaint(currentCar.id,maintData);
+  closeCycleModal(); renderDetail(); renderMaintList();
+}
+
+/* ═══════════════════════════════════════
+   차량 편집 모달
+═══════════════════════════════════════ */
+function openCarEditModal(){ showCarEditMain(); document.getElementById('carEditModal').classList.add('active'); }
+function closeCarEditModal(){ document.getElementById('carEditModal').classList.remove('active'); }
+
+function showCarEditMain(){
+  const listHTML=cars.length?cars.map(c=>`
+    <div class="edit-item">
+      <div class="ei-icon">🚗</div>
+      <div class="ei-info"><div class="ei-name">${c.plate}</div><div class="ei-sub">${c.maker} ${c.model} · ${c.year}년식</div></div>
+      <div class="ei-actions">
+        <button class="btn-ea" onclick="showCarForm(${c.id})">수정</button>
+        <button class="btn-ea del" onclick="deleteCar(${c.id})">삭제</button>
+      </div>
+    </div>`).join(''):'<div style="color:#555;font-size:13px;padding:8px 0">등록된 차량이 없어요</div>';
+  document.getElementById('carEditContent').innerHTML=`
+    <div class="modal-title">차량 편집</div>
+    <div class="edit-list">${listHTML}</div>
+    <button class="btn-add" onclick="showCarForm(null)">＋ 차량 추가하기</button>`;
+}
+
+function showCarForm(id){
+  const p=id?cars.find(x=>x.id===id):{};
+  const isEdit=!!id;
+  document.getElementById('carEditContent').innerHTML=`
+    <div class="modal-title">${isEdit?'차량 수정':'차량 추가'}</div>
+    <div class="add-form">
+      <div class="fsec">차량 기본 정보</div>
+      <div class="f-row"><div class="f-label">차량 번호</div><input class="f-input" id="fPlate" type="text" placeholder="예) 56너 9618" value="${p.plate||''}"></div>
+      <div class="f-row-2">
+        <div class="f-row"><div class="f-label">제조사</div><input class="f-input" id="fMaker" type="text" placeholder="예) BMW" value="${p.maker||''}"></div>
+        <div class="f-row"><div class="f-label">연식</div><input class="f-input" id="fYear" type="number" inputmode="numeric" placeholder="2018" value="${p.year||''}"></div>
+      </div>
+      <div class="f-row"><div class="f-label">모델명</div><input class="f-input" id="fModel" type="text" placeholder="예) 3시리즈 (6세대)" value="${p.model||''}"></div>
+      <div class="f-row"><div class="f-label">연료</div>
+        <div class="fuel-grid" id="fuelGrid">
+          ${FUEL_TYPES.map(t=>`<button class="type-btn ${(p.fuel||FUEL_TYPES[0])===t?'active':''}" data-v="${t}" onclick="pickFuel(this)">${t}</button>`).join('')}
+        </div>
+      </div>
+      <div class="fsec">차량 상태</div>
+      <div class="f-row"><div class="f-label">주행거리 (km)</div><input class="f-input" id="fMileage" type="number" inputmode="numeric" placeholder="0" value="${p.mileage||''}"></div>
+      <div class="fsec">일정 관리</div>
+      <div class="f-row-2">
+        <div class="f-row"><div class="f-label">검사 만료일</div><input class="f-input" id="fInspect" type="date" value="${p.inspectDate||''}"></div>
+        <div class="f-row"><div class="f-label">자동차세 납부월</div><input class="f-input" id="fTax" type="number" inputmode="numeric" placeholder="6" min="1" max="12" value="${p.taxDate||''}"></div>
+      </div>
+      <button class="btn-submit" onclick="${isEdit?`updateCar(${id})`:'addCar()'}">${isEdit?'저장하기':'추가하기'}</button>
+      <button class="btn-cancel" onclick="showCarEditMain()">취소</button>
+    </div>`;
+}
+function pickFuel(btn){ document.querySelectorAll('#fuelGrid .type-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
+function readCarForm(){
+  const plate=document.getElementById('fPlate').value.trim();
+  const maker=document.getElementById('fMaker').value.trim();
+  const model=document.getElementById('fModel').value.trim();
+  const year=parseInt(document.getElementById('fYear').value)||0;
+  const fuel=document.querySelector('#fuelGrid .type-btn.active')?.dataset.v||FUEL_TYPES[0];
+  const mileage=parseInt(document.getElementById('fMileage').value)||0;
+  const inspectDate=document.getElementById('fInspect').value;
+  const taxDate=parseInt(document.getElementById('fTax').value)||0;
+  if(!plate){alert('차량 번호를 입력해주세요.');return null;}
+  if(!year) {alert('연식을 입력해주세요.');return null;}
+  return {plate,maker,model,year,fuel,mileage,inspectDate,taxDate};
+}
+function addCar(){ const c=readCarForm(); if(!c)return; c.id=Date.now(); cars.push(c); saveCars(cars); showCarEditMain(); renderCarList(); }
+function updateCar(id){ const c=readCarForm(); if(!c)return; const i=cars.findIndex(x=>Number(x.id)===Number(id)); if(i!==-1)cars[i]={...cars[i],...c}; saveCars(cars); showCarEditMain(); renderCarList(); }
+function deleteCar(id){ cars=cars.filter(x=>Number(x.id)!==Number(id)); saveCars(cars); showCarEditMain(); renderCarList(); }
+
+/* ─── 초기화 ─── */
+showView('car');
+</script>
+</body>
+</html>

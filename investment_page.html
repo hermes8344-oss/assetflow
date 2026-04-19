@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>투자 관리 - AssetFlow</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: #1a1a1a;
+    color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+    min-height: 100vh;
+    padding-bottom: 100px;
+  }
+
+  /* ── 헤더 ── */
+  .header {
+    display: flex; align-items: center;
+    padding: 16px 20px;
+    position: sticky; top: 0;
+    background: #1a1a1a; z-index: 100;
+  }
+  .back-btn { background:none; border:none; color:#fff; font-size:22px; cursor:pointer; padding:4px 8px 4px 0; line-height:1; }
+  .header-title { font-size:17px; font-weight:600; margin-left:4px; }
+
+  /* ── 총 투자 요약 카드 ── */
+  .summary-card {
+    margin: 4px 20px 0;
+    background: #242424; border-radius: 16px; padding: 20px 20px 18px;
+  }
+  .sc-label  { font-size:13px; color:#888; margin-bottom:6px; }
+  .sc-amount { font-size:26px; font-weight:700; color:#fff; letter-spacing:-0.5px; white-space:nowrap; }
+  .sc-yield  { font-size:13px; margin-top:4px; }
+  .sc-yield.pos { color:#4ade80; }
+  .sc-yield.neg { color:#f87171; }
+
+  /* ── 비율 막대 그래프 ── */
+  .ratio-bar-wrap { margin: 16px 20px 0; }
+  .ratio-bar {
+    display: flex; height: 10px; border-radius: 6px; overflow: hidden; gap: 2px;
+  }
+  .ratio-seg { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
+
+  /* 카테고리 범례 */
+  .ratio-legend { margin: 14px 20px 20px; display:flex; flex-direction:column; gap:0; }
+  .legend-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 13px 0;
+    border-bottom: 1px solid #2a2a2a;
+  }
+  .legend-item:last-child { border-bottom: none; }
+  .legend-left { display:flex; align-items:center; gap:10px; }
+  .legend-dot  { width:3px; height:36px; border-radius:2px; flex-shrink:0; }
+  .legend-name { font-size:15px; font-weight:500; color:#eee; }
+  .legend-pct  { font-size:12px; color:#666; margin-top:2px; }
+  .legend-right { text-align:right; }
+  .legend-amount { font-size:15px; font-weight:600; color:#fff; white-space:nowrap; }
+  .legend-gain   { font-size:12px; margin-top:2px; white-space:nowrap; }
+  .legend-gain.pos { color:#4ade80; }
+  .legend-gain.neg { color:#f87171; }
+  .legend-gain.neutral { color:#666; }
+
+  /* 카테고리 색상 */
+  .c-overseas  { background:#4f8ef7; }
+  .c-domestic  { background:#22c55e; }
+  .c-bond      { background:#a855f7; }
+  .c-bill      { background:#f59e0b; }
+  .c-deposit   { background:#888; }
+  .c-etc       { background:#64748b; }
+
+  /* ── 계좌별 목록 ── */
+  .section-header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 20px 20px 10px;
+  }
+  .section-title { font-size:13px; color:#888; font-weight:500; }
+  .section-total { font-size:13px; color:#888; }
+
+  .account-list { padding: 0 20px; }
+  .account-item {
+    display:flex; align-items:center;
+    padding:14px 0; border-bottom:1px solid #2a2a2a;
+    cursor:pointer; transition:opacity 0.15s;
+  }
+  .account-item:last-child { border-bottom:none; }
+  .account-item:active { opacity:0.7; }
+
+  .acc-icon {
+    width:40px; height:40px; border-radius:10px;
+    margin-right:14px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; font-size:18px;
+  }
+  .acc-info { flex:1; min-width:0; }
+  .acc-name { font-size:15px; font-weight:500; color:#eee; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:2px; }
+  .acc-sub  { font-size:12px; color:#666; }
+  .acc-right { text-align:right; flex-shrink:0; margin-left:8px; }
+  .acc-amount { font-size:15px; font-weight:600; color:#fff; white-space:nowrap; }
+  .acc-gain   { font-size:12px; margin-top:2px; white-space:nowrap; }
+  .acc-gain.pos { color:#4ade80; }
+  .acc-gain.neg { color:#f87171; }
+
+  /* 빈 화면 */
+  .empty-state { text-align:center; padding:60px 0 32px; color:#444; }
+  .empty-icon  { font-size:40px; margin-bottom:12px; }
+  .empty-text  { font-size:14px; line-height:1.6; }
+
+  /* ── 하단 버튼 ── */
+  .bottom-nav {
+    position:fixed; bottom:0; left:0; right:0;
+    background:rgba(26,26,26,0.97); backdrop-filter:blur(10px);
+    padding:12px 20px 28px;
+  }
+  .nav-btn {
+    width:100%; background:#2e2e2e; border:none; border-radius:12px;
+    color:#fff; font-size:14px; font-weight:500; padding:14px;
+    cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;
+  }
+  .nav-btn:active { background:#383838; }
+
+  /* ── 편집 모달 ── */
+  .edit-overlay {
+    display:none; position:fixed; inset:0;
+    background:rgba(0,0,0,0.75); z-index:200; align-items:flex-end;
+  }
+  .edit-overlay.active { display:flex; }
+  .edit-sheet {
+    background:#242424; border-radius:24px 24px 0 0;
+    width:100%; max-height:92vh; overflow-y:auto;
+    padding:20px 20px 40px; animation:slideUp 0.28s ease;
+  }
+  @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+  .modal-handle { width:36px; height:4px; background:#444; border-radius:2px; margin:0 auto 20px; }
+  .modal-title  { font-size:18px; font-weight:700; margin-bottom:24px; }
+
+  .edit-list { display:flex; flex-direction:column; gap:10px; }
+  .edit-item {
+    background:#2e2e2e; border-radius:14px;
+    padding:14px 16px; display:flex; align-items:center; gap:12px;
+  }
+  .ei-icon { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
+  .ei-info { flex:1; min-width:0; }
+  .ei-name { font-size:14px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .ei-sub  { font-size:12px; color:#666; margin-top:2px; }
+  .ei-actions { display:flex; gap:8px; flex-shrink:0; }
+  .btn-ea { background:#3a3a3a; border:none; border-radius:8px; color:#ccc; font-size:12px; padding:6px 10px; cursor:pointer; }
+  .btn-ea.del { color:#ff6b6b; }
+
+  .btn-add {
+    margin-top:16px; width:100%;
+    background:#007aff; border:none; border-radius:14px;
+    color:#fff; font-size:15px; font-weight:600; padding:16px;
+    cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;
+  }
+
+  /* 폼 */
+  .add-form { display:flex; flex-direction:column; gap:14px; }
+  .f-label  { font-size:13px; color:#888; margin-bottom:4px; }
+  .f-input  {
+    width:100%; background:#2e2e2e; border:1px solid #3a3a3a;
+    border-radius:10px; color:#fff; font-size:15px;
+    padding:13px 14px; outline:none; transition:border-color 0.2s;
+    -webkit-appearance:none;
+  }
+  .f-input:focus { border-color:#007aff; }
+  .f-row   { display:flex; flex-direction:column; gap:4px; }
+
+  .sel-grid { display:grid; gap:8px; }
+  .type-btn {
+    background:#2e2e2e; border:2px solid transparent;
+    border-radius:10px; color:#aaa; font-size:13px;
+    padding:10px 6px; cursor:pointer; text-align:center; transition:all 0.15s; line-height:1.4;
+  }
+  .type-btn.active { border-color:#007aff; color:#007aff; background:rgba(0,122,255,0.08); }
+
+  /* 카테고리별 active 색상 */
+  .type-btn.active.col-overseas { border-color:#4f8ef7; color:#4f8ef7; background:rgba(79,142,247,0.08); }
+  .type-btn.active.col-domestic { border-color:#22c55e; color:#22c55e; background:rgba(34,197,94,0.08); }
+  .type-btn.active.col-bond     { border-color:#a855f7; color:#a855f7; background:rgba(168,85,247,0.08); }
+  .type-btn.active.col-bill     { border-color:#f59e0b; color:#f59e0b; background:rgba(245,158,11,0.08); }
+  .type-btn.active.col-deposit  { border-color:#888;    color:#aaa;    background:rgba(136,136,136,0.08); }
+  .type-btn.active.col-etc      { border-color:#64748b; color:#94a3b8; background:rgba(100,116,139,0.08); }
+
+  .form-section-label {
+    font-size:12px; color:#555; font-weight:600; letter-spacing:0.5px;
+    padding:6px 0 2px; border-top:1px solid #333; margin-top:2px;
+  }
+  .form-section-label:first-child { border-top:none; margin-top:0; }
+
+  .btn-submit {
+    margin-top:8px; width:100%;
+    background:#007aff; border:none; border-radius:14px;
+    color:#fff; font-size:15px; font-weight:600; padding:16px; cursor:pointer;
+  }
+  .btn-cancel {
+    width:100%; background:#333; border:none; border-radius:14px;
+    color:#aaa; font-size:15px; padding:14px; cursor:pointer; margin-top:6px;
+  }
+
+  .edit-cat-label {
+    font-size:12px; color:#555; padding:8px 0 4px;
+    border-top:1px solid #2a2a2a; margin-top:4px;
+  }
+  .edit-cat-label:first-child { border-top:none; margin-top:0; }
+
+  /* ── 계좌 카테고리 그룹 헤더 ── */
+  .cat-group-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 20px 10px;
+    margin-top: 4px;
+  }
+  .cat-group-header:first-child { margin-top: 0; }
+  .cgh-left  { display:flex; align-items:center; gap:8px; }
+  .cgh-dot   { width:3px; height:18px; border-radius:2px; flex-shrink:0; }
+  .cgh-label { font-size:14px; font-weight:600; color:#ccc; }
+  .cgh-right { display:flex; flex-direction:column; align-items:flex-end; gap:2px; }
+  .cgh-total { font-size:14px; font-weight:600; color:#fff; }
+  .cgh-gain  { font-size:12px; }
+  .cgh-gain.pos { color:#4ade80; }
+  .cgh-gain.neg { color:#f87171; }
+  .cgh-gain.neutral { color:#666; }
+
+  .cat-account-group {
+    padding: 0 20px;
+    border-bottom: 6px solid #111;
+    margin-bottom: 0;
+  }
+  .cat-account-group:last-child { border-bottom: none; }
+
+  /* ── 배당 뷰 ── */
+  .div-overlay {
+    display:none; position:fixed; inset:0; background:#1a1a1a;
+    z-index:300; overflow-y:auto; padding-bottom:40px;
+  }
+  .div-overlay.active { display:block; animation:slideInRight 0.28s ease; }
+  @keyframes slideInRight { from{transform:translateX(100%)} to{transform:translateX(0)} }
+
+  .div-header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 20px; position:sticky; top:0; background:#1a1a1a; z-index:10;
+  }
+  .div-back { background:none; border:none; color:#fff; font-size:22px; cursor:pointer; padding:4px 8px 4px 0; line-height:1; }
+  .div-title { font-size:17px; font-weight:600; }
+  .div-add-btn { background:none; border:none; color:#007aff; font-size:14px; font-weight:600; cursor:pointer; }
+
+  /* 연간 합계 */
+  .div-summary { margin:4px 20px 20px; background:#242424; border-radius:16px; padding:20px; }
+  .divs-year   { font-size:13px; color:#888; margin-bottom:6px; }
+  .divs-total  { font-size:26px; font-weight:700; color:#4ade80; letter-spacing:-0.5px; }
+  .divs-count  { font-size:13px; color:#666; margin-top:4px; }
+
+  /* 연도 탭 */
+  .year-tabs { display:flex; gap:8px; padding:0 20px 16px; overflow-x:auto; scrollbar-width:none; }
+  .year-tabs::-webkit-scrollbar { display:none; }
+  .year-tab { background:#242424; border:2px solid transparent; border-radius:20px; color:#888; font-size:13px; font-weight:500; padding:6px 16px; cursor:pointer; white-space:nowrap; flex-shrink:0; transition:all 0.15s; }
+  .year-tab.active { border-color:#4ade80; color:#4ade80; background:rgba(74,222,128,0.08); }
+
+  /* 막대 차트 */
+  .div-chart-card { margin:0 20px 20px; background:#242424; border-radius:16px; padding:18px 16px 12px; }
+  .dcc-title { font-size:13px; color:#888; margin-bottom:14px; }
+
+  /* 배당 기록 목록 */
+  .div-list-section { margin:0 20px; }
+  .dls-title { font-size:13px; color:#888; margin-bottom:12px; font-weight:500; }
+  .div-record { background:#242424; border-radius:14px; padding:14px 16px; display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+  .dr-left { display:flex; align-items:center; gap:12px; }
+  .dr-dot  { width:10px; height:10px; border-radius:50%; background:#4ade80; flex-shrink:0; }
+  .dr-info { }
+  .dr-name { font-size:14px; font-weight:500; color:#eee; }
+  .dr-date { font-size:12px; color:#666; margin-top:2px; }
+  .dr-right { text-align:right; }
+  .dr-amount { font-size:15px; font-weight:600; color:#4ade80; }
+  .dr-del { background:none; border:none; color:#555; font-size:18px; cursor:pointer; padding:4px; margin-left:8px; }
+
+  .div-empty { text-align:center; padding:40px 0; color:#444; font-size:14px; }
+
+  /* 배당 추가 모달 */
+  .div-modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:400; align-items:flex-end; }
+  .div-modal-overlay.active { display:flex; }
+  .div-modal-sheet { background:#242424; border-radius:24px 24px 0 0; width:100%; max-height:85vh; overflow-y:auto; padding:20px 20px 40px; animation:slideUp 0.28s ease; }
+
+</style>
+</head>
+<body>
+
+<div class="header">
+  <button class="back-btn" onclick="location.href='asset_manager_mobile.html'">‹</button>
+  <span class="header-title">투자</span>
+</div>
+
+<!-- 총 투자 요약 -->
+<div class="summary-card">
+  <div class="sc-label">총 투자 자산</div>
+  <div class="sc-amount" id="totalAmount">—</div>
+  <div class="sc-yield"  id="totalYield">—</div>
+  <button onclick="openDividend()" style="margin-top:14px;background:#4ade8022;border:none;border-radius:10px;color:#4ade80;font-size:13px;font-weight:600;padding:8px 16px;cursor:pointer;">💰 배당금 보기</button>
+</div>
+
+<!-- 비율 막대 -->
+<div class="ratio-bar-wrap">
+  <div class="ratio-bar" id="ratioBar"></div>
+</div>
+
+<!-- 범례 -->
+<div class="ratio-legend" id="ratioLegend"></div>
+
+<!-- 계좌 목록 (카테고리별 그룹) -->
+<div id="accountList"></div>
+
+<!-- 하단 -->
+<div class="bottom-nav">
+  <button class="nav-btn" onclick="openEditModal()">⚙️ 자산 편집하기</button>
+</div>
+
+<!-- ── 배당 버튼 (summary-card 아래) ── -->
+
+<!-- ── 배당 뷰 오버레이 ── -->
+<div class="div-overlay" id="divOverlay">
+  <div class="div-header">
+    <button class="div-back" onclick="closeDividend()">‹</button>
+    <span class="div-title">배당금</span>
+    <button class="div-add-btn" onclick="openDivModal()">+ 추가</button>
+  </div>
+
+  <div class="div-summary">
+    <div class="divs-year" id="divYearLabel">—</div>
+    <div class="divs-total" id="divTotal">—</div>
+    <div class="divs-count" id="divCount">—</div>
+  </div>
+
+  <div class="year-tabs" id="yearTabs"></div>
+
+  <div class="div-chart-card">
+    <div class="dcc-title" id="dccTitle">월별 배당금 수령액 (원화 환산)</div>
+    <div style="position:relative;height:160px;width:100%">
+      <canvas id="divChart"></canvas>
+    </div>
+  </div>
+
+  <div class="div-list-section">
+    <div class="dls-title">배당 기록</div>
+    <div id="divRecordList"></div>
+  </div>
+</div>
+
+<!-- 배당 추가 모달 -->
+<div class="div-modal-overlay" id="divModal" onclick="if(event.target===this)closeDivModal()">
+  <div class="div-modal-sheet">
+    <div class="modal-handle"></div>
+    <div id="divModalContent"></div>
+  </div>
+</div>
+
+<!-- 편집 모달 -->
+<div class="edit-overlay" id="editOverlay" onclick="if(event.target===this)closeEditModal()">
+  <div class="edit-sheet">
+    <div class="modal-handle"></div>
+    <div id="editContent"></div>
+  </div>
+</div>
+
+<script>
+
+/* ── 사용자 prefix 시스템 ── */
+function getPrefix(){
+  return localStorage.getItem('af_active_prefix')||'u1_';
+}
+function pk(key){ return getPrefix()+key; }
+/* ══════════════════════════════════════
+   카테고리 정의
+══════════════════════════════════════ */
+const CATS = [
+  { key:'overseas', label:'해외 주식',    colClass:'c-overseas', btnCol:'col-overseas', icon:'🌏' },
+  { key:'domestic', label:'국내 주식',    colClass:'c-domestic', btnCol:'col-domestic', icon:'📈' },
+  { key:'bond',     label:'채권·RP·기타', colClass:'c-bond',     btnCol:'col-bond',     icon:'📊' },
+  { key:'bill',     label:'발행어음·CMA', colClass:'c-bill',     btnCol:'col-bill',     icon:'💵' },
+  { key:'deposit',  label:'예수금',       colClass:'c-deposit',  btnCol:'col-deposit',  icon:'💰' },
+  { key:'etc',      label:'기타',         colClass:'c-etc',      btnCol:'col-etc',      icon:'📦' },
+];
+
+const BANK_ICONS = {
+  '삼성증권':'📈','미래에셋':'🌏','키움증권':'📊','NH투자':'💹',
+  '한국투자':'🏦','KB증권':'⭐','신한투자':'💙','대신증권':'🔶',
+  '카카오페이증권':'💛','토스증권':'🔵','기타':'📦'
+};
+
+/* ── 기본 데이터 ── */
+const DEFAULT_ACCOUNTS = [
+  { id:1, name:'미래에셋 해외주식 계좌', bank:'미래에셋', bankIcon:'🌏', cat:'overseas', balance:68411965, gainAmt:1900604, gainPct:2.86 },
+  { id:2, name:'키움 국내주식 계좌',     bank:'키움증권', bankIcon:'📊', cat:'domestic', balance:49668790, gainAmt:17796578, gainPct:55.84 },
+  { id:3, name:'삼성증권 채권·RP',       bank:'삼성증권', bankIcon:'📈', cat:'bond',     balance:46141606, gainAmt:1330615, gainPct:2.97 },
+  { id:4, name:'NH투자 예수금',          bank:'NH투자',   bankIcon:'💹', cat:'deposit',  balance:366358,   gainAmt:0,       gainPct:null },
+];
+
+function loadAccounts(){ try{const s=localStorage.getItem(pk('af_invest')); return s?JSON.parse(s):DEFAULT_ACCOUNTS;} catch{return DEFAULT_ACCOUNTS;} }
+function saveAccounts(d){ localStorage.setItem(pk('af_invest'),JSON.stringify(d)); }
+
+let accounts = loadAccounts();
+
+/* ══════════════════════
+   포맷 함수
+══════════════════════ */
+function fmt(n){ return Math.round(n).toLocaleString('ko-KR')+'원'; }
+function fmtShort(n){
+  n=Math.round(Math.abs(n));
+  if(n>=100000000){ const u=Math.floor(n/100000000); const r=n%100000000; return r>0?`${u}억 ${(r/10000).toFixed(0)}만`:`${u}억`; }
+  if(n>=10000) return Math.floor(n/10000)+'만';
+  return n.toLocaleString('ko-KR');
+}
+
+/* ══════════════════════
+   렌더링
+══════════════════════ */
+function renderPage(){
+  const total = accounts.reduce((s,a)=>s+a.balance,0);
+  const totalGain = accounts.reduce((s,a)=>s+(a.gainAmt||0),0);
+  const principal = total - totalGain;
+  const totalPct  = principal>0 ? (totalGain/principal*100) : 0;
+
+  document.getElementById('totalAmount').textContent = fmt(total);
+  const yieldEl = document.getElementById('totalYield');
+  if(totalGain!==0){
+    yieldEl.textContent = `${totalGain>=0?'+':''}${fmt(totalGain)} (${totalPct>=0?'+':''}${totalPct.toFixed(2)}%)`;
+    yieldEl.className = 'sc-yield '+(totalGain>=0?'pos':'neg');
+  } else {
+    yieldEl.textContent = '수익 정보 없음';
+    yieldEl.className = 'sc-yield neutral';
+  }
+
+  /* 카테고리별 집계 */
+  const catTotals = {};
+  CATS.forEach(c=>{ catTotals[c.key]={balance:0,gainAmt:0,accounts:[]}; });
+  accounts.forEach(a=>{
+    if(!catTotals[a.cat]) return;
+    catTotals[a.cat].balance  += a.balance;
+    catTotals[a.cat].gainAmt  += (a.gainAmt||0);
+    catTotals[a.cat].accounts.push(a);
+  });
+
+  /* 막대 그래프 */
+  const barEl = document.getElementById('ratioBar');
+  barEl.innerHTML = CATS.map(c=>{
+    const pct = total>0 ? catTotals[c.key].balance/total*100 : 0;
+    if(pct<0.5) return '';
+    return `<div class="ratio-seg ${c.colClass}" style="width:${pct.toFixed(1)}%;flex:none"></div>`;
+  }).join('');
+
+  /* 범례 */
+  const legendEl = document.getElementById('ratioLegend');
+  legendEl.innerHTML = CATS.map(c=>{
+    const d = catTotals[c.key];
+    if(d.balance===0) return '';
+    const pct = total>0 ? (d.balance/total*100).toFixed(0) : 0;
+    const gainStr = d.gainAmt!==0
+      ? `${d.gainAmt>=0?'+':''}${fmt(d.gainAmt)} (${(d.gainAmt/(d.balance-d.gainAmt)*100).toFixed(2)}%)`
+      : (c.key==='deposit'?'원화 · 달러':'—');
+    const gainClass = d.gainAmt>0?'pos':d.gainAmt<0?'neg':'neutral';
+    return `
+      <div class="legend-item">
+        <div class="legend-left">
+          <div class="legend-dot ${c.colClass}"></div>
+          <div>
+            <div class="legend-name">${c.label}</div>
+            <div class="legend-pct">${pct}%</div>
+          </div>
+        </div>
+        <div class="legend-right">
+          <div class="legend-amount">${fmt(d.balance)}</div>
+          <div class="legend-gain ${gainClass}">${gainStr}</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  /* 계좌 목록 */
+  const listEl = document.getElementById('accountList');
+  if(!accounts.length){
+    listEl.innerHTML=`<div class="empty-state"><div class="empty-icon">📈</div><div class="empty-text">등록된 투자 계좌가 없어요<br><span style="font-size:12px;color:#555">자산 편집하기에서 추가해보세요</span></div></div>`;
+    return;
+  }
+
+  // 카테고리별 헤더 + 계좌 목록
+  let listHTML = '';
+  CATS.forEach(c=>{
+    const list = catTotals[c.key].accounts;
+    if(!list.length) return;
+    const catTotal = catTotals[c.key].balance;
+    const catGain  = catTotals[c.key].gainAmt;
+    const gainClass = catGain>0?'pos':catGain<0?'neg':'neutral';
+    const gainStr = catGain!==0
+      ? `${catGain>=0?'+':''}${fmt(catGain)}`
+      : '';
+
+    // 카테고리 헤더
+    listHTML += `
+      <div class="cat-group-header">
+        <div class="cgh-left">
+          <div class="cgh-dot ${c.colClass}"></div>
+          <span class="cgh-label">${c.label}</span>
+        </div>
+        <div class="cgh-right">
+          <span class="cgh-total">${fmt(catTotal)}</span>
+          ${gainStr?`<span class="cgh-gain ${gainClass}">${gainStr}</span>`:''}
+        </div>
+      </div>`;
+
+    // 해당 카테고리 계좌들
+    listHTML += `<div class="cat-account-group">`;
+    listHTML += list.map(a=>{
+      const gainStr = a.gainPct!==null && a.gainPct!==undefined
+        ? `${a.gainAmt>=0?'+':''}${fmt(a.gainAmt)} (${a.gainPct>=0?'+':''}${a.gainPct}%)`
+        : (a.gainAmt!==0 ? `${a.gainAmt>=0?'+':''}${fmt(a.gainAmt)}` : '');
+      const gainClass = (a.gainAmt||0)>0?'pos':(a.gainAmt||0)<0?'neg':'neutral';
+      return `
+        <div class="account-item">
+          <div class="acc-icon" style="background:${catBg(a.cat)}">${a.bankIcon||'📈'}</div>
+          <div class="acc-info">
+            <div class="acc-name">${a.name}</div>
+            <div class="acc-sub">${a.bank}</div>
+          </div>
+          <div class="acc-right">
+            <div class="acc-amount">${fmt(a.balance)}</div>
+            ${gainStr?`<div class="acc-gain ${gainClass}">${gainStr}</div>`:''}
+          </div>
+        </div>`;
+    }).join('');
+    listHTML += `</div>`;
+  });
+  listEl.innerHTML = listHTML;
+}
+
+function catBg(key){
+  const m={overseas:'rgba(79,142,247,0.12)',domestic:'rgba(34,197,94,0.12)',bond:'rgba(168,85,247,0.12)',bill:'rgba(245,158,11,0.12)',deposit:'rgba(136,136,136,0.12)',etc:'rgba(100,116,139,0.12)'};
+  return m[key]||'#2e2e2e';
+}
+
+/* ══════════════════════
+   편집 모달
+══════════════════════ */
+function openEditModal(){ showEditMain(); document.getElementById('editOverlay').classList.add('active'); }
+function closeEditModal(){ document.getElementById('editOverlay').classList.remove('active'); }
+
+function showEditMain(){
+  let listHTML = '';
+  CATS.forEach(c=>{
+    const list = accounts.filter(a=>a.cat===c.key);
+    if(!list.length) return;
+    listHTML += `<div class="edit-cat-label">${c.label}</div>`;
+    listHTML += list.map(a=>`
+      <div class="edit-item">
+        <div class="ei-icon" style="background:${catBg(a.cat)}">${a.bankIcon||'📈'}</div>
+        <div class="ei-info">
+          <div class="ei-name">${a.name}</div>
+          <div class="ei-sub">${a.bank} · ${fmt(a.balance)}</div>
+        </div>
+        <div class="ei-actions">
+          <button class="btn-ea" onclick="showForm(${a.id})">수정</button>
+          <button class="btn-ea del" onclick="deleteAccount(${a.id})">삭제</button>
+        </div>
+      </div>`).join('');
+  });
+
+  document.getElementById('editContent').innerHTML=`
+    <div class="modal-title">투자 편집</div>
+    <div class="edit-list">${listHTML||'<div style="color:#555;font-size:13px;padding:8px 0">등록된 계좌가 없어요</div>'}</div>
+    <button class="btn-add" onclick="showForm(null)">＋ 계좌 추가하기</button>`;
+}
+
+function showForm(id){
+  const p = id ? accounts.find(x=>x.id===id) : {};
+  const isEdit = !!id;
+
+  document.getElementById('editContent').innerHTML=`
+    <div class="modal-title">${isEdit?'계좌 수정':'계좌 추가'}</div>
+    <div class="add-form">
+
+      <div class="form-section-label">투자 구분</div>
+      <div class="f-row">
+        <div class="f-label">자산 종류</div>
+        <div class="sel-grid" style="grid-template-columns:1fr 1fr 1fr" id="catGrid">
+          ${CATS.map(c=>`
+            <button class="type-btn ${(p.cat||'overseas')===c.key?'active '+c.btnCol:''}"
+                    data-v="${c.key}" data-col="${c.btnCol}"
+                    onclick="pickCat(this)">
+              ${c.icon}<br>${c.label}
+            </button>`).join('')}
+        </div>
+      </div>
+
+      <div class="form-section-label">계좌 정보</div>
+
+      <div class="f-row">
+        <div class="f-label">계좌명</div>
+        <input class="f-input" id="fName" type="text" placeholder="예) 미래에셋 해외주식 계좌" value="${p.name||''}">
+      </div>
+      <div class="f-row">
+        <div class="f-label">증권사</div>
+        <input class="f-input" id="fBank" type="text" placeholder="예) 미래에셋" value="${p.bank||''}">
+      </div>
+
+      <div class="form-section-label">금액</div>
+
+      <div class="f-row">
+        <div class="f-label">평가액 (원)</div>
+        <input class="f-input" id="fBalance" type="number" inputmode="numeric" placeholder="0" value="${p.balance||''}">
+      </div>
+      <div class="f-row">
+        <div class="f-label">수익금 (원) — 손실이면 음수 입력</div>
+        <input class="f-input" id="fGainAmt" type="number" inputmode="numeric" placeholder="예) 1900604" value="${p.gainAmt!=null?p.gainAmt:''}">
+      </div>
+      <div class="f-row">
+        <div class="f-label">수익률 (%)</div>
+        <input class="f-input" id="fGainPct" type="number" inputmode="decimal" step="0.01" placeholder="예) 2.86" value="${p.gainPct!=null?p.gainPct:''}">
+      </div>
+
+      <button class="btn-submit" onclick="${isEdit?`updateAccount(${id})`:'addAccount()'}">
+        ${isEdit?'저장하기':'추가하기'}
+      </button>
+      <button class="btn-cancel" onclick="showEditMain()">취소</button>
+    </div>`;
+}
+
+function pickCat(btn){
+  document.querySelectorAll('#catGrid .type-btn').forEach(b=>{
+    b.className = 'type-btn';
+  });
+  btn.className = `type-btn active ${btn.dataset.col}`;
+}
+
+function readForm(){
+  const name    = document.getElementById('fName').value.trim();
+  const bank    = document.getElementById('fBank').value.trim();
+  const balance = parseInt(document.getElementById('fBalance').value)||0;
+  const gainAmt = parseFloat(document.getElementById('fGainAmt').value)||0;
+  const gainPct = document.getElementById('fGainPct').value!==''
+    ? parseFloat(document.getElementById('fGainPct').value) : null;
+  const cat     = document.querySelector('#catGrid .type-btn.active')?.dataset.v||'overseas';
+  const bankIcon= BANK_ICONS[bank]||'📈';
+
+  if(!name)   { alert('계좌명을 입력해주세요.');  return null; }
+  if(!bank)   { alert('증권사를 입력해주세요.');  return null; }
+  if(!balance){ alert('평가액을 입력해주세요.');  return null; }
+
+  return { name, bank, bankIcon, balance, gainAmt, gainPct, cat };
+}
+
+function addAccount(){
+  const a=readForm(); if(!a) return;
+  a.id=Date.now(); accounts.push(a);
+  saveAccounts(accounts); showEditMain(); renderPage();
+}
+function updateAccount(id){
+  const a=readForm(); if(!a) return;
+  const idx=accounts.findIndex(x=>x.id===id);
+  if(idx!==-1) accounts[idx]={...accounts[idx],...a};
+  saveAccounts(accounts); showEditMain(); renderPage();
+}
+function deleteAccount(id){
+  if(!confirm('이 계좌를 삭제할까요?')) return;
+  accounts=accounts.filter(x=>Number(x.id)!==Number(id));
+  saveAccounts(accounts); showEditMain(); renderPage();
+}
+
+renderPage();
+
+/* ══════════════════════════════════════
+   배당금 기능
+   af_dividends: [{id, date:"YYYY-MM-DD", name, amount}]
+══════════════════════════════════════ */
+function loadDividends(){ try{const s=localStorage.getItem(pk('af_dividends')); return s?JSON.parse(s):[];} catch{return [];} }
+function saveDividends(d){ localStorage.setItem(pk('af_dividends'),JSON.stringify(d)); }
+
+let dividends = loadDividends();
+let divSelYear = new Date().getFullYear();
+let divChartInst = null;
+
+function openDividend(){
+  divSelYear = new Date().getFullYear();
+  document.getElementById('divOverlay').classList.add('active');
+  renderDividendView();
+}
+function closeDividend(){
+  document.getElementById('divOverlay').classList.remove('active');
+}
+
+function getYears(){
+  const years = [...new Set(dividends.map(d=>d.date.slice(0,4)))];
+  const cur = String(new Date().getFullYear());
+  if(!years.includes(cur)) years.push(cur);
+  return years.sort((a,b)=>b-a);
+}
+
+function renderDividendView(){
+  // 연도 탭
+  const years = getYears();
+  document.getElementById('yearTabs').innerHTML = years.map(y=>`
+    <button class="year-tab ${String(divSelYear)===y?'active':''}" onclick="selectDivYear(${y})">${y}년</button>
+  `).join('');
+
+  const yearData = dividends.filter(d=>d.date.startsWith(String(divSelYear)));
+  const total    = yearData.reduce((s,d)=>s+d.amount,0);
+
+  document.getElementById('divYearLabel').textContent = `${divSelYear}년 배당 수령액`;
+  document.getElementById('divTotal').textContent     = total>0 ? fmt(total) : '0원';
+  document.getElementById('divCount').textContent     = `총 ${yearData.length}건`;
+
+  // 월별 집계
+  const monthly = Array.from({length:12},(_,i)=>{
+    const m = String(i+1).padStart(2,'0');
+    return yearData.filter(d=>d.date.slice(5,7)===m).reduce((s,d)=>s+d.amount,0);
+  });
+
+  // 막대 차트
+  if(divChartInst) divChartInst.destroy();
+  const ctx = document.getElementById('divChart').getContext('2d');
+  const maxVal = Math.max(...monthly, 1);
+  const grad = ctx.createLinearGradient(0,0,0,160);
+  grad.addColorStop(0,'rgba(74,222,128,0.8)');
+  grad.addColorStop(1,'rgba(74,222,128,0.2)');
+
+  divChartInst = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels:['1','2','3','4','5','6','7','8','9','10','11','12'],
+      datasets:[{
+        data: monthly,
+        backgroundColor: monthly.map(v=> v>0 ? grad : 'rgba(255,255,255,0.05)'),
+        borderRadius: 6,
+        borderSkipped: false,
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:'rgba(20,20,30,0.95)',
+          padding:10, cornerRadius:10,
+          callbacks:{
+            title: items => `${items[0].label}월`,
+            label: item  => item.raw>0 ? ` ${fmt(item.raw)}` : ' 없음'
+          }
+        }
+      },
+      scales:{
+        x:{ grid:{color:'rgba(255,255,255,0.04)'}, ticks:{color:'#666',font:{size:11}} },
+        y:{ display:false, min:0 }
+      },
+      animation:{duration:500}
+    }
+  });
+
+  // 기록 목록 (최신순)
+  const listEl = document.getElementById('divRecordList');
+  const sorted = [...yearData].sort((a,b)=>b.date.localeCompare(a.date));
+  if(!sorted.length){
+    listEl.innerHTML=`<div class="div-empty">이 해의 배당 기록이 없어요<br><span style="font-size:12px;color:#555">우측 상단 + 로 추가해보세요</span></div>`;
+    return;
+  }
+  listEl.innerHTML = sorted.map(d=>`
+    <div class="div-record">
+      <div class="dr-left">
+        <div class="dr-dot"></div>
+        <div class="dr-info">
+          <div class="dr-name">${d.name||'배당금'}</div>
+          <div class="dr-date">${d.date}${d.currency==='USD'?' · $'+d.amountUsd.toFixed(2)+' (환율 '+d.rate+'원)':'' }</div>
+        </div>
+      </div>
+      <div class="dr-right" style="display:flex;align-items:center">
+        <div class="dr-amount">${fmt(d.amount)}</div>
+        <button class="dr-del" onclick="deleteDividend(${d.id})">×</button>
+      </div>
+    </div>`).join('');
+}
+
+function selectDivYear(y){
+  divSelYear = y;
+  renderDividendView();
+}
+
+function openDivModal(){
+  document.getElementById('divModalContent').innerHTML=`
+    <div class="modal-title">배당금 추가</div>
+    <div class="add-form">
+      <div class="f-row">
+        <div class="f-label">종목·계좌명</div>
+        <input class="f-input" id="dvName" type="text" placeholder="예) MSFT, KODEX S&P500">
+      </div>
+      <div class="f-row">
+        <div class="f-label">수령일</div>
+        <input class="f-input" id="dvDate" type="date" value="${new Date().toISOString().slice(0,10)}">
+      </div>
+      <div class="f-row">
+        <div class="f-label">통화</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px" id="currGrid">
+          <button class="type-btn active" data-v="KRW" onclick="pickCurr(this)" style="border-color:#4ade80;color:#4ade80;background:rgba(74,222,128,0.08)">🇰🇷 원화 (KRW)</button>
+          <button class="type-btn" data-v="USD" onclick="pickCurr(this)">🇺🇸 달러 (USD)</button>
+        </div>
+      </div>
+      <div class="f-row" id="krwRow">
+        <div class="f-label">배당금 (원)</div>
+        <input class="f-input" id="dvAmountKRW" type="number" inputmode="numeric" placeholder="0">
+      </div>
+      <div id="usdRows" style="display:none;flex-direction:column;gap:14px">
+        <div class="f-row">
+          <div class="f-label">배당금 ($)</div>
+          <input class="f-input" id="dvAmountUSD" type="number" inputmode="decimal" step="0.01" placeholder="예) 12.34">
+        </div>
+        <div class="f-row">
+          <div class="f-label">수령 당시 환율 (원/$)</div>
+          <input class="f-input" id="dvRate" type="number" inputmode="numeric" placeholder="예) 1380">
+        </div>
+      </div>
+      <button class="btn-submit" onclick="saveDividend()" style="background:#4ade80;color:#000;font-weight:700">추가하기</button>
+      <button class="btn-cancel" onclick="closeDivModal()">취소</button>
+    </div>`;
+  document.getElementById('divModal').classList.add('active');
+}
+function pickCurr(btn){
+  document.querySelectorAll('#currGrid .type-btn').forEach(b=>{
+    b.classList.remove('active');
+    b.style.borderColor='transparent'; b.style.color='#aaa'; b.style.background='#2e2e2e';
+  });
+  btn.classList.add('active');
+  btn.style.borderColor='#4ade80'; btn.style.color='#4ade80'; btn.style.background='rgba(74,222,128,0.08)';
+  const isUSD = btn.dataset.v==='USD';
+  document.getElementById('krwRow').style.display  = isUSD?'none':'';
+  document.getElementById('usdRows').style.display  = isUSD?'flex':'none';
+}
+function closeDivModal(){ document.getElementById('divModal').classList.remove('active'); }
+
+function saveDividend(){
+  const name = document.getElementById('dvName').value.trim();
+  const date = document.getElementById('dvDate').value;
+  const curr = document.querySelector('#currGrid .type-btn.active')?.dataset.v||'KRW';
+  if(!date){ alert('수령일을 입력해주세요.'); return; }
+  let amount=0, amountUsd=0, rate=0;
+  if(curr==='KRW'){
+    amount = parseInt(document.getElementById('dvAmountKRW').value)||0;
+    if(!amount){ alert('배당금을 입력해주세요.'); return; }
+  } else {
+    amountUsd = parseFloat(document.getElementById('dvAmountUSD').value)||0;
+    rate      = parseInt(document.getElementById('dvRate').value)||0;
+    if(!amountUsd){ alert('달러 배당금을 입력해주세요.'); return; }
+    if(!rate)     { alert('환율을 입력해주세요.'); return; }
+    amount = Math.round(amountUsd * rate);
+  }
+  dividends.push({ id:Date.now(), name:name||'배당금', date, amount, currency:curr, amountUsd, rate });
+  saveDividends(dividends);
+  divSelYear = parseInt(date.slice(0,4));
+  closeDivModal();
+  renderDividendView();
+}
+
+function deleteDividend(id){
+  dividends = dividends.filter(d=>Number(d.id)!==Number(id));
+  saveDividends(dividends);
+  renderDividendView();
+}
+</script>
+</body>
+</html>

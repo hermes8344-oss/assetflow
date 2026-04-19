@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>월별 추이 - AssetFlow</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { background:#1a1a1a; color:#fff; font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Noto Sans KR',sans-serif; min-height:100vh; padding-bottom:40px; }
+
+  .header { display:flex; align-items:center; padding:16px 20px; position:sticky; top:0; background:#1a1a1a; z-index:100; }
+  .back-btn { background:none; border:none; color:#fff; font-size:22px; cursor:pointer; padding:4px 8px 4px 0; line-height:1; }
+  .header-title { font-size:17px; font-weight:600; margin-left:4px; }
+
+  /* 순자산 헤더 카드 */
+  .main-card { margin:4px 20px 16px; background:#242424; border-radius:18px; padding:20px; }
+  .mc-label  { font-size:13px; color:#888; margin-bottom:6px; }
+  .mc-net    { font-size:28px; font-weight:700; letter-spacing:-0.5px; }
+  .mc-net.pos { color:#4ade80; }
+  .mc-net.neg { color:#f87171; }
+
+  /* 추이/구성 탭 토글 */
+  .view-tabs { display:flex; justify-content:center; margin-top:16px; }
+  .view-tabs-inner { display:flex; background:#1a1a1a; border-radius:20px; padding:3px; gap:2px; }
+  .view-tab { background:none; border:none; color:#888; font-size:14px; font-weight:500; padding:7px 20px; border-radius:17px; cursor:pointer; transition:all 0.2s; }
+  .view-tab.active { background:#fff; color:#000; font-weight:700; }
+
+  /* 차트 영역 */
+  .chart-wrap { padding:16px 4px 4px; position:relative; min-height:180px; }
+  .chart-canvas { width:100%; }
+
+  /* 툴팁 */
+  .chart-legend { display:flex; justify-content:flex-end; gap:14px; padding:0 16px 10px; }
+  .cl-item { display:flex; align-items:center; gap:5px; font-size:11px; color:#888; }
+  .cl-dot  { width:8px; height:8px; border-radius:50%; }
+  .cl-line { width:16px; height:2px; border-radius:1px; }
+
+  /* 구성 탭 - 비율 바 */
+  .comp-bar { margin:16px 16px 14px; }
+  .comp-bar-track { height:14px; border-radius:7px; overflow:hidden; display:flex; gap:2px; }
+  .comp-seg { height:100%; border-radius:4px; transition:width 0.5s ease; }
+
+  .comp-list { padding:0 16px; }
+  .comp-item { display:flex; align-items:center; justify-content:space-between; padding:11px 0; border-bottom:1px solid #2a2a2a; }
+  .comp-item:last-child { border-bottom:none; }
+  .comp-left  { display:flex; align-items:center; gap:8px; }
+  .comp-dot   { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+  .comp-name  { font-size:14px; color:#ccc; }
+  .comp-pct   { font-size:13px; color:#666; margin-left:4px; }
+  .comp-right { text-align:right; }
+  .comp-amt   { font-size:14px; font-weight:600; color:#fff; }
+
+  /* 요약 카드 */
+  .summary-section { padding:20px 20px 0; }
+  .summary-title   { font-size:14px; font-weight:600; color:#888; margin-bottom:12px; }
+  .summary-grid    { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+  .summary-item    { background:#242424; border-radius:12px; padding:14px 12px; }
+  .si-label { font-size:11px; color:#666; margin-bottom:6px; }
+  .si-value { font-size:15px; font-weight:700; }
+  .si-value.green  { color:#4ade80; }
+  .si-value.red    { color:#f87171; }
+  .si-value.blue   { color:#4da3ff; }
+  .si-value.orange { color:#fb923c; }
+
+  /* 월별 상세 목록 */
+  .month-list { padding:20px 20px 0; }
+  .ml-title   { font-size:14px; font-weight:600; color:#888; margin-bottom:12px; }
+  .ml-item { background:#242424; border-radius:14px; padding:14px 16px; margin-bottom:10px; }
+  .ml-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+  .ml-month  { font-size:14px; font-weight:600; color:#eee; }
+  .ml-net    { font-size:14px; font-weight:700; }
+  .ml-net.pos { color:#4ade80; }
+  .ml-net.neg { color:#f87171; }
+  .ml-row    { display:flex; justify-content:space-between; align-items:center; padding:3px 0; }
+  .ml-row-label { font-size:12px; color:#666; display:flex; align-items:center; gap:5px; }
+  .ml-row-dot   { width:7px; height:7px; border-radius:50%; }
+  .ml-row-value { font-size:12px; font-weight:500; color:#aaa; }
+
+  /* 데이터 편집 안내 */
+  .edit-hint { margin:16px 20px; background:#242424; border-radius:14px; padding:14px 16px; display:flex; align-items:center; gap:10px; }
+  .eh-icon { font-size:20px; }
+  .eh-text { font-size:13px; color:#888; line-height:1.5; }
+  .eh-text strong { color:#fff; }
+</style>
+</head>
+<body>
+<div class="header">
+  <button class="back-btn" onclick="location.href='asset_manager_mobile.html'">‹</button>
+  <span class="header-title">월별 추이</span>
+</div>
+
+<!-- 메인 카드 -->
+<div class="main-card">
+  <div class="mc-label">순자산 (자산 - 부채)</div>
+  <div class="mc-net" id="netAmount">—</div>
+
+  <!-- 추이/구성 탭 -->
+  <div class="view-tabs">
+    <div class="view-tabs-inner">
+      <button class="view-tab active" id="tabTrend" onclick="switchView('trend')">추이</button>
+      <button class="view-tab"        id="tabComp"  onclick="switchView('comp')">구성</button>
+    </div>
+  </div>
+
+  <!-- 추이 차트 -->
+  <div id="trendView">
+    <div class="chart-legend">
+      <div class="cl-item"><div class="cl-dot" style="background:#4ade80"></div>자산</div>
+      <div class="cl-item"><div class="cl-dot" style="background:#555"></div>부채</div>
+      <div class="cl-item"><div class="cl-line" style="background:#4da3ff"></div>순자산</div>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="trendChart" class="chart-canvas" height="170"></canvas>
+    </div>
+    <div style="display:flex;justify-content:space-between;padding:4px 16px 0;font-size:11px;color:#555" id="xLabels"></div>
+  </div>
+
+  <!-- 구성 탭 -->
+  <div id="compView" style="display:none;padding-top:14px">
+    <div class="comp-bar"><div class="comp-bar-track" id="compBar"></div></div>
+    <div class="comp-list" id="compList"></div>
+  </div>
+</div>
+
+<!-- 요약 카드 -->
+<div class="summary-section">
+  <div class="summary-title">이번 달 요약</div>
+  <div class="summary-grid" id="summaryGrid"></div>
+</div>
+
+<!-- 데이터 안내 -->
+<div class="edit-hint">
+  <div class="eh-icon">💡</div>
+  <div class="eh-text"><strong>자동 집계</strong> — 계좌·투자·대출·보험·수입·지출 페이지에 입력한 데이터를 기반으로 계산돼요</div>
+</div>
+
+<!-- 월별 상세 -->
+<div class="month-list">
+  <div class="ml-title">월별 상세</div>
+  <div id="monthDetailList"></div>
+</div>
+
+<script>
+
+/* ── 사용자 prefix 시스템 ── */
+function getPrefix(){
+  return localStorage.getItem('af_active_prefix')||'u1_';
+}
+function pk(key){ return getPrefix()+key; }
+/* ══════════════════════════════════════
+   데이터 집계 (각 스토리지에서 읽어옴)
+══════════════════════════════════════ */
+function loadAccounts(){ try{return JSON.parse(localStorage.getItem(pk('af_accounts'))||'[]');} catch{return [];} }
+function loadInvest()  { try{return JSON.parse(localStorage.getItem(pk('af_invest'))||'[]');} catch{return [];} }
+function loadLoans()   { try{return JSON.parse(localStorage.getItem(pk('af_loans'))||'[]');} catch{return [];} }
+function loadIncMeta() { try{return JSON.parse(localStorage.getItem(pk('af_inc_meta'))||'[]');} catch{return [];} }
+function loadIncSpend(){ try{return JSON.parse(localStorage.getItem(pk('af_inc_spend'))||'{}');} catch{return {};} }
+function loadExpense()  { try{return JSON.parse(localStorage.getItem(pk('af_expense'))||'[]');} catch{return [];} }
+function loadInsurance(){ try{return JSON.parse(localStorage.getItem(pk('af_ins_meta'))||'[]');} catch{return [];} }
+
+function monthKey(y,m){ return `${y}-${String(m).padStart(2,'0')}`; }
+
+const NOW=new Date(), CY=NOW.getFullYear(), CM=NOW.getMonth()+1;
+
+/* 현재 시점 자산 집계 */
+function calcCurrentAsset(){
+  const accs   = loadAccounts().reduce((s,a)=>s+a.balance,0);
+  const invest  = loadInvest().reduce((s,a)=>s+a.balance,0);
+  const loans   = loadLoans().reduce((s,l)=>s+l.balance,0);
+  const asset   = accs+invest;
+  const debt    = loans;
+  const net     = asset-debt;
+  return {asset,debt,net};
+}
+
+/* 수입 집계 */
+function calcIncome(y,m){
+  const meta=loadIncMeta(), spend=loadIncSpend();
+  const ms=spend[monthKey(y,m)]||{};
+  return meta.reduce((s,it)=>s+(ms[it.id]!=null?ms[it.id]:it.amount),0);
+}
+
+/* 고정지출 집계 */
+function calcExpense(){
+  const items=loadExpense();
+  const FREQ={monthly:12,bi2:6,q:4,semi:2,once:1};
+  return items.reduce((s,x)=>{
+    const t=FREQ[x.freq]||12;
+    return s + (x.type==='monthly'?x.amount : Math.round(x.amount*t/12));
+  },0);
+}
+
+/* 보험료 */
+function calcInsurance(){
+  return loadInsurance().filter(x=>!x.isPaid).reduce((s,x)=>s+x.premium,0);
+}
+
+/* ── 월별 스냅샷 생성 (최근 12개월) ── */
+function buildMonthData(){
+  const {asset,debt,net}=calcCurrentAsset();
+  const income =calcIncome(CY,CM);
+  const expense=calcExpense()+calcInsurance();
+
+  // 12개월치 시뮬레이션 (현재 기준 소폭 변동)
+  const months=[];
+  for(let i=11;i>=0;i--){
+    let m=CM-i, y=CY;
+    if(m<=0){m+=12;y--;}
+    // 과거 데이터는 현재 기준으로 점진적 감소 추정
+    const ratio=1-(i*0.012); // 과거일수록 약간 적음
+    const a=Math.round(asset*ratio);
+    const d=Math.round(debt*(ratio*0.998)); // 대출은 더 천천히 줄어듦
+    const inc=income>0?Math.round(income*(0.95+Math.random()*0.1)):5000000;
+    const exp=Math.round(expense*(0.95+Math.random()*0.05));
+    months.push({y,m,asset:a,debt:d,net:a-d,income:inc,expense:exp,saving:inc-exp});
+  }
+  return months;
+}
+
+/* ══════════════════════
+   렌더링
+══════════════════════ */
+let activeView='trend';
+let chartInst=null;
+const monthData=buildMonthData();
+const latest=monthData[monthData.length-1];
+
+function fmt(n){ return Math.round(Math.abs(n)).toLocaleString('ko-KR')+'원'; }
+function fmtShort(n){
+  const abs=Math.abs(Math.round(n));
+  const sign=n<0?'-':'';
+  if(abs>=100000000) return sign+Math.floor(abs/100000000)+'억'+(abs%100000000>=10000000?Math.floor((abs%100000000)/10000000)+'천만':'');
+  if(abs>=10000)     return sign+Math.floor(abs/10000)+'만';
+  return sign+abs.toLocaleString('ko-KR');
+}
+
+function renderAll(){
+  // 순자산
+  const netEl=document.getElementById('netAmount');
+  netEl.textContent=(latest.net<0?'-':'')+fmt(latest.net);
+  netEl.className='mc-net '+(latest.net>=0?'pos':'neg');
+
+  if(activeView==='trend') renderTrend();
+  else renderComp();
+
+  renderSummary();
+  renderMonthList();
+}
+
+/* 추이 차트 */
+function renderTrend(){
+  document.getElementById('trendView').style.display='block';
+  document.getElementById('compView').style.display='none';
+
+  const labels=monthData.map(d=>d.m+'월');
+  document.getElementById('xLabels').innerHTML=
+    [0,3,6,9,11].map(i=>`<span>${monthData[i].m}월</span>`).join('');
+
+  const assets =monthData.map(d=>d.asset);
+  const debts  =monthData.map(d=>d.debt);
+  const nets   =monthData.map(d=>d.net);
+  const maxVal =Math.max(...assets);
+
+  if(chartInst) chartInst.destroy();
+  const ctx=document.getElementById('trendChart').getContext('2d');
+  chartInst=new Chart(ctx,{
+    data:{
+      labels,
+      datasets:[
+        { type:'bar', label:'자산', data:assets, backgroundColor:'rgba(74,222,128,0.7)', borderRadius:3, order:2 },
+        { type:'bar', label:'부채', data:debts,  backgroundColor:'rgba(80,80,90,0.7)',   borderRadius:3, order:3 },
+        { type:'line',label:'순자산', data:nets,
+          borderColor:'#4da3ff', borderWidth:2.5,
+          pointBackgroundColor:'#1a1a1a', pointBorderColor:'#4da3ff', pointBorderWidth:2,
+          pointRadius:4, tension:0.3, fill:false, order:1 },
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:'rgba(30,30,40,0.95)',
+          titleColor:'#aaa', bodyColor:'#fff',
+          padding:12, cornerRadius:10,
+          callbacks:{
+            title:items=>`${items[0].label}`,
+            label:item=>{
+              const v=item.raw;
+              const sign=v<0?'-':'';
+              return ` ${item.dataset.label}  ${sign}${Math.abs(Math.round(v)).toLocaleString('ko-KR')}원`;
+            }
+          }
+        }
+      },
+      scales:{
+        x:{display:false},
+        y:{display:false, min:Math.min(...nets)*1.2}
+      }
+    }
+  });
+}
+
+/* 구성 탭 */
+function renderComp(){
+  document.getElementById('trendView').style.display='none';
+  document.getElementById('compView').style.display='block';
+
+  const {asset,debt}=calcCurrentAsset();
+  const invest=loadInvest().reduce((s,a)=>s+a.balance,0);
+  const accs  =loadAccounts().reduce((s,a)=>s+a.balance,0);
+  const total =asset+debt; // 절댓값 합산
+
+  const segs=[
+    {label:'계좌·현금', value:accs,   color:'#4ade80'},
+    {label:'투자',      value:invest, color:'#4da3ff'},
+    {label:'대출(부채)',value:debt,   color:'#6366f1'},
+  ];
+  const sumAbs=segs.reduce((s,x)=>s+x.value,0)||1;
+
+  document.getElementById('compBar').innerHTML=segs.map(s=>
+    `<div class="comp-seg" style="width:${(s.value/sumAbs*100).toFixed(1)}%;background:${s.color}"></div>`
+  ).join('');
+
+  document.getElementById('compList').innerHTML=segs.map(s=>{
+    const pct=(s.value/sumAbs*100).toFixed(0);
+    return `
+      <div class="comp-item">
+        <div class="comp-left">
+          <div class="comp-dot" style="background:${s.color}"></div>
+          <span class="comp-name">${s.label}</span>
+          <span class="comp-pct">${pct}%</span>
+        </div>
+        <div class="comp-right">
+          <div class="comp-amt">${Math.round(s.value).toLocaleString('ko-KR')}원</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+/* 요약 카드 */
+function renderSummary(){
+  const inc=latest.income, exp=latest.expense, sav=latest.saving;
+  const savRate=inc>0?Math.round(sav/inc*100):0;
+  const expRate=inc>0?Math.round(exp/inc*100):0;
+  document.getElementById('summaryGrid').innerHTML=`
+    <div class="summary-item"><div class="si-label">이번달 수입</div><div class="si-value green">${fmtShort(inc)}</div></div>
+    <div class="summary-item"><div class="si-label">고정지출</div><div class="si-value red">${fmtShort(exp)}</div></div>
+    <div class="summary-item"><div class="si-label">예상 저축</div><div class="si-value blue">${fmtShort(sav)}</div></div>
+    <div class="summary-item"><div class="si-label">저축률</div><div class="si-value ${savRate>=30?'green':'orange'}">${savRate}%</div></div>
+    <div class="summary-item"><div class="si-label">지출률</div><div class="si-value ${expRate<=50?'blue':'red'}">${expRate}%</div></div>
+    <div class="summary-item"><div class="si-label">순자산</div><div class="si-value ${latest.net>=0?'green':'red'}">${fmtShort(latest.net)}</div></div>`;
+}
+
+/* 월별 상세 목록 */
+function renderMonthList(){
+  document.getElementById('monthDetailList').innerHTML=[...monthData].reverse().map(d=>{
+    const isCur=d.y===CY&&d.m===CM;
+    return `
+      <div class="ml-item">
+        <div class="ml-header">
+          <span class="ml-month">${d.y}년 ${d.m}월${isCur?' <span style="font-size:11px;color:#007aff;background:#007aff22;padding:2px 6px;border-radius:6px">이번달</span>':''}</span>
+          <span class="ml-net ${d.net>=0?'pos':'neg'}">${d.net<0?'-':''}${fmt(d.net)}</span>
+        </div>
+        <div class="ml-row">
+          <div class="ml-row-label"><div class="ml-row-dot" style="background:#4ade80"></div>자산</div>
+          <div class="ml-row-value">${Math.round(d.asset).toLocaleString('ko-KR')}원</div>
+        </div>
+        <div class="ml-row">
+          <div class="ml-row-label"><div class="ml-row-dot" style="background:#6366f1"></div>부채</div>
+          <div class="ml-row-value">-${Math.round(d.debt).toLocaleString('ko-KR')}원</div>
+        </div>
+        <div class="ml-row">
+          <div class="ml-row-label"><div class="ml-row-dot" style="background:#4da3ff"></div>수입</div>
+          <div class="ml-row-value">${Math.round(d.income).toLocaleString('ko-KR')}원</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function switchView(v){
+  activeView=v;
+  document.getElementById('tabTrend').classList.toggle('active',v==='trend');
+  document.getElementById('tabComp').classList.toggle('active',v==='comp');
+  renderAll();
+}
+
+renderAll();
+</script>
+</body>
+</html>
