@@ -133,6 +133,31 @@
   .ns-btn-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:4px; }
   .ns-save   { background:#007aff; border:none; border-radius:12px; color:#fff; font-size:15px; font-weight:600; padding:14px; cursor:pointer; }
   .ns-cancel { background:#2a2a2a; border:none; border-radius:12px; color:#aaa; font-size:15px; padding:14px; cursor:pointer; }
+
+  /* ── 초기화 모달 ── */
+  .reset-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:400; align-items:center; justify-content:center; padding:0 24px; }
+  .reset-overlay.active { display:flex; }
+  .reset-sheet {
+    background:#1e1e1e; border-radius:20px; width:100%; max-width:340px;
+    padding:28px 24px 20px; animation:popIn 0.2s ease;
+  }
+  @keyframes popIn { from{transform:scale(0.92);opacity:0} to{transform:scale(1);opacity:1} }
+  .rs-icon   { font-size:36px; text-align:center; margin-bottom:14px; }
+  .rs-title  { font-size:18px; font-weight:700; text-align:center; margin-bottom:8px; }
+  .rs-desc   { font-size:14px; color:#888; text-align:center; line-height:1.6; margin-bottom:20px; }
+  .rs-desc strong { color:#f87171; }
+  .rs-btns   { display:flex; flex-direction:column; gap:8px; }
+  .rs-cancel { background:#2a2a2a; border:none; border-radius:12px; color:#aaa; font-size:15px; padding:14px; cursor:pointer; width:100%; }
+  .rs-confirm { background:#f8717122; border:2px solid #f87171; border-radius:12px; color:#f87171; font-size:15px; font-weight:700; padding:14px; cursor:pointer; width:100%; }
+  /* 2단계 확인 입력 */
+  .rs-step2 { display:none; }
+  .rs-step2.active { display:block; }
+  .rs-step1 { display:block; }
+  .rs-step1.hidden { display:none; }
+  .rs-input-wrap { margin-bottom:16px; }
+  .rs-input-label { font-size:13px; color:#888; margin-bottom:8px; text-align:center; }
+  .rs-input { width:100%; background:#2a2a2a; border:2px solid #f87171; border-radius:10px; color:#f87171; font-size:16px; font-weight:700; padding:12px; text-align:center; outline:none; letter-spacing:2px; }
+
 </style>
 </head>
 <body>
@@ -151,6 +176,7 @@
 <span>통합</span>
   </button>
   <button class="user-btn" onclick="openNameModal()" style="border-color:#333;color:#555;padding:7px 12px">✏️</button>
+  <button class="user-btn" onclick="openResetModal()" style="border-color:#f8717133;color:#f87171;padding:7px 12px">🗑️</button>
 </div>
 
 <!-- 총자산 -->
@@ -234,6 +260,41 @@
   </div>
 </div>
 
+<!-- 초기화 모달 -->
+<div class="reset-overlay" id="resetOverlay" onclick="if(event.target===this)closeResetModal()">
+  <div class="reset-sheet">
+    <div class="rs-icon">🗑️</div>
+
+    <!-- 1단계 -->
+    <div id="rsStep1" class="rs-step1">
+      <div class="rs-title">데이터 초기화</div>
+      <div class="rs-desc">
+        <strong id="rsTargetName">—</strong>의 모든 데이터가<br>
+        <strong>완전히 삭제</strong>돼요.<br>
+        삭제 후 복구가 불가능해요.
+      </div>
+      <div class="rs-btns">
+        <button class="rs-cancel" onclick="closeResetModal()">취소</button>
+        <button class="rs-confirm" onclick="goStep2()">계속 진행하기</button>
+      </div>
+    </div>
+
+    <!-- 2단계 -->
+    <div id="rsStep2" class="rs-step2">
+      <div class="rs-title">정말 삭제할까요?</div>
+      <div class="rs-desc">확인을 위해 아래에 <strong>"삭제"</strong>를 입력해주세요</div>
+      <div class="rs-input-wrap">
+        <input class="rs-input" id="rsConfirmInput" type="text" placeholder="삭제" oninput="checkResetInput()">
+      </div>
+      <div class="rs-btns">
+        <button class="rs-cancel" onclick="backStep1()">뒤로</button>
+        <button class="rs-confirm" id="rsFinalBtn" onclick="executeReset()" disabled style="opacity:0.4">초기화 실행</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
 <script>
 /* ══════════════════════════════════════
    사용자 시스템
@@ -295,19 +356,66 @@ function calcAssetsForPrefix(p){
   const invest   = safe(p+'af_invest');
   const loans    = safe(p+'af_loans');
   const ins      = safe(p+'af_ins_meta');
-  // 계좌는 이번 달 히스토리에서 읽기
-  const accHist  = safeObj(p+'af_accounts_history');
-  const mk       = monthKey(CY,CM);
-  const monthH   = accHist[mk]||{};
-  const acc   = accounts.reduce((s,a)=>s+(monthH[a.id]||a.balance||0),0);
-  const inv   = invest.reduce((s,a)=>s+(a.balance||0),0);
+  const cars     = safe(p+'af_cars');
+
+  // 계좌 월별 히스토리
+  const accHist = safeObj(p+'af_accounts_history');
+  const mk      = monthKey(CY,CM);
+  const monthH  = accHist[mk]||{};
+
+  // 카테고리별 분리 (히스토리 기반)
+  const getAcc = (cat) => accounts
+    .filter(a=>a.cat===cat)
+    .reduce((s,a)=>s+(monthH[a.id]||0),0);
+
+  const accCash     = getAcc('checking');   // 입출금
+  const accSavings  = getAcc('savings');    // 저축·파킹
+  const accSecur    = getAcc('securities'); // 증권·CMA
+  const accPension  = getAcc('pension');    // 연금·IRP
+
+  // 계좌 합계 (입출금+저축만 — 증권/연금은 별도)
+  const accTotal = accCash + accSavings;
+
+  // 투자탭 (가상화폐 제외한 순수 투자)
+  const inv      = invest.filter(a=>a.cat!=='crypto').reduce((s,a)=>s+(a.balance||0),0);
+  const crypto   = invest.filter(a=>a.cat==='crypto').reduce((s,a)=>s+(a.balance||0),0);
+  const invGain  = invest.reduce((s,a)=>s+(a.gainAmt||0),0);
+
   const loan  = loans.reduce((s,l)=>s+(l.balance||0),0);
   const insMo = ins.filter(x=>!x.isPaid).reduce((s,x)=>s+(x.premium||0),0);
-  const pension = accounts.filter(a=>a.cat==='pension').reduce((s,a)=>s+(a.balance||0),0);
-  const invGain = invest.reduce((s,a)=>s+(a.gainAmt||0),0);
-  const cars = safe(p+'af_cars');
-  return { acc, inv, loan, insMo, pension, invGain,
-           total:acc+inv, net:acc+inv-loan, cars };
+
+  // 부동산 (월별 시세 히스토리)
+  const reList = safe(p+'af_realestate');
+  const reHist = safeObj(p+'af_re_history');
+  const reMH   = reHist[mk]||{};
+  const reTotal= reList.reduce((s,re)=>s+(reMH[re.id]||0),0);
+  // 전세보증금 부채
+  const reRentDebt = reList.filter(re=>re.rentType==='jeon'||re.rentType==='semi')
+                           .reduce((s,re)=>s+(re.rentDeposit||0),0);
+
+  // 총자산 = 입출금+저축 + 증권 + 연금 + 투자
+  const total = accTotal + accSecur + accPension + inv;
+  const net   = total - loan;
+
+  // 총자산 재계산 (부동산 + 가상화폐 포함)
+  const totalFull = accTotal + accSecur + accPension + inv + crypto + reTotal;
+  const netFull   = totalFull - loan - reRentDebt;
+
+  return {
+    accTotal,       // 입출금+저축
+    accSecur,       // 증권·CMA
+    accPension,     // 연금·IRP
+    inv,            // 투자탭 (가상화폐 제외)
+    crypto,         // 가상화폐
+    reTotal,        // 부동산 시세
+    reRentDebt,     // 전세보증금 부채
+    invGain,
+    loan,
+    insMo,
+    total:  totalFull,
+    net:    netFull,
+    cars,
+  };
 }
 
 function calcIncomeForPrefix(p){
@@ -337,16 +445,25 @@ function getAggregated(){
     const a1=calcAssetsForPrefix('u1_'), a2=calcAssetsForPrefix('u2_');
     const i1=calcIncomeForPrefix('u1_'),  i2=calcIncomeForPrefix('u2_');
     const e1=calcExpenseForPrefix('u1_'), e2=calcExpenseForPrefix('u2_');
-    const e1ins=a1.insMo, e2ins=a2.insMo;
     const c1=calcCardSpendForPrefix('u1_'), c2=calcCardSpendForPrefix('u2_');
     return {
-      acc:a1.acc+a2.acc, inv:a1.inv+a2.inv,
-      loan:a1.loan+a2.loan, insMo:a1.insMo+a2.insMo,
-      pension:a1.pension+a2.pension, invGain:a1.invGain+a2.invGain,
-      total:a1.total+a2.total, net:a1.net+a2.net,
-      cars:a1.cars,
-      income:i1+i2, expense:e1+e1ins+e2+e2ins,
-      cardSpend:c1+c2, isAll:true
+      accTotal:  a1.accTotal  + a2.accTotal,
+      accSecur:  a1.accSecur  + a2.accSecur,
+      accPension:a1.accPension+ a2.accPension,
+      inv:       a1.inv       + a2.inv,
+      crypto:    a1.crypto    + a2.crypto,
+      reTotal:   a1.reTotal   + a2.reTotal,
+      reRentDebt:a1.reRentDebt+ a2.reRentDebt,
+      invGain:   a1.invGain   + a2.invGain,
+      loan:      a1.loan      + a2.loan,
+      insMo:     a1.insMo     + a2.insMo,
+      total:     a1.total     + a2.total,
+      net:       a1.net       + a2.net,
+      cars:      a1.cars,
+      income:    i1+i2,
+      expense:   e1+a1.insMo+e2+a2.insMo,
+      cardSpend: c1+c2,
+      isAll:true
     };
   } else {
     const p=currentUser+'_';
@@ -354,7 +471,22 @@ function getAggregated(){
     const income  = calcIncomeForPrefix(p);
     const expense = calcExpenseForPrefix(p)+a.insMo;
     const cardSpend = calcCardSpendForPrefix(p);
-    return {...a, income, expense, cardSpend, isAll:false};
+    return {
+      accTotal:   a.accTotal,
+      accSecur:   a.accSecur,
+      accPension: a.accPension,
+      inv:        a.inv,
+      crypto:     a.crypto,
+      reTotal:    a.reTotal,
+      reRentDebt: a.reRentDebt,
+      invGain:    a.invGain,
+      loan:       a.loan,
+      insMo:      a.insMo,
+      total:      a.total,
+      net:        a.net,
+      cars:       a.cars,
+      income, expense, cardSpend, isAll:false
+    };
   }
 }
 
@@ -377,7 +509,8 @@ let donutInst=null;
 
 function render(){
   const D = getAggregated();
-  const { acc, inv, loan, insMo, pension, invGain, total, net,
+  const { accTotal, accSecur, accPension, inv, crypto, reTotal, invGain,
+          loan, insMo, total, net,
           cars, income, expense, cardSpend } = D;
   const saving  = income-expense;
   const savRate = income>0?Math.round(saving/income*100):0;
@@ -398,10 +531,13 @@ function render(){
 
   // 도넛
   const segments = [
-    {label:'계좌', value:acc,    color:'#4ade80'},
-    {label:'투자', value:inv,    color:'#4da3ff'},
-    {label:'연금', value:pension, color:'#a855f7'},
-    {label:'대출', value:loan,   color:'#374151', neg:true},
+    {label:'계좌·현금', value:accTotal,   color:'#4ade80'},
+    {label:'증권·CMA',  value:accSecur,   color:'#22c55e'},
+    {label:'투자',       value:inv,        color:'#4da3ff'},
+    {label:'가상화폐',   value:crypto,     color:'#f7931a'},
+    {label:'연금·IRP',  value:accPension, color:'#a855f7'},
+    {label:'부동산',     value:reTotal,    color:'#f59e0b'},
+    {label:'대출',       value:loan,       color:'#374151', neg:true},
   ].filter(s=>s.value>0);
 
   if(donutInst) donutInst.destroy();
@@ -437,7 +573,7 @@ function render(){
   document.getElementById('assetGrid').innerHTML=`
     <div class="grid-item" onclick="goGrid('account_page.html')">
       <div class="gi-label">계좌</div>
-      <div class="gi-value">${fmtShort(acc)}</div>
+      <div class="gi-value">${fmtShort(accTotal)}</div>
     </div>
     <div class="grid-item" onclick="goGrid('card_page.html')">
       <div class="gi-label">카드</div>
@@ -458,7 +594,11 @@ function render(){
     <div class="grid-item" onclick="goGrid('car_page.html')">
       <div class="gi-label">자동차</div>
       <div class="gi-value">${cars0?cars0.plate:'등록없음'}</div>
-    </div>`;
+    </div>
+    <div class="grid-item" onclick="goGrid('realestate_page.html')">
+      <div class="gi-label">부동산</div>
+      <div class="gi-value">${reTotal>0?fmtShort(reTotal)+'원':'등록없음'}</div>
+    </div>\`;
 
   // 수입/지출
   document.getElementById('incomeAmt').textContent  = income>0?fmtShort(income):'미입력';
@@ -490,6 +630,80 @@ function goGrid(page){
   const prefix = currentUser==='all'?'u1_':currentUser+'_';
   localStorage.setItem('af_active_prefix', prefix);
   location.href = page;
+}
+
+
+/* ══════════════════════════════════════
+   데이터 초기화
+══════════════════════════════════════ */
+const RESET_KEYS = [
+  'af_accounts','af_accounts_history',
+  'af_invest','af_loans',
+  'af_cards_meta','af_cards_spend',
+  'af_ins_meta','af_expense',
+  'af_inc_meta','af_inc_spend',
+  'af_cars','af_dividends',
+  'af_realestate','af_re_history',
+];
+
+function openResetModal(){
+  const names = getNames();
+  const label = currentUser==='all'
+    ? '통합(전체 사용자)'
+    : currentUser==='u1' ? names.u1 : names.u2;
+  document.getElementById('rsTargetName').textContent = label;
+  document.getElementById('rsConfirmInput').value = '';
+  document.getElementById('rsFinalBtn').disabled = true;
+  document.getElementById('rsFinalBtn').style.opacity = '0.4';
+  // 1단계로 초기화
+  document.getElementById('rsStep1').classList.remove('hidden');
+  document.getElementById('rsStep1').classList.add('rs-step1');
+  document.getElementById('rsStep2').classList.remove('active');
+  document.getElementById('resetOverlay').classList.add('active');
+}
+function closeResetModal(){
+  document.getElementById('resetOverlay').classList.remove('active');
+}
+function goStep2(){
+  document.getElementById('rsStep1').classList.add('hidden');
+  document.getElementById('rsStep2').classList.add('active');
+  setTimeout(()=>document.getElementById('rsConfirmInput').focus(), 100);
+}
+function backStep1(){
+  document.getElementById('rsStep1').classList.remove('hidden');
+  document.getElementById('rsStep2').classList.remove('active');
+}
+function checkResetInput(){
+  const val = document.getElementById('rsConfirmInput').value;
+  const ok  = val === '삭제';
+  document.getElementById('rsFinalBtn').disabled = !ok;
+  document.getElementById('rsFinalBtn').style.opacity = ok ? '1' : '0.4';
+}
+function executeReset(){
+  const prefixes = currentUser==='all' ? ['u1_','u2_'] : [currentUser+'_'];
+  prefixes.forEach(p=>{
+    RESET_KEYS.forEach(key=>{
+      localStorage.removeItem(p+key);
+    });
+    // 정비 데이터 (af_maint_로 시작하는 것)
+    Object.keys(localStorage).filter(k=>k.startsWith(p+'af_maint_')).forEach(k=>{
+      localStorage.removeItem(k);
+    });
+  });
+  closeResetModal();
+  render();
+  // 완료 토스트
+  showToast(currentUser==='all'?'전체 데이터가 초기화됐어요':'데이터가 초기화됐어요');
+}
+
+/* 토스트 메시지 */
+function showToast(msg){
+  const t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 20px;border-radius:20px;font-size:14px;z-index:999;white-space:nowrap;animation:fadeInOut 2.5s ease forwards';
+  document.head.insertAdjacentHTML('beforeend','<style>@keyframes fadeInOut{0%{opacity:0;transform:translateX(-50%) translateY(10px)}15%{opacity:1;transform:translateX(-50%) translateY(0)}85%{opacity:1}100%{opacity:0}}</style>');
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(), 2500);
 }
 
 /* 이름 모달 */

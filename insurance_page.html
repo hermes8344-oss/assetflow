@@ -291,12 +291,7 @@ const COMPANY_MAP = {
 
 function monthKey(y, m){ return `${y}-${String(m).padStart(2,'0')}`; }
 
-const DEFAULT_META = [
-  { id:1, name:'아이(I)러브(LOVE)건강보험1808', company:'삼성화재',   companyIcon:'🔵', companyClass:'ic-samsung', insType:'건강·의료', premium:67740, isPaid:false, startDate:'2018-08-01', endDate:'' },
-  { id:2, name:'실손의료비보험1904',             company:'삼성화재',   companyIcon:'🔵', companyClass:'ic-samsung', insType:'건강·의료', premium:17340, isPaid:false, startDate:'2019-04-01', endDate:'' },
-  { id:3, name:'캐롯 운전자보험 무배당',         company:'캐롯손해보험', companyIcon:'🥕', companyClass:'ic-carrot',  insType:'자동차',   premium:3334,  isPaid:false, startDate:'2023-01-01', endDate:'' },
-  { id:4, name:'애니카다이렉트_개인용',          company:'삼성화재',   companyIcon:'🔵', companyClass:'ic-samsung', insType:'자동차',   premium:0,     isPaid:true,  startDate:'2020-01-01', endDate:'2024-01-01' },
-];
+const DEFAULT_META = [];
 
 function loadMeta()   { try{ const s=localStorage.getItem(pk('af_ins_meta'));  return s?JSON.parse(s):DEFAULT_META;  } catch{ return DEFAULT_META;  } }
 function saveMeta(d)  { localStorage.setItem(pk('af_ins_meta'),  JSON.stringify(d)); }

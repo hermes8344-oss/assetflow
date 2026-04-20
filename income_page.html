@@ -173,13 +173,9 @@ const CATS = [
 
 // af_income_meta: [{id,name,cat,amount}]
 // af_income_spend: {"YYYY-MM":{id:amount}}
-const DEFAULT_META=[
-  {id:1,name:'월급',        cat:'salary',  amount:5000000},
-  {id:2,name:'임대수입',    cat:'rental',  amount:1440000},
-  {id:3,name:'배당·이자',   cat:'invest',  amount:720000},
-];
+const DEFAULT_META = [];
 const k0=monthKey(CUR_YEAR,CUR_MONTH);
-const DEFAULT_SPEND={[k0]:{1:5000000,2:1440000,3:720000}};
+const DEFAULT_SPEND = {};
 
 function loadMeta()  { try{const s=localStorage.getItem(pk('af_inc_meta'));  return s?JSON.parse(s):DEFAULT_META;}  catch{return DEFAULT_META;} }
 function saveMeta(d) { localStorage.setItem(pk('af_inc_meta'),JSON.stringify(d)); }

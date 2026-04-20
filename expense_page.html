@@ -170,14 +170,7 @@ const FREQ_OPTS = [
 function loadItems(){ try{const s=localStorage.getItem(pk('af_expense')); return s?JSON.parse(s):DEFAULT_ITEMS;} catch{return DEFAULT_ITEMS;} }
 function saveItems(d){ localStorage.setItem(pk('af_expense'),JSON.stringify(d)); }
 
-const DEFAULT_ITEMS = [
-  {id:1, type:'monthly', cat:'telecom',  name:'넷플릭스',    amount:17000,  freq:'monthly'},
-  {id:2, type:'monthly', cat:'telecom',  name:'통신비',      amount:69000,  freq:'monthly'},
-  {id:3, type:'monthly', cat:'housing',  name:'관리비',      amount:180000, freq:'monthly'},
-  {id:4, type:'monthly', cat:'health',   name:'헬스장',      amount:88000,  freq:'monthly'},
-  {id:5, type:'annual',  cat:'tax_prop', name:'재산세',      amount:1200000,freq:'semi'},
-  {id:6, type:'annual',  cat:'tax_car',  name:'자동차세',    amount:260000, freq:'once'},
-];
+const DEFAULT_ITEMS = [];
 
 let items=loadItems();
 let activeTab='monthly';

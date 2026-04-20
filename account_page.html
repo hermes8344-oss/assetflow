@@ -36,8 +36,9 @@
 
   /* 계좌 아이템 */
   .account-list { padding:0 20px; }
-  .account-item { display:flex; align-items:center; padding:14px 0; border-bottom:1px solid #2a2a2a; }
+  .account-item { display:flex; align-items:center; padding:14px 0; border-bottom:1px solid #2a2a2a; cursor:pointer; transition:opacity 0.15s; }
   .account-item:last-child { border-bottom:none; }
+  .account-item:active { opacity:0.6; }
   .acc-icon { width:40px; height:40px; border-radius:10px; margin-right:14px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:18px; }
   .ic-toss      { background:#0064ff22; }
   .ic-kakao     { background:#fee50022; }
@@ -196,14 +197,7 @@ const CATS = {
    pk('af_accounts')        : [{id, cat, name, bank, icon, iconCls, yieldPct}]  ← 잔액 없음
    pk('af_accounts_history'): {"YYYY-MM": {id: balance, ...}}
 ══════════════════════════════════════ */
-const DEFAULT_ACCOUNTS = [
-  {id:101, cat:'checking',   name:'토스뱅크 통장',      bank:'토스뱅크', icon:'💙', iconCls:'ic-toss',       yieldPct:null},
-  {id:102, cat:'checking',   name:'카카오뱅크 통장',     bank:'카카오뱅크',icon:'💛', iconCls:'ic-kakao',      yieldPct:null},
-  {id:201, cat:'savings',    name:'토스뱅크 파킹통장',   bank:'토스뱅크', icon:'💰', iconCls:'ic-savings',    yieldPct:null},
-  {id:301, cat:'securities', name:'삼성증권 CMA',        bank:'삼성증권', icon:'📈', iconCls:'ic-securities', yieldPct:null},
-  {id:302, cat:'securities', name:'미래에셋 해외주식',    bank:'미래에셋', icon:'🌏', iconCls:'ic-securities', yieldPct:null},
-  {id:401, cat:'pension',    name:'삼성생명 IRP',        bank:'삼성생명', icon:'🏦', iconCls:'ic-pension',    yieldPct:6.3},
-];
+const DEFAULT_ACCOUNTS = [];
 
 function loadAccounts(){
   try{const s=localStorage.getItem(pk('af_accounts')); return s?JSON.parse(s):DEFAULT_ACCOUNTS;} catch{return DEFAULT_ACCOUNTS;}
@@ -254,6 +248,13 @@ function getBalance(accountId){
 
 function fmt(n){ return Math.round(n).toLocaleString('ko-KR')+'원'; }
 
+
+/* 계좌 항목 탭 → 바로 잔액 입력 */
+function quickEdit(id){
+  openEditModal();
+  // 모달 열린 후 바로 잔액 폼으로
+  setTimeout(()=>showBalanceForm(id), 50);
+}
 /* ── 렌더링 ── */
 function renderPage(){
   const mk = monthKey(selY, selM);
@@ -280,7 +281,7 @@ function renderPage(){
         ${list.map(a=>{
           const bal = getBalance(a.id);
           return `
-            <div class="account-item">
+            <div class="account-item" onclick="quickEdit(${a.id})">
               <div class="acc-icon ${a.iconCls}">${a.icon}</div>
               <div class="acc-info">
                 <div class="acc-name">${a.name}</div>

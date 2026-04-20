@@ -69,6 +69,7 @@
   .c-bond      { background:#a855f7; }
   .c-bill      { background:#f59e0b; }
   .c-deposit   { background:#888; }
+  .c-crypto    { background:#f7931a; }
   .c-etc       { background:#64748b; }
 
   /* ── 계좌별 목록 ── */
@@ -181,6 +182,7 @@
   .type-btn.active.col-bond     { border-color:#a855f7; color:#a855f7; background:rgba(168,85,247,0.08); }
   .type-btn.active.col-bill     { border-color:#f59e0b; color:#f59e0b; background:rgba(245,158,11,0.08); }
   .type-btn.active.col-deposit  { border-color:#888;    color:#aaa;    background:rgba(136,136,136,0.08); }
+  .type-btn.active.col-crypto    { border-color:#f7931a; color:#f7931a; background:rgba(247,147,26,0.08); }
   .type-btn.active.col-etc      { border-color:#64748b; color:#94a3b8; background:rgba(100,116,139,0.08); }
 
   .form-section-label {
@@ -418,6 +420,7 @@ const CATS = [
   { key:'domestic', label:'국내 주식',    colClass:'c-domestic', btnCol:'col-domestic', icon:'📈' },
   { key:'bond',     label:'채권·RP·기타', colClass:'c-bond',     btnCol:'col-bond',     icon:'📊' },
   { key:'bill',     label:'발행어음·CMA', colClass:'c-bill',     btnCol:'col-bill',     icon:'💵' },
+  { key:'crypto',   label:'가상화폐',     colClass:'c-crypto',   btnCol:'col-crypto',   icon:'🪙' },
   { key:'deposit',  label:'예수금',       colClass:'c-deposit',  btnCol:'col-deposit',  icon:'💰' },
   { key:'etc',      label:'기타',         colClass:'c-etc',      btnCol:'col-etc',      icon:'📦' },
 ];
@@ -429,12 +432,7 @@ const BANK_ICONS = {
 };
 
 /* ── 기본 데이터 ── */
-const DEFAULT_ACCOUNTS = [
-  { id:1, name:'미래에셋 해외주식 계좌', bank:'미래에셋', bankIcon:'🌏', cat:'overseas', balance:68411965, gainAmt:1900604, gainPct:2.86 },
-  { id:2, name:'키움 국내주식 계좌',     bank:'키움증권', bankIcon:'📊', cat:'domestic', balance:49668790, gainAmt:17796578, gainPct:55.84 },
-  { id:3, name:'삼성증권 채권·RP',       bank:'삼성증권', bankIcon:'📈', cat:'bond',     balance:46141606, gainAmt:1330615, gainPct:2.97 },
-  { id:4, name:'NH투자 예수금',          bank:'NH투자',   bankIcon:'💹', cat:'deposit',  balance:366358,   gainAmt:0,       gainPct:null },
-];
+const DEFAULT_ACCOUNTS = [];
 
 function loadAccounts(){ try{const s=localStorage.getItem(pk('af_invest')); return s?JSON.parse(s):DEFAULT_ACCOUNTS;} catch{return DEFAULT_ACCOUNTS;} }
 function saveAccounts(d){ localStorage.setItem(pk('af_invest'),JSON.stringify(d)); }
@@ -635,7 +633,7 @@ function renderPage(){
 }
 
 function catBg(key){
-  const m={overseas:'rgba(79,142,247,0.12)',domestic:'rgba(34,197,94,0.12)',bond:'rgba(168,85,247,0.12)',bill:'rgba(245,158,11,0.12)',deposit:'rgba(136,136,136,0.12)',etc:'rgba(100,116,139,0.12)'};
+  const m={overseas:'rgba(79,142,247,0.12)',domestic:'rgba(34,197,94,0.12)',bond:'rgba(168,85,247,0.12)',bill:'rgba(245,158,11,0.12)',crypto:'rgba(247,147,26,0.12)',deposit:'rgba(136,136,136,0.12)',etc:'rgba(100,116,139,0.12)'};
   return m[key]||'#2e2e2e';
 }
 
@@ -696,11 +694,11 @@ function showForm(id){
 
       <div class="f-row">
         <div class="f-label">계좌명</div>
-        <input class="f-input" id="fName" type="text" placeholder="예) 미래에셋 해외주식 계좌" value="${p.name||''}">
+        <input class="f-input" id="fName" type="text" placeholder="예) 업비트 BTC, 미래에셋 해외주식" value="${p.name||''}">
       </div>
       <div class="f-row">
         <div class="f-label">증권사</div>
-        <input class="f-input" id="fBank" type="text" placeholder="예) 미래에셋" value="${p.bank||''}">
+        <input class="f-input" id="fBank" type="text" placeholder="예) 업비트, 빗썸, 미래에셋" value="${p.bank||''}">
       </div>
 
       <div class="form-section-label">금액</div>

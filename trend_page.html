@@ -149,6 +149,10 @@ function buildMonthData(){
   const loanTotal = loanList.reduce((s,l)=>s+(l.balance||0),0);
   const invTotal  = invList.reduce((s,a)=>s+(a.balance||0),0);
 
+  // 부동산
+  const reListD  = rd('af_realestate');
+  const reHistD  = rdObj('af_re_history');
+
   const months=[];
   for(let i=11;i>=0;i--){
     let m=CM-i, y=CY;
@@ -163,8 +167,12 @@ function buildMonthData(){
     const ms=incSpend[mk]||{};
     const income=incMeta.reduce((s,it)=>s+(ms[it.id]!=null?ms[it.id]:(it.amount||0)),0);
 
-    const asset=accTotal+invTotal;
-    const net  =asset-loanTotal;
+    const reMHD    = reHistD[mk]||{};
+    const reTotalD = reListD.reduce((s,re)=>s+(reMHD[re.id]||0),0);
+    const reRentDD = reListD.filter(re=>re.rentType==='jeon'||re.rentType==='semi')
+                            .reduce((s,re)=>s+(re.rentDeposit||0),0);
+    const asset=accTotal+invTotal+reTotalD;
+    const net  =asset-loanTotal-reRentDD;
     const hasRealData=accTotal>0||income>0;
 
     months.push({y,m,mk,asset,debt:loanTotal,net,income,expense:expFixed,saving:income-expFixed,hasRealData});
@@ -181,7 +189,11 @@ function getCurrentComp(){
   const acc  = accList.reduce((s,a)=>s+(mh[a.id]||0),0);
   const inv  = rd('af_invest').reduce((s,a)=>s+(a.balance||0),0);
   const loan = rd('af_loans').reduce((s,l)=>s+(l.balance||0),0);
-  return {acc,inv,loan};
+  const reList = rd('af_realestate');
+  const reHist = rdObj('af_re_history');
+  const reMH   = reHist[mk]||{};
+  const re = reList.reduce((s,r)=>s+(reMH[r.id]||0),0);
+  return {acc,inv,loan,re};
 }
 
 /* 포맷 */
@@ -273,6 +285,7 @@ function renderComp(){
   const segs=[
     {label:'계좌·현금', value:acc,  color:'#4ade80'},
     {label:'투자',      value:inv,  color:'#4da3ff'},
+    {label:'부동산',    value:re,   color:'#f59e0b'},
     {label:'대출(부채)',value:loan, color:'#6366f1'},
   ].filter(s=>s.value>0);
   const sumAbs=segs.reduce((s,x)=>s+x.value,0)||1;

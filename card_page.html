@@ -270,21 +270,11 @@ const NOW = new Date();
 const CUR_YEAR = NOW.getFullYear(), CUR_MONTH = NOW.getMonth()+1;
 function monthKey(y,m){ return `${y}-${String(m).padStart(2,'0')}`; }
 
-const DEFAULT_META = [
-  {id:1, name:'KB국민 Liiv M 체크카드(RF)', type:'체크카드', color:'card-kb',        label:'KB\n국민'},
-  {id:2, name:'토스뱅크 모임카드',           type:'체크카드', color:'card-toss-black', label:'TOSS\nBANK'},
-  {id:3, name:'토스뱅크 체크카드',            type:'체크카드', color:'card-toss-check', label:'TOSS'},
-  {id:4, name:'K-First 카드(바로_신용)',      type:'신용카드', color:'card-kfirst',     label:'K-First\nVISA'},
-  {id:5, name:'HI-POINT',                    type:'신용카드', color:'card-hipoint',    label:'HI\nPOINT'},
-];
+const DEFAULT_META = [];
 const k0=monthKey(CUR_YEAR,CUR_MONTH);
 const k1=CUR_MONTH===1?monthKey(CUR_YEAR-1,12):monthKey(CUR_YEAR,CUR_MONTH-1);
 const k2=CUR_MONTH<=2?monthKey(CUR_YEAR-1,CUR_MONTH+10):monthKey(CUR_YEAR,CUR_MONTH-2);
-const DEFAULT_SPEND={
-  [k0]:{1:402268,2:376740,3:191290,4:91700,5:85080},
-  [k1]:{1:380000,2:320000,3:150000,4:75000,5:92000},
-  [k2]:{1:410000,2:290000,4:68000,5:78000},
-};
+const DEFAULT_SPEND = {};
 
 function loadMeta()   { try{const s=localStorage.getItem(pk('af_cards_meta'));  return s?JSON.parse(s):DEFAULT_META;}  catch{return DEFAULT_META;} }
 function saveMeta(d)  { localStorage.setItem(pk('af_cards_meta'),JSON.stringify(d)); }

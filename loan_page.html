@@ -261,13 +261,7 @@ const BANK_ICONS = {
   'SC제일':'🔷','씨티은행':'🏦','우체국':'📮','기타':'🏦'
 };
 
-const DEFAULT_LOANS = [{
-  id:1, name:'가계일반자금대출(분할상환)-등기전신용대출',
-  bank:'신한은행', bankIcon:'💙', loanType:'주택담보',
-  repayMethod:'equal_payment',
-  balance:493687817, rate:4.04,
-  startDate:'2022-04-30', endDate:'2052-04-30', interestDay:30,
-}];
+const DEFAULT_LOANS = [];
 
 function loadLoans(){ try{const s=localStorage.getItem(pk('af_loans')); return s?JSON.parse(s):DEFAULT_LOANS;} catch{return DEFAULT_LOANS;} }
 function saveLoans(d){ localStorage.setItem(pk('af_loans'),JSON.stringify(d)); }
