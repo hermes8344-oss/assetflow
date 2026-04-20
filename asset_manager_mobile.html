@@ -509,8 +509,8 @@ let donutInst=null;
 
 function render(){
   const D = getAggregated();
-  const { accTotal, accSecur, accPension, inv, crypto, reTotal, invGain,
-          loan, insMo, total, net,
+  const { accTotal, accSecur, accPension, inv, crypto, reTotal, reRentDebt,
+          invGain, loan, insMo, total, net,
           cars, income, expense, cardSpend } = D;
   const saving  = income-expense;
   const savRate = income>0?Math.round(saving/income*100):0;
