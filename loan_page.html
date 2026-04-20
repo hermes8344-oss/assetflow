@@ -674,7 +674,6 @@ function updateLoan(id){
   saveLoans(loans); showEditMain(); renderPage();
 }
 function deleteLoan(id){
-  if(!confirm('이 대출을 삭제할까요?')) return;
   loans=loans.filter(x=>Number(x.id)!==Number(id));
   saveLoans(loans); showEditMain(); renderPage();
 }

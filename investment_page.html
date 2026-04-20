@@ -281,6 +281,28 @@
   .div-modal-overlay.active { display:flex; }
   .div-modal-sheet { background:#242424; border-radius:24px 24px 0 0; width:100%; max-height:85vh; overflow-y:auto; padding:20px 20px 40px; animation:slideUp 0.28s ease; }
 
+
+  /* 월 선택 버튼 */
+  .month-label-btn { background:none; border:none; padding:4px 20px 14px; display:flex; align-items:center; gap:6px; cursor:pointer; width:100%; }
+  .month-label-btn .label-text { font-size:15px; font-weight:600; color:#fff; }
+  .month-label-btn .label-arrow { font-size:10px; color:#555; }
+  /* 월 시트 */
+  .sheet-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:300; align-items:flex-end; }
+  .sheet-overlay.active { display:flex; }
+  .sheet-inner { background:#242424; border-radius:24px 24px 0 0; width:100%; padding:20px 20px 40px; animation:slideUpM 0.25s ease; }
+  @keyframes slideUpM { from{transform:translateY(100%)} to{transform:translateY(0)} }
+  .sheet-handle { width:36px; height:4px; background:#444; border-radius:2px; margin:0 auto 20px; }
+  .sheet-title  { font-size:16px; font-weight:700; margin-bottom:20px; }
+  .year-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+  .year-nav { background:#333; border:none; color:#fff; font-size:18px; width:36px; height:36px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .year-nav:disabled { color:#444; cursor:default; }
+  .year-lbl { font-size:16px; font-weight:600; }
+  .month-grid-inv { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+  .m-chip { background:#333; border:2px solid transparent; border-radius:10px; color:#aaa; font-size:14px; padding:11px 0; cursor:pointer; text-align:center; transition:all 0.15s; line-height:1.4; }
+  .m-chip.sel { border-color:#4da3ff; color:#4da3ff; background:rgba(77,163,255,0.1); font-weight:600; }
+  .m-chip.future { color:#333; pointer-events:none; }
+  .m-dot { font-size:8px; color:#555; margin-top:2px; }
+
 </style>
 </head>
 <body>
@@ -289,6 +311,12 @@
   <button class="back-btn" onclick="location.href='asset_manager_mobile.html'">‹</button>
   <span class="header-title">투자</span>
 </div>
+
+<!-- 월 선택 버튼 -->
+<button class="month-label-btn" onclick="openMonthSheet()">
+  <span class="label-text" id="invMonthLabel">—</span>
+  <span class="label-arrow">▼</span>
+</button>
 
 <!-- 총 투자 요약 -->
 <div class="summary-card">
@@ -353,6 +381,20 @@
   </div>
 </div>
 
+<!-- 월 선택 시트 -->
+<div class="sheet-overlay" id="invMonthSheet" onclick="if(event.target===this)closeMonthSheet()">
+  <div class="sheet-inner">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">월 선택</div>
+    <div class="year-row">
+      <button class="year-nav" id="invYearPrev" onclick="changeYear(-1)">‹</button>
+      <span class="year-lbl" id="invSheetYear"></span>
+      <button class="year-nav" id="invYearNext" onclick="changeYear(1)">›</button>
+    </div>
+    <div class="month-grid-inv" id="invMonthGrid"></div>
+  </div>
+</div>
+
 <!-- 편집 모달 -->
 <div class="edit-overlay" id="editOverlay" onclick="if(event.target===this)closeEditModal()">
   <div class="edit-sheet">
@@ -413,7 +455,69 @@ function fmtShort(n){
 /* ══════════════════════
    렌더링
 ══════════════════════ */
+
+/* ── 월 선택 ── */
+const INV_NOW=new Date(), INV_CY=INV_NOW.getFullYear(), INV_CM=INV_NOW.getMonth()+1;
+let selY=INV_CY, selM=INV_CM, sheetY=INV_CY;
+function invMonthKey(y,m){ return `${y}-${String(m).padStart(2,'0')}`; }
+
+function openMonthSheet(){
+  sheetY=selY;
+  renderInvMonthGrid();
+  document.getElementById('invMonthSheet').classList.add('active');
+}
+function closeMonthSheet(){ document.getElementById('invMonthSheet').classList.remove('active'); }
+function changeYear(d){ sheetY=Math.min(INV_CY,sheetY+d); renderInvMonthGrid(); }
+function renderInvMonthGrid(){
+  document.getElementById('invSheetYear').textContent=sheetY+'년';
+  document.getElementById('invYearPrev').disabled=(sheetY<=INV_CY-5);
+  document.getElementById('invYearNext').disabled=(sheetY>=INV_CY);
+  document.getElementById('invMonthGrid').innerHTML=Array.from({length:12},(_,i)=>{
+    const m=i+1;
+    const future=sheetY===INV_CY&&m>INV_CM;
+    const isSel=sheetY===selY&&m===selM;
+    return `<button class="m-chip ${isSel?'sel':''} ${future?'future':''}" onclick="pickInvMonth(${m})">${m}월<div class="m-dot"></div></button>`;
+  }).join('');
+}
+function pickInvMonth(m){ selY=sheetY; selM=m; closeMonthSheet(); renderPage(); }
+
 function renderPage(){
+  // 계좌탭의 증권 계좌 잔액 불러와서 balance 오버라이드
+  try {
+    const accHist   = JSON.parse(localStorage.getItem(pk('af_accounts_history'))||'{}');
+    const accList   = JSON.parse(localStorage.getItem(pk('af_accounts'))||'[]');
+    const mk        = invMonthKey(selY, selM);
+    const monthHist = accHist[mk]||{};
+    const secAccs   = accList.filter(a=>a.cat==='securities');
+
+    // 계좌탭 증권계좌 → 투자탭 계좌에 잔액 반영
+    // 매칭: 이름 완전일치 우선, 그 다음 은행명 일치
+    secAccs.forEach(sa=>{
+      const bal = monthHist[sa.id];
+      if(bal == null) return;
+      // 이름 완전일치
+      let match = accounts.find(a=>a.name === sa.name);
+      // 없으면 은행명 일치 중 첫 번째
+      if(!match) match = accounts.find(a=>a.bank === sa.bank);
+      if(match) match.balance = bal;
+    });
+    // 계좌탭에만 있고 투자탭엔 없는 증권계좌 → 자동으로 투자탭에 추가 표시
+    secAccs.forEach(sa=>{
+      const bal = monthHist[sa.id]||0;
+      const alreadyIn = accounts.some(a=>a.name===sa.name||a.bank===sa.bank);
+      if(!alreadyIn && bal>0){
+        accounts.push({
+          id:'acc_'+sa.id, name:sa.name, bank:sa.bank,
+          bankIcon:'📈', cat:'domestic', balance:bal,
+          gainAmt:0, gainPct:null, _fromAccount:true
+        });
+      }
+    });
+  } catch(e){ console.warn('계좌 연동 오류:', e); }
+
+  // 월 라벨
+  document.getElementById('invMonthLabel').textContent = `${selM}월 투자 자산`;
+
   const total = accounts.reduce((s,a)=>s+a.balance,0);
   const totalGain = accounts.reduce((s,a)=>s+(a.gainAmt||0),0);
   const principal = total - totalGain;
@@ -657,7 +761,6 @@ function updateAccount(id){
   saveAccounts(accounts); showEditMain(); renderPage();
 }
 function deleteAccount(id){
-  if(!confirm('이 계좌를 삭제할까요?')) return;
   accounts=accounts.filter(x=>Number(x.id)!==Number(id));
   saveAccounts(accounts); showEditMain(); renderPage();
 }

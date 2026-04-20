@@ -295,7 +295,11 @@ function calcAssetsForPrefix(p){
   const invest   = safe(p+'af_invest');
   const loans    = safe(p+'af_loans');
   const ins      = safe(p+'af_ins_meta');
-  const acc   = accounts.reduce((s,a)=>s+(a.balance||0),0);
+  // 계좌는 이번 달 히스토리에서 읽기
+  const accHist  = safeObj(p+'af_accounts_history');
+  const mk       = monthKey(CY,CM);
+  const monthH   = accHist[mk]||{};
+  const acc   = accounts.reduce((s,a)=>s+(monthH[a.id]||a.balance||0),0);
   const inv   = invest.reduce((s,a)=>s+(a.balance||0),0);
   const loan  = loans.reduce((s,l)=>s+(l.balance||0),0);
   const insMo = ins.filter(x=>!x.isPaid).reduce((s,x)=>s+(x.premium||0),0);

@@ -403,7 +403,6 @@ function updateCard(id){
   showEditMain(); renderPage();
 }
 function deleteCard(id){
-  if(!confirm('이 카드를 삭제할까요?'))return;
   meta=meta.filter(x=>Number(x.id)!==Number(id)); saveMeta(meta);
   Object.keys(spend).forEach(k=>{delete spend[k][id];}); saveSpend(spend);
   showEditMain(); renderPage();

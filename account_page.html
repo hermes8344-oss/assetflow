@@ -5,197 +5,116 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>계좌 관리 - AssetFlow</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { background:#1a1a1a; color:#fff; font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Noto Sans KR',sans-serif; min-height:100vh; padding-bottom:100px; }
 
-  body {
-    background: #1a1a1a;
-    color: #fff;
-    font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
-    min-height: 100vh;
-    padding-bottom: 100px;
-  }
+  .header { display:flex; align-items:center; padding:16px 20px; position:sticky; top:0; background:#1a1a1a; z-index:100; }
+  .back-btn { background:none; border:none; color:#fff; font-size:22px; cursor:pointer; padding:4px 8px 4px 0; line-height:1; }
+  .header-title { font-size:17px; font-weight:600; margin-left:4px; }
 
-  /* ── 헤더 ── */
-  .header {
-    display: flex;
-    align-items: center;
-    padding: 16px 20px;
-    position: sticky;
-    top: 0;
-    background: #1a1a1a;
-    z-index: 100;
-  }
-  .back-btn {
-    background: none; border: none;
-    color: #fff; font-size: 22px;
-    cursor: pointer; padding: 4px 8px 4px 0; line-height: 1;
-  }
-  .header-title { font-size: 17px; font-weight: 600; margin-left: 4px; }
+  /* 월 선택 */
+  .month-label-btn { background:none; border:none; padding:4px 20px 14px; display:flex; align-items:center; gap:6px; cursor:pointer; width:100%; }
+  .month-label-btn .label-text { font-size:15px; font-weight:600; color:#fff; }
+  .month-label-btn .label-arrow { font-size:10px; color:#555; }
 
-  /* ── 총 자산 요약 ── */
-  .total-asset-card {
-    margin: 4px 20px 20px;
-    background: #242424;
-    border-radius: 16px;
-    padding: 20px;
-  }
-  .tac-label  { font-size: 13px; color: #888; margin-bottom: 6px; }
-  .tac-amount { font-size: 26px; font-weight: 700; color: #fff; white-space: nowrap; letter-spacing: -0.5px; }
-  .tac-sub    { font-size: 13px; color: #666; margin-top: 4px; }
+  /* 총 자산 */
+  .total-card { margin:0 20px 20px; background:#242424; border-radius:16px; padding:20px; }
+  .tac-label  { font-size:13px; color:#888; margin-bottom:6px; }
+  .tac-amount { font-size:26px; font-weight:700; color:#fff; letter-spacing:-0.5px; white-space:nowrap; }
+  .tac-sub    { font-size:13px; color:#666; margin-top:4px; }
 
-  /* ── 카테고리 탭 ── */
-  .cat-tabs {
-    display: flex; gap: 8px;
-    padding: 0 20px 16px;
-    overflow-x: auto; scrollbar-width: none;
-  }
-  .cat-tabs::-webkit-scrollbar { display: none; }
-  .cat-tab {
-    background: #242424;
-    border: 2px solid transparent;
-    border-radius: 20px;
-    color: #888; font-size: 13px; font-weight: 500;
-    padding: 7px 14px; cursor: pointer;
-    white-space: nowrap; transition: all 0.15s; flex-shrink: 0;
-  }
-  .cat-tab.active { border-color: #007aff; color: #007aff; background: rgba(0,122,255,0.08); }
+  /* 카테고리 탭 */
+  .cat-tabs { display:flex; gap:8px; padding:0 20px 16px; overflow-x:auto; scrollbar-width:none; }
+  .cat-tabs::-webkit-scrollbar { display:none; }
+  .cat-tab { background:#242424; border:2px solid transparent; border-radius:20px; color:#888; font-size:13px; font-weight:500; padding:7px 14px; cursor:pointer; white-space:nowrap; transition:all 0.15s; flex-shrink:0; }
+  .cat-tab.active { border-color:#007aff; color:#007aff; background:rgba(0,122,255,0.08); }
 
-  /* ── 섹션 ── */
-  .section { margin-bottom: 8px; }
-  .section-header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 16px 20px 10px;
-  }
-  .section-title { font-size: 13px; color: #888; font-weight: 500; }
-  .section-total { font-size: 13px; color: #888; }
+  /* 섹션 */
+  .section-header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px 10px; }
+  .section-title { font-size:13px; color:#888; font-weight:500; }
+  .section-total { font-size:13px; color:#888; }
 
-  /* ── 계좌 아이템 ── */
-  .account-list { padding: 0 20px; }
-  .account-item {
-    display: flex; align-items: center;
-    padding: 14px 0;
-    border-bottom: 1px solid #2a2a2a;
-    cursor: pointer; transition: opacity 0.15s;
-  }
-  .account-item:last-child { border-bottom: none; }
-  .account-item:active { opacity: 0.7; }
+  /* 계좌 아이템 */
+  .account-list { padding:0 20px; }
+  .account-item { display:flex; align-items:center; padding:14px 0; border-bottom:1px solid #2a2a2a; }
+  .account-item:last-child { border-bottom:none; }
+  .acc-icon { width:40px; height:40px; border-radius:10px; margin-right:14px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:18px; }
+  .ic-toss      { background:#0064ff22; }
+  .ic-kakao     { background:#fee50022; }
+  .ic-kb        { background:#f5c51822; }
+  .ic-shinhan   { background:#0046a022; }
+  .ic-woori     { background:#007b4022; }
+  .ic-ibk       { background:#005bac22; }
+  .ic-nh        { background:#00843422; }
+  .ic-hana      { background:#00854922; }
+  .ic-post      { background:#e0001822; }
+  .ic-sc        { background:#1428a022; }
+  .ic-securities{ background:#6c3fb522; }
+  .ic-pension   { background:#d9772022; }
+  .ic-savings   { background:#2563eb22; }
+  .acc-info { flex:1; min-width:0; }
+  .acc-name { font-size:15px; font-weight:500; color:#eee; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:2px; }
+  .acc-sub  { font-size:12px; color:#666; }
+  .acc-amount-wrap { text-align:right; flex-shrink:0; margin-left:8px; }
+  .acc-amount { font-size:15px; font-weight:600; color:#fff; white-space:nowrap; }
+  .empty-section { text-align:center; padding:40px 0; color:#444; font-size:14px; }
 
-  .acc-icon {
-    width: 40px; height: 40px; border-radius: 10px;
-    margin-right: 14px; flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center; font-size: 18px;
-  }
-  .ic-toss      { background: #0064ff22; }
-  .ic-kakao     { background: #fee50022; }
-  .ic-kb        { background: #f5c51822; }
-  .ic-shinhan   { background: #0046a022; }
-  .ic-woori     { background: #007b4022; }
-  .ic-ibk       { background: #005bac22; }
-  .ic-nh        { background: #00843422; }
-  .ic-hana      { background: #00854922; }
-  .ic-post      { background: #e0001822; }
-  .ic-sc        { background: #1428a022; }
-  .ic-securities{ background: #6c3fb522; }
-  .ic-pension   { background: #d9772022; }
-  .ic-savings   { background: #2563eb22; }
+  /* 하단 */
+  .bottom-nav { position:fixed; bottom:0; left:0; right:0; background:rgba(26,26,26,0.97); backdrop-filter:blur(10px); padding:12px 20px 28px; }
+  .nav-btn { width:100%; background:#2e2e2e; border:none; border-radius:12px; color:#fff; font-size:14px; font-weight:500; padding:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; }
+  .nav-btn:active { background:#383838; }
 
-  .acc-info { flex: 1; min-width: 0; }
-  .acc-name { font-size: 15px; font-weight: 500; color: #eee; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px; }
-  .acc-sub  { font-size: 12px; color: #666; }
-
-  .acc-amount-wrap { text-align: right; flex-shrink: 0; margin-left: 8px; }
-  .acc-amount { font-size: 15px; font-weight: 600; color: #fff; white-space: nowrap; }
-  .acc-yield  { font-size: 12px; margin-top: 2px; white-space: nowrap; }
-  .acc-yield.pos { color: #4ade80; }
-  .acc-yield.neg { color: #f87171; }
-
-  /* 빈 화면 */
-  .empty-section { text-align: center; padding: 40px 0; color: #444; font-size: 14px; }
-
-  /* ── 하단 버튼 ── */
-  .bottom-nav {
-    position: fixed; bottom: 0; left: 0; right: 0;
-    background: rgba(26,26,26,0.97);
-    backdrop-filter: blur(10px);
-    padding: 12px 20px 28px;
-  }
-  .nav-btn {
-    width: 100%; background: #2e2e2e; border: none;
-    border-radius: 12px; color: #fff;
-    font-size: 14px; font-weight: 500; padding: 14px;
-    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
-  }
-  .nav-btn:active { background: #383838; }
-
-  /* ── 편집 모달 ── */
-  .edit-overlay {
-    display: none; position: fixed; inset: 0;
-    background: rgba(0,0,0,0.7); z-index: 200; align-items: flex-end;
-  }
-  .edit-overlay.active { display: flex; }
-  .edit-sheet {
-    background: #242424; border-radius: 24px 24px 0 0;
-    width: 100%; max-height: 85vh; overflow-y: auto;
-    padding: 20px 20px 40px; animation: slideUp 0.28s ease;
-  }
+  /* 월 선택 시트 */
+  .sheet-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:300; align-items:flex-end; }
+  .sheet-overlay.active { display:flex; }
+  .sheet-inner { background:#242424; border-radius:24px 24px 0 0; width:100%; padding:20px 20px 40px; animation:slideUp 0.25s ease; }
   @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
-  .modal-handle { width: 36px; height: 4px; background: #444; border-radius: 2px; margin: 0 auto 20px; }
-  .modal-title  { font-size: 18px; font-weight: 700; margin-bottom: 24px; }
+  .sheet-handle { width:36px; height:4px; background:#444; border-radius:2px; margin:0 auto 20px; }
+  .sheet-title  { font-size:16px; font-weight:700; margin-bottom:20px; }
+  .year-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+  .year-nav { background:#333; border:none; color:#fff; font-size:18px; width:36px; height:36px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .year-nav:disabled { color:#444; cursor:default; }
+  .year-lbl { font-size:16px; font-weight:600; }
+  .month-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+  .m-chip { background:#333; border:2px solid transparent; border-radius:10px; color:#aaa; font-size:14px; padding:11px 0; cursor:pointer; text-align:center; transition:all 0.15s; line-height:1.4; }
+  .m-chip.sel { border-color:#007aff; color:#007aff; background:rgba(0,122,255,0.1); font-weight:600; }
+  .m-chip.future { color:#333; pointer-events:none; }
+  .m-dot { font-size:8px; color:#555; margin-top:2px; }
+  .m-chip.sel .m-dot { color:#4da3ff; }
 
-  .edit-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 4px; }
-  .edit-item {
-    background: #2e2e2e; border-radius: 14px;
-    padding: 14px 16px; display: flex; align-items: center; gap: 12px;
-  }
-  .edit-item .acc-icon { margin-right: 0; }
-  .ei-info { flex: 1; min-width: 0; }
-  .ei-name { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .ei-sub  { font-size: 12px; color: #666; margin-top: 2px; }
-  .ei-actions { display: flex; gap: 8px; flex-shrink: 0; }
-  .btn-ea { background: #3a3a3a; border: none; border-radius: 8px; color: #ccc; font-size: 12px; padding: 6px 10px; cursor: pointer; }
-  .btn-ea.del { color: #ff6b6b; }
+  /* 편집 모달 */
+  .edit-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:200; align-items:flex-end; }
+  .edit-overlay.active { display:flex; }
+  .edit-sheet { background:#242424; border-radius:24px 24px 0 0; width:100%; max-height:85vh; overflow-y:auto; padding:20px 20px 40px; animation:slideUp 0.28s ease; }
+  .modal-handle { width:36px; height:4px; background:#444; border-radius:2px; margin:0 auto 20px; }
+  .modal-title  { font-size:18px; font-weight:700; margin-bottom:24px; }
+  .edit-list { display:flex; flex-direction:column; gap:10px; margin-bottom:4px; }
+  .edit-item { background:#2e2e2e; border-radius:14px; padding:14px 16px; display:flex; align-items:center; gap:12px; }
+  .ei-info { flex:1; min-width:0; }
+  .ei-name { font-size:14px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .ei-sub  { font-size:12px; color:#666; margin-top:2px; }
+  .ei-actions { display:flex; gap:8px; flex-shrink:0; }
+  .btn-ea { background:#3a3a3a; border:none; border-radius:8px; color:#ccc; font-size:12px; padding:6px 10px; cursor:pointer; }
+  .btn-ea.del { color:#ff6b6b; }
+  .btn-add-acc { margin-top:16px; width:100%; background:#007aff; border:none; border-radius:14px; color:#fff; font-size:15px; font-weight:600; padding:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; }
+  .edit-cat-label { font-size:12px; color:#555; padding:8px 0 4px; border-top:1px solid #2a2a2a; margin-top:4px; }
+  .edit-cat-label:first-child { border-top:none; margin-top:0; }
+  .add-form { display:flex; flex-direction:column; gap:14px; }
+  .f-label { font-size:13px; color:#888; margin-bottom:4px; }
+  .f-input { width:100%; background:#2e2e2e; border:1px solid #3a3a3a; border-radius:10px; color:#fff; font-size:15px; padding:13px 14px; outline:none; -webkit-appearance:none; }
+  .f-input:focus { border-color:#007aff; }
+  .f-row { display:flex; flex-direction:column; gap:4px; }
+  .type-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .type-btn { background:#2e2e2e; border:2px solid transparent; border-radius:10px; color:#aaa; font-size:13px; padding:10px 4px; cursor:pointer; text-align:center; transition:all 0.15s; }
+  .type-btn.active { border-color:#007aff; color:#007aff; background:rgba(0,122,255,0.08); }
+  .btn-submit { margin-top:4px; width:100%; background:#007aff; border:none; border-radius:14px; color:#fff; font-size:15px; font-weight:600; padding:16px; cursor:pointer; }
+  .btn-cancel { width:100%; background:#333; border:none; border-radius:14px; color:#aaa; font-size:15px; padding:14px; cursor:pointer; margin-top:6px; }
 
-  .btn-add-acc {
-    margin-top: 16px; width: 100%;
-    background: #007aff; border: none; border-radius: 14px;
-    color: #fff; font-size: 15px; font-weight: 600; padding: 16px;
-    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
-  }
-
-  /* 편집 카테고리 구분 */
-  .edit-cat-label {
-    font-size: 12px; color: #555;
-    padding: 8px 0 4px;
-    border-top: 1px solid #333; margin-top: 4px;
-  }
-  .edit-cat-label:first-child { border-top: none; margin-top: 0; }
-
-  /* 폼 */
-  .add-form { display: flex; flex-direction: column; gap: 14px; }
-  .f-label  { font-size: 13px; color: #888; margin-bottom: 4px; }
-  .f-input  {
-    width: 100%; background: #2e2e2e; border: 1px solid #3a3a3a;
-    border-radius: 10px; color: #fff; font-size: 15px;
-    padding: 13px 14px; outline: none; transition: border-color 0.2s;
-  }
-  .f-input:focus { border-color: #007aff; }
-  .type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .type-btn {
-    background: #2e2e2e; border: 2px solid transparent;
-    border-radius: 10px; color: #aaa; font-size: 14px;
-    padding: 12px; cursor: pointer; text-align: center; transition: all 0.15s;
-  }
-  .type-btn.active { border-color: #007aff; color: #007aff; background: rgba(0,122,255,0.08); }
-  .f-row { display: flex; flex-direction: column; gap: 4px; }
-  .btn-submit {
-    margin-top: 8px; width: 100%;
-    background: #007aff; border: none; border-radius: 14px;
-    color: #fff; font-size: 15px; font-weight: 600; padding: 16px; cursor: pointer;
-  }
-  .btn-cancel {
-    width: 100%; background: #333; border: none; border-radius: 14px;
-    color: #aaa; font-size: 15px; padding: 14px; cursor: pointer; margin-top: 6px;
-  }
+  /* 월별 잔액 일괄 입력 */
+  .bulk-edit-hint { margin:0 20px 16px; background:#242424; border-radius:14px; padding:14px 16px; display:flex; align-items:center; gap:10px; }
+  .beh-icon { font-size:20px; }
+  .beh-text { font-size:13px; color:#888; line-height:1.5; }
+  .beh-text strong { color:#fff; }
 </style>
 </head>
 <body>
@@ -205,12 +124,20 @@
   <span class="header-title">계좌</span>
 </div>
 
-<div class="total-asset-card">
-  <div class="tac-label">총 계좌 자산</div>
+<!-- 월 선택 -->
+<button class="month-label-btn" onclick="openMonthSheet()">
+  <span class="label-text" id="monthLabelText">—</span>
+  <span class="label-arrow">▼</span>
+</button>
+
+<!-- 총 자산 -->
+<div class="total-card">
+  <div class="tac-label" id="tacLabel">이번 달 계좌 잔액</div>
   <div class="tac-amount" id="totalAssetAmt">—</div>
   <div class="tac-sub"   id="totalAssetSub">—</div>
 </div>
 
+<!-- 카테고리 탭 -->
 <div class="cat-tabs">
   <button class="cat-tab active" data-cat="all"        onclick="selectCat(this)">전체</button>
   <button class="cat-tab"        data-cat="checking"   onclick="selectCat(this)">입출금</button>
@@ -219,10 +146,26 @@
   <button class="cat-tab"        data-cat="pension"    onclick="selectCat(this)">연금</button>
 </div>
 
+<!-- 계좌 목록 -->
 <div id="accountSections"></div>
 
+<!-- 하단 -->
 <div class="bottom-nav">
   <button class="nav-btn" onclick="openEditModal()">⚙️ 자산 편집하기</button>
+</div>
+
+<!-- 월 선택 시트 -->
+<div class="sheet-overlay" id="monthSheet" onclick="if(event.target===this)closeMonthSheet()">
+  <div class="sheet-inner">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">월 선택</div>
+    <div class="year-row">
+      <button class="year-nav" id="yearPrev" onclick="changeYear(-1)">‹</button>
+      <span class="year-lbl" id="sheetYearLbl"></span>
+      <button class="year-nav" id="yearNext" onclick="changeYear(1)">›</button>
+    </div>
+    <div class="month-grid" id="monthGrid"></div>
+  </div>
 </div>
 
 <!-- 편집 모달 -->
@@ -234,63 +177,109 @@
 </div>
 
 <script>
-
-/* ── 사용자 prefix 시스템 ── */
-function getPrefix(){
-  return localStorage.getItem('af_active_prefix')||'u1_';
-}
+/* ── 사용자 prefix ── */
+function getPrefix(){ return localStorage.getItem('af_active_prefix')||'u1_'; }
 function pk(key){ return getPrefix()+key; }
+
+const NOW=new Date(), CUR_YEAR=NOW.getFullYear(), CUR_MONTH=NOW.getMonth()+1;
+function monthKey(y,m){ return `${y}-${String(m).padStart(2,'0')}`; }
+
 const CATS = {
-  checking:   { label: '입출금' },
-  savings:    { label: '저축'   },
-  securities: { label: '증권'   },
-  pension:    { label: '연금'   },
+  checking:   {label:'입출금'},
+  savings:    {label:'저축·파킹'},
+  securities: {label:'증권·CMA'},
+  pension:    {label:'연금·IRP'},
 };
 
+/* ══════════════════════════════════════
+   데이터 구조
+   pk('af_accounts')        : [{id, cat, name, bank, icon, iconCls, yieldPct}]  ← 잔액 없음
+   pk('af_accounts_history'): {"YYYY-MM": {id: balance, ...}}
+══════════════════════════════════════ */
 const DEFAULT_ACCOUNTS = [
-  {id:101, cat:'checking',   name:'토스 개인 통장',    bank:'토스뱅크',  icon:'🔵', iconCls:'ic-toss',       balance:160414,   yieldPct:null},
-  {id:102, cat:'checking',   name:'카카오페이 머니',    bank:'카카오뱅크',icon:'💛', iconCls:'ic-kakao',      balance:50000,    yieldPct:null},
-  {id:103, cat:'checking',   name:'KB 직장인 통장',    bank:'KB국민',   icon:'⭐', iconCls:'ic-kb',         balance:320000,   yieldPct:null},
-  {id:104, cat:'checking',   name:'신한 쏠편한 통장',   bank:'신한은행',  icon:'💙', iconCls:'ic-shinhan',    balance:210000,   yieldPct:null},
-  {id:105, cat:'checking',   name:'우리 WON 통장',     bank:'우리은행',  icon:'💚', iconCls:'ic-woori',      balance:87000,    yieldPct:null},
-  {id:106, cat:'checking',   name:'IBK 기업은행 통장',  bank:'IBK기업',  icon:'🏛', iconCls:'ic-ibk',        balance:195000,   yieldPct:null},
-  {id:107, cat:'checking',   name:'NH 농협 통장',      bank:'NH농협',   icon:'🌾', iconCls:'ic-nh',         balance:143000,   yieldPct:null},
-  {id:108, cat:'checking',   name:'하나 자유통장',      bank:'하나은행',  icon:'🟢', iconCls:'ic-hana',       balance:74000,    yieldPct:null},
-  {id:109, cat:'checking',   name:'우체국 통장',       bank:'우체국',   icon:'📮', iconCls:'ic-post',       balance:47937,    yieldPct:null},
-  {id:110, cat:'checking',   name:'SC제일은행 통장',    bank:'SC제일',   icon:'🔷', iconCls:'ic-sc',         balance:240000,   yieldPct:null},
-  {id:201, cat:'savings',    name:'토스뱅크 파킹통장',  bank:'토스뱅크',  icon:'💰', iconCls:'ic-savings',    balance:2300000,  yieldPct:null},
-  {id:301, cat:'securities', name:'삼성증권 CMA',       bank:'삼성증권',  icon:'📈', iconCls:'ic-securities', balance:45230000, yieldPct:8.2},
-  {id:302, cat:'securities', name:'미래에셋 해외주식',   bank:'미래에셋',  icon:'🌏', iconCls:'ic-securities', balance:61800000, yieldPct:12.4},
-  {id:303, cat:'securities', name:'키움 국내주식',      bank:'키움증권',  icon:'📊', iconCls:'ic-securities', balance:18900000, yieldPct:-3.1},
-  {id:304, cat:'securities', name:'NH투자증권',         bank:'NH투자',   icon:'💹', iconCls:'ic-securities', balance:7303085,  yieldPct:5.7},
-  {id:401, cat:'pension',    name:'삼성생명 IRP',       bank:'삼성생명',  icon:'🏦', iconCls:'ic-pension',    balance:18500000, yieldPct:6.3},
-  {id:402, cat:'pension',    name:'미래에셋 퇴직연금',   bank:'미래에셋',  icon:'🎯', iconCls:'ic-pension',    balance:12513620, yieldPct:4.1},
+  {id:101, cat:'checking',   name:'토스뱅크 통장',      bank:'토스뱅크', icon:'💙', iconCls:'ic-toss',       yieldPct:null},
+  {id:102, cat:'checking',   name:'카카오뱅크 통장',     bank:'카카오뱅크',icon:'💛', iconCls:'ic-kakao',      yieldPct:null},
+  {id:201, cat:'savings',    name:'토스뱅크 파킹통장',   bank:'토스뱅크', icon:'💰', iconCls:'ic-savings',    yieldPct:null},
+  {id:301, cat:'securities', name:'삼성증권 CMA',        bank:'삼성증권', icon:'📈', iconCls:'ic-securities', yieldPct:null},
+  {id:302, cat:'securities', name:'미래에셋 해외주식',    bank:'미래에셋', icon:'🌏', iconCls:'ic-securities', yieldPct:null},
+  {id:401, cat:'pension',    name:'삼성생명 IRP',        bank:'삼성생명', icon:'🏦', iconCls:'ic-pension',    yieldPct:6.3},
 ];
 
-function loadAccounts(){ try{const s=localStorage.getItem(pk('af_accounts')); return s?JSON.parse(s):DEFAULT_ACCOUNTS;} catch{return DEFAULT_ACCOUNTS;} }
+function loadAccounts(){
+  try{const s=localStorage.getItem(pk('af_accounts')); return s?JSON.parse(s):DEFAULT_ACCOUNTS;} catch{return DEFAULT_ACCOUNTS;}
+}
 function saveAccounts(d){ localStorage.setItem(pk('af_accounts'),JSON.stringify(d)); }
 
-let accounts=loadAccounts(), activeCat='all';
+function loadHistory(){
+  try{const s=localStorage.getItem(pk('af_accounts_history')); return s?JSON.parse(s):{};} catch{return {};}
+}
+function saveHistory(d){ localStorage.setItem(pk('af_accounts_history'),JSON.stringify(d)); }
 
+// 기존 balance 값 → 현재 달 히스토리로 자동 이전
+function migrateOldBalance(){
+  const raw = localStorage.getItem(pk('af_accounts'));
+  if(!raw) return;
+  const list = JSON.parse(raw);
+  if(!list.length || list[0].balance == null) return; // 이미 이전됨
+  const hist = loadHistory();
+  const mk = monthKey(CUR_YEAR, CUR_MONTH);
+  if(!hist[mk]) hist[mk] = {};
+  list.forEach(a=>{ if(a.balance!=null && !hist[mk][a.id]) hist[mk][a.id]=a.balance; });
+  saveHistory(hist);
+  // balance 필드 제거
+  const clean = list.map(({balance, ...rest})=>rest);
+  localStorage.setItem(pk('af_accounts'), JSON.stringify(clean));
+}
+
+let accounts = [], history = {}, activeCat = 'all';
+let selY = CUR_YEAR, selM = CUR_MONTH, sheetY = CUR_YEAR;
+
+function init(){
+  migrateOldBalance();
+  accounts = loadAccounts();
+  history  = loadHistory();
+  // 기본 계좌가 없으면 DEFAULT 저장
+  if(!localStorage.getItem(pk('af_accounts'))){
+    saveAccounts(DEFAULT_ACCOUNTS);
+  }
+  renderPage();
+}
+
+/* ── 현재 선택 월 잔액 가져오기 ── */
+function getBalance(accountId){
+  const mk = monthKey(selY, selM);
+  const h  = history[mk]||{};
+  return h[accountId] ?? 0;
+}
+
+function fmt(n){ return Math.round(n).toLocaleString('ko-KR')+'원'; }
+
+/* ── 렌더링 ── */
 function renderPage(){
-  const total=accounts.reduce((s,a)=>s+a.balance,0);
-  document.getElementById('totalAssetAmt').textContent=fmt(total);
-  document.getElementById('totalAssetSub').textContent='총 '+accounts.length+'개 계좌';
+  const mk = monthKey(selY, selM);
+  const isCur = selY===CUR_YEAR && selM===CUR_MONTH;
+  document.getElementById('monthLabelText').textContent = `${selM}월 계좌 잔액`;
+  document.getElementById('tacLabel').textContent = isCur ? '이번 달 계좌 잔액' : `${selY}년 ${selM}월 잔액`;
 
-  const catKeys=activeCat==='all'?Object.keys(CATS):[activeCat];
-  let html='';
+  const catKeys = activeCat==='all' ? Object.keys(CATS) : [activeCat];
+  let totalBalance = 0, totalCount = 0;
+  let html = '';
+
   catKeys.forEach(cat=>{
-    const list=accounts.filter(a=>a.cat===cat);
+    const list = accounts.filter(a=>a.cat===cat);
     if(!list.length) return;
-    const sub=list.reduce((s,a)=>s+a.balance,0);
-    html+=`
-      <div class="section">
-        <div class="section-header">
-          <span class="section-title">${CATS[cat].label}</span>
-          <span class="section-total">${fmt(sub)}</span>
-        </div>
-        <div class="account-list">
-          ${list.map(a=>`
+    const sub = list.reduce((s,a)=>s+getBalance(a.id),0);
+    totalBalance += sub;
+    totalCount   += list.length;
+    html += `
+      <div class="section-header">
+        <span class="section-title">${CATS[cat].label}</span>
+        <span class="section-total">${fmt(sub)}</span>
+      </div>
+      <div class="account-list">
+        ${list.map(a=>{
+          const bal = getBalance(a.id);
+          return `
             <div class="account-item">
               <div class="acc-icon ${a.iconCls}">${a.icon}</div>
               <div class="acc-info">
@@ -298,83 +287,140 @@ function renderPage(){
                 <div class="acc-sub">${a.bank}</div>
               </div>
               <div class="acc-amount-wrap">
-                <div class="acc-amount">${fmt(a.balance)}</div>
-                ${a.yieldPct!==null?`<div class="acc-yield ${a.yieldPct>=0?'pos':'neg'}">${a.yieldPct>=0?'+':''}${a.yieldPct}%</div>`:''}
+                <div class="acc-amount">${fmt(bal)}</div>
+
               </div>
-            </div>`).join('')}
-        </div>
+            </div>`;
+        }).join('')}
       </div>`;
   });
-  if(!html) html=`<div class="empty-section">계좌가 없어요<br><span style="font-size:12px;color:#555">자산 편집하기에서 추가해보세요</span></div>`;
-  document.getElementById('accountSections').innerHTML=html;
-}
 
-function fmt(n){ return n.toLocaleString('ko-KR')+'원'; }
+  if(!html) html = `<div class="empty-section">계좌가 없어요<br><span style="font-size:12px;color:#555">자산 편집하기에서 추가해보세요</span></div>`;
+  document.getElementById('accountSections').innerHTML = html;
+  document.getElementById('totalAssetAmt').textContent = fmt(totalBalance);
+  document.getElementById('totalAssetSub').textContent = `총 ${totalCount}개 계좌`;
+}
 
 function selectCat(btn){
   document.querySelectorAll('.cat-tab').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  activeCat=btn.dataset.cat;
+  activeCat = btn.dataset.cat;
   renderPage();
 }
 
+/* ── 월 시트 ── */
+function openMonthSheet(){ sheetY=selY; renderSheetGrid(); document.getElementById('monthSheet').classList.add('active'); }
+function closeMonthSheet(){ document.getElementById('monthSheet').classList.remove('active'); }
+function changeYear(d){ sheetY=Math.min(CUR_YEAR,sheetY+d); renderSheetGrid(); }
+function renderSheetGrid(){
+  document.getElementById('sheetYearLbl').textContent = sheetY+'년';
+  document.getElementById('yearPrev').disabled = sheetY<=CUR_YEAR-5;
+  document.getElementById('yearNext').disabled = sheetY>=CUR_YEAR;
+  document.getElementById('monthGrid').innerHTML = Array.from({length:12},(_,i)=>{
+    const m=i+1;
+    const future = sheetY===CUR_YEAR && m>CUR_MONTH;
+    const isSel  = sheetY===selY && m===selM;
+    const hasDot = history[monthKey(sheetY,m)] && Object.values(history[monthKey(sheetY,m)]).some(v=>v>0);
+    return `<button class="m-chip ${isSel?'sel':''} ${future?'future':''}" onclick="pickMonth(${m})">${m}월<div class="m-dot">${hasDot?'●':''}</div></button>`;
+  }).join('');
+}
+function pickMonth(m){ selY=sheetY; selM=m; closeMonthSheet(); renderPage(); }
+
+/* ── 편집 모달 ── */
 function openEditModal(){ showEditMain(); document.getElementById('editOverlay').classList.add('active'); }
 function closeEditModal(){ document.getElementById('editOverlay').classList.remove('active'); }
 
 function showEditMain(){
-  let listHtml='';
+  let listHtml = '';
   Object.keys(CATS).forEach(cat=>{
-    const list=accounts.filter(a=>a.cat===cat);
+    const list = accounts.filter(a=>a.cat===cat);
     if(!list.length) return;
-    listHtml+=`<div class="edit-cat-label">${CATS[cat].label}</div>`;
-    listHtml+=list.map(a=>`
+    listHtml += `<div class="edit-cat-label">${CATS[cat].label}</div>`;
+    listHtml += list.map(a=>`
       <div class="edit-item">
-        <div class="acc-icon ${a.iconCls}" style="width:36px;height:36px;font-size:16px;">${a.icon}</div>
-        <div class="ei-info"><div class="ei-name">${a.name}</div><div class="ei-sub">${a.bank} · ${CATS[a.cat].label}</div></div>
+        <div class="acc-icon ${a.iconCls}" style="width:36px;height:36px;font-size:16px;margin-right:0">${a.icon}</div>
+        <div class="ei-info">
+          <div class="ei-name">${a.name}</div>
+          <div class="ei-sub">${a.bank} · ${selM}월 ${fmt(getBalance(a.id))}</div>
+        </div>
         <div class="ei-actions">
+          <button class="btn-ea" onclick="showBalanceForm(${a.id})">잔액</button>
           <button class="btn-ea" onclick="showEditForm(${a.id})">수정</button>
           <button class="btn-ea del" onclick="deleteAccount(${a.id})">삭제</button>
         </div>
       </div>`).join('');
   });
-  document.getElementById('editContent').innerHTML=`
-    <div class="modal-title">계좌 편집</div>
-    <div class="edit-list">${listHtml}</div>
+
+  document.getElementById('editContent').innerHTML = `
+    <div class="modal-title">계좌 편집 · ${selM}월</div>
+    <div class="edit-list">${listHtml||'<div style="color:#555;font-size:13px">등록된 계좌가 없어요</div>'}</div>
     <button class="btn-add-acc" onclick="showAddForm()">＋ 계좌 추가하기</button>`;
 }
 
+/* 월별 잔액 입력 폼 */
+function showBalanceForm(id){
+  const a = accounts.find(x=>x.id===id); if(!a) return;
+  const cur = getBalance(id);
+  document.getElementById('editContent').innerHTML = `
+    <div class="modal-title">${a.name}<br><span style="font-size:14px;color:#888;font-weight:400">${selY}년 ${selM}월 잔액 입력</span></div>
+    <div class="add-form">
+      <div class="f-row">
+        <div class="f-label">${selM}월 말 잔액 (원)</div>
+        <input class="f-input" id="bInput" type="number" inputmode="numeric" placeholder="0" value="${cur||''}">
+      </div>
+      <button class="btn-submit" onclick="saveBalance(${id})">저장하기</button>
+      <button class="btn-cancel" onclick="showEditMain()">취소</button>
+    </div>`;
+}
+
+function saveBalance(id){
+  const bal = parseInt(document.getElementById('bInput').value)||0;
+
+  const mk  = monthKey(selY, selM);
+  if(!history[mk]) history[mk] = {};
+  history[mk][id] = bal;
+  saveHistory(history);
+
+  showEditMain(); renderPage();
+}
+
+/* 계좌 정보 수정 */
 function showAddForm(){
-  document.getElementById('editContent').innerHTML=`
+  document.getElementById('editContent').innerHTML = `
     <div class="modal-title">계좌 추가</div>
     <div class="add-form">
       <div class="f-row"><div class="f-label">계좌 구분</div>
         <div class="type-grid" id="typeGrid">
-          ${Object.entries(CATS).map(([k,v],i)=>`<button class="type-btn ${i===0?'active':''}" data-cat="${k}" onclick="selCat(this)">${v.label}</button>`).join('')}
-        </div></div>
+          ${Object.entries(CATS).map(([k,v],i)=>`<button class="type-btn ${i===0?'active':''}" data-cat="${k}" onclick="selCatBtn(this)">${v.label}</button>`).join('')}
+        </div>
+      </div>
       <div class="f-row"><div class="f-label">계좌명</div><input class="f-input" id="newName" type="text" placeholder="예) 토스뱅크 파킹통장"></div>
       <div class="f-row"><div class="f-label">은행/증권사</div><input class="f-input" id="newBank" type="text" placeholder="예) 토스뱅크"></div>
-      <div class="f-row"><div class="f-label">잔액 (원)</div><input class="f-input" id="newBalance" type="number" inputmode="numeric" placeholder="0"></div>
-      <div class="f-row" id="yieldRow" style="display:none"><div class="f-label">수익률 (%)</div><input class="f-input" id="newYield" type="number" inputmode="decimal" placeholder="예) 8.2"></div>
+      <div class="f-row"><div class="f-label">${selM}월 잔액 (원)</div><input class="f-input" id="newBalance" type="number" inputmode="numeric" placeholder="0"></div>
+
       <button class="btn-submit" onclick="addAccount()">추가하기</button>
       <button class="btn-cancel" onclick="showEditMain()">취소</button>
     </div>`;
-  updateYieldRow();
 }
-function selCat(btn){ document.querySelectorAll('#typeGrid .type-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); updateYieldRow(); }
-function updateYieldRow(){ const cat=document.querySelector('#typeGrid .type-btn.active')?.dataset.cat||'checking'; const r=document.getElementById('yieldRow'); if(r)r.style.display=(cat==='securities'||cat==='pension')?'flex':'none'; }
+
+function selCatBtn(btn){ document.querySelectorAll('#typeGrid .type-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
+
 
 function addAccount(){
-  const name=document.getElementById('newName').value.trim();
-  const bank=document.getElementById('newBank').value.trim();
-  const balance=parseInt(document.getElementById('newBalance').value)||0;
-  const cat=document.querySelector('#typeGrid .type-btn.active')?.dataset.cat||'checking';
-  const yEl=document.getElementById('newYield');
-  const yieldPct=yEl&&yEl.value!==''?parseFloat(yEl.value):null;
+  const name    = document.getElementById('newName').value.trim();
+  const bank    = document.getElementById('newBank').value.trim();
+  const balance = parseInt(document.getElementById('newBalance').value)||0;
+  const cat     = document.querySelector('#typeGrid .type-btn.active')?.dataset.cat||'checking';
+  const yieldPct= null;
   if(!name){alert('계좌명을 입력해주세요.');return;}
-  const iconMap={checking:'🏦',savings:'💰',securities:'📈',pension:'🎯'};
-  const clsMap ={checking:'ic-toss',savings:'ic-savings',securities:'ic-securities',pension:'ic-pension'};
-  accounts.push({id:Date.now(),cat,name,bank:bank||'직접입력',icon:iconMap[cat],iconCls:clsMap[cat],balance,yieldPct});
-  saveAccounts(accounts); showEditMain(); renderPage();
+  const iconMap ={checking:'🏦',savings:'💰',securities:'📈',pension:'🎯'};
+  const clsMap  ={checking:'ic-toss',savings:'ic-savings',securities:'ic-securities',pension:'ic-pension'};
+  const id = Date.now();
+  accounts.push({id,cat,name,bank:bank||'직접입력',icon:iconMap[cat],iconCls:clsMap[cat],yieldPct});
+  saveAccounts(accounts);
+  // 이번 달 잔액 저장
+  if(balance>0){ const mk=monthKey(selY,selM); if(!history[mk])history[mk]={}; history[mk][id]=balance; saveHistory(history); }
+  showEditMain(); renderPage();
 }
 
 function showEditForm(id){
@@ -384,35 +430,35 @@ function showEditForm(id){
     <div class="add-form">
       <div class="f-row"><div class="f-label">계좌 구분</div>
         <div class="type-grid" id="typeGrid">
-          ${Object.entries(CATS).map(([k,v])=>`<button class="type-btn ${k===a.cat?'active':''}" data-cat="${k}" onclick="selCat(this)">${v.label}</button>`).join('')}
-        </div></div>
+          ${Object.entries(CATS).map(([k,v])=>`<button class="type-btn ${k===a.cat?'active':''}" data-cat="${k}" onclick="selCatBtn(this)">${v.label}</button>`).join('')}
+        </div>
+      </div>
       <div class="f-row"><div class="f-label">계좌명</div><input class="f-input" id="newName" type="text" value="${a.name}"></div>
-      <div class="f-row"><div class="f-label">은행/증권사</div><input class="f-input" id="newBank" type="text" value="${a.bank}"></div>
-      <div class="f-row"><div class="f-label">잔액 (원)</div><input class="f-input" id="newBalance" type="number" inputmode="numeric" value="${a.balance}"></div>
-      <div class="f-row" id="yieldRow" style="display:${(a.cat==='securities'||a.cat==='pension')?'flex':'none'}"><div class="f-label">수익률 (%)</div><input class="f-input" id="newYield" type="number" inputmode="decimal" value="${a.yieldPct??''}"></div>
+      <div class="f-row"><div class="f-label">은행/증권사</div><input class="f-input" id="newBank" type="text" value="${a.bank}"></div><input class="f-input" id="newYield" type="number" inputmode="decimal" value="${a.yieldPct??''}"></div>
       <button class="btn-submit" onclick="updateAccount(${id})">저장하기</button>
       <button class="btn-cancel" onclick="showEditMain()">취소</button>
     </div>`;
 }
+
 function updateAccount(id){
   const name=document.getElementById('newName').value.trim();
   const bank=document.getElementById('newBank').value.trim();
-  const balance=parseInt(document.getElementById('newBalance').value)||0;
   const cat=document.querySelector('#typeGrid .type-btn.active')?.dataset.cat||'checking';
-  const yEl=document.getElementById('newYield');
-  const yieldPct=yEl&&yEl.value!==''?parseFloat(yEl.value):null;
+  const yieldPct=null;
   if(!name){alert('계좌명을 입력해주세요.');return;}
   const idx=accounts.findIndex(x=>x.id===id);
-  if(idx!==-1)accounts[idx]={...accounts[idx],name,bank,balance,cat,yieldPct};
-  saveAccounts(accounts); showEditMain(); renderPage();
-}
-function deleteAccount(id){
-  if(!confirm('이 계좌를 삭제할까요?'))return;
-  accounts=accounts.filter(x=>Number(x.id)!==Number(id));
+  if(idx!==-1) accounts[idx]={...accounts[idx],name,bank,cat,yieldPct};
   saveAccounts(accounts); showEditMain(); renderPage();
 }
 
-renderPage();
+function deleteAccount(id){
+  accounts=accounts.filter(x=>Number(x.id)!==Number(id));
+  // 히스토리에서도 제거
+  Object.keys(history).forEach(mk=>{ delete history[mk][id]; });
+  saveAccounts(accounts); saveHistory(history); showEditMain(); renderPage();
+}
+
+init();
 </script>
 </body>
 </html>
