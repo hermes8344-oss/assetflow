@@ -529,7 +529,7 @@ function openMonthTrash(){
     const touch = e.touches?e.touches[0]:e;
     currentY = touch.clientY;
     const diff = currentY - startY;
-    if(diff>0) sheet.style.transform = \`translateY(\${diff}px)\`;
+    if(diff>0) sheet.style.transform = `translateY(${diff}px)`;
   }
   function onEnd(){
     if(!isDragging) return;
