@@ -224,8 +224,11 @@ const CATS = {
 
 /* ══════════════════════════════════════
    데이터 구조
-   pk('af_accounts')        : [{id, cat, name, bank, icon, iconCls, yieldPct}]  ← 잔액 없음
+   pk('af_accounts')        : [{id, cat, name, bank, icon, iconCls, yieldPct, stockType?, principal?, startDate?}]  ← 잔액 없음
    pk('af_accounts_history'): {"YYYY-MM": {id: balance, ...}}
+   - stockType: 'domestic' | 'overseas' (증권계좌만)
+   - principal: 투자 원금 (증권계좌만, 누적관리)
+   - startDate: 투자 시작일 (증권계좌만, YYYY-MM 형식)
 ══════════════════════════════════════ */
 const DEFAULT_ACCOUNTS = [];
 
@@ -425,16 +428,53 @@ function showAddForm(){
           ${Object.entries(CATS).map(([k,v],i)=>`<button class="type-btn ${i===0?'active':''}" data-cat="${k}" onclick="selCatBtn(this)">${v.label}</button>`).join('')}
         </div>
       </div>
+      <div id="stockTypeRow" style="display:none">
+        <div class="f-label">증권계좌 구분</div>
+        <div class="type-grid">
+          <button class="type-btn active" data-stock="domestic" onclick="selStockTypeBtn(this)">국내</button>
+          <button class="type-btn" data-stock="overseas" onclick="selStockTypeBtn(this)">해외</button>
+        </div>
+      </div>
       <div class="f-row"><div class="f-label">계좌명</div><input class="f-input" id="newName" type="text" placeholder="예) 토스뱅크 파킹통장"></div>
       <div class="f-row"><div class="f-label">은행/증권사</div><input class="f-input" id="newBank" type="text" placeholder="예) 토스뱅크"></div>
+      <div id="principalRow" style="display:none" class="f-row">
+        <div class="f-label">투자 원금 (원) <span style="color:#888;font-size:11px">· 누적 관리</span></div>
+        <input class="f-input" id="newPrincipal" type="number" inputmode="numeric" placeholder="0">
+      </div>
+      <div id="startDateRow" style="display:none" class="f-row">
+        <div class="f-label">투자 시작일</div>
+        <input class="f-input" id="newStartDate" type="month" value="${selY}-${String(selM).padStart(2,'0')}">
+      </div>
       <div class="f-row"><div class="f-label">${selM}월 잔액 (원)</div><input class="f-input" id="newBalance" type="number" inputmode="numeric" placeholder="0"></div>
 
       <button class="btn-submit" onclick="addAccount()">추가하기</button>
       <button class="btn-cancel" onclick="showEditMain()">취소</button>
     </div>`;
+  
+  // 증권계좌 선택 시 추가 필드 표시
+  document.querySelectorAll('#typeGrid .type-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const isSec = btn.dataset.cat === 'securities';
+      document.getElementById('stockTypeRow').style.display = isSec?'block':'none';
+      document.getElementById('principalRow').style.display = isSec?'block':'none';
+      document.getElementById('startDateRow').style.display = isSec?'block':'none';
+    });
+  });
 }
 
-function selCatBtn(btn){ document.querySelectorAll('#typeGrid .type-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
+function selCatBtn(btn){ 
+  document.querySelectorAll('#typeGrid .type-btn').forEach(b=>b.classList.remove('active')); 
+  btn.classList.add('active');
+  const isSec = btn.dataset.cat === 'securities';
+  document.getElementById('stockTypeRow').style.display = isSec?'block':'none';
+  document.getElementById('principalRow').style.display = isSec?'block':'none';
+  document.getElementById('startDateRow').style.display = isSec?'block':'none';
+}
+
+function selStockTypeBtn(btn){
+  btn.parentElement.querySelectorAll('.type-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
 
 
 function addAccount(){
@@ -447,7 +487,21 @@ function addAccount(){
   const iconMap ={checking:'🏦',savings:'💰',securities:'📈',pension:'🎯'};
   const clsMap  ={checking:'ic-toss',savings:'ic-savings',securities:'ic-securities',pension:'ic-pension'};
   const id = Date.now();
-  accounts.push({id,cat,name,bank:bank||'직접입력',icon:iconMap[cat],iconCls:clsMap[cat],yieldPct});
+  
+  const accountData = {id,cat,name,bank:bank||'직접입력',icon:iconMap[cat],iconCls:clsMap[cat],yieldPct};
+  
+  // 증권계좌면 추가 필드
+  if(cat === 'securities'){
+    const stockType = document.querySelector('[data-stock].type-btn.active')?.dataset.stock||'domestic';
+    const principal = parseInt(document.getElementById('newPrincipal').value)||0;
+    const startDate = document.getElementById('newStartDate').value||monthKey(selY,selM);
+    
+    accountData.stockType = stockType;
+    accountData.principal = principal;
+    accountData.startDate = startDate;
+  }
+  
+  accounts.push(accountData);
   saveAccounts(accounts);
   // 이번 달 잔액 저장
   if(balance>0){ const mk=monthKey(selY,selM); if(!history[mk])history[mk]={}; history[mk][id]=balance; saveHistory(history); }

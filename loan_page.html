@@ -171,6 +171,7 @@
 
   /* 선택 그리드 */
   .sel-grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+  .sel-grid-4 { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:8px; }
   .sel-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
   .sel-grid-5 { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; }
   .type-btn {
@@ -248,7 +249,20 @@ function getPrefix(){
 }
 function pk(key){ return getPrefix()+key; }
 /* ══════════════════════════════════════
-   상수
+   데이터 구조
+   pk('af_loans'): [{
+     id, name, bank, bankIcon, loanType,
+     principal,      // 대출 원금 (주담대 필수)
+     balance,        // 현재 잔액
+     rate,           // 연 금리
+     rateType,       // 금리유형: 'fixed'|'variable'|'mixed'
+     fixedYears,     // 혼합형일 때 고정 기간
+     repayMethod,    // 상환방식
+     repayYears,     // 상환기간: 10|20|30|40
+     gracePeriod,    // 거치기간 (개월)
+     startDate, endDate, interestDay,
+     monthlyOverride // {"YYYY-MM": 실제납부액} 중도상환 반영
+   }]
 ══════════════════════════════════════ */
 const LOAN_TYPES   = ['주택담보','전세자금','신용대출','마이너스통장','기타'];
 const REPAY_METHODS = [
@@ -256,6 +270,12 @@ const REPAY_METHODS = [
   { key:'equal_principal', label:'원금\n균등',  desc:'매달 원금을 균등하게 상환하고 이자는 줄어들어요. 초기 납부액이 크지만 총 이자가 적어요.' },
   { key:'increasing',  label:'체증식',           desc:'초기 납부액이 낮고 매년 일정 비율로 증가해요. 소득이 늘어날 예정인 경우 적합해요.' },
 ];
+const RATE_TYPES = [
+  { key:'fixed', label:'고정금리' },
+  { key:'variable', label:'변동금리' },
+  { key:'mixed', label:'혼합형' }
+];
+const REPAY_YEARS = [10, 20, 30, 40];
 const BANK_ICONS = {
   '신한은행':'💙','KB국민':'⭐','우리은행':'💚','하나은행':'🟢',
   'NH농협':'🌾','IBK기업':'🏛','토스뱅크':'🔵','카카오뱅크':'💛',
@@ -400,6 +420,22 @@ function loanCardHTML(l){
   const method = REPAY_METHODS.find(m=>m.key===l.repayMethod)||REPAY_METHODS[0];
   const methodLabel = method.label.replace('\n','');
 
+  // 주담대 추가 정보
+  let judamboInfo = '';
+  if(l.loanType === '주택담보' && l.principal){
+    const rateTypeLabel = RATE_TYPES.find(rt=>rt.key===l.rateType)?.label||'고정금리';
+    const repaidPrincipal = l.principal - l.balance;
+    const repaidPct = l.principal > 0 ? ((repaidPrincipal / l.principal) * 100).toFixed(1) : 0;
+    
+    judamboInfo = `
+      <div class="lc-info-grid" style="margin-top:12px;padding-top:12px;border-top:1px solid #2a2a2a">
+        <div><div class="lc-info-label">대출 원금</div><div class="lc-info-value">${fmtWonShort(l.principal)}</div></div>
+        <div><div class="lc-info-label">상환 원금</div><div class="lc-info-value" style="color:#4ade80">${fmtWonShort(repaidPrincipal)} (${repaidPct}%)</div></div>
+        <div><div class="lc-info-label">금리 유형</div><div class="lc-info-value">${rateTypeLabel}${l.rateType==='mixed'?` ${l.fixedYears}년`:''}</div></div>
+        <div><div class="lc-info-label">상환 기간</div><div class="lc-info-value">${l.repayYears}년${l.gracePeriod>0?` (거치 ${l.gracePeriod}개월)`:''}</div></div>
+      </div>`;
+  }
+
   // 상환 계산
   let calcHTML = '';
   if(totM > 0 && l.balance > 0 && l.rate > 0){
@@ -462,6 +498,8 @@ function loanCardHTML(l){
       <div><div class="lc-info-label">연 금리</div><div class="lc-info-value">${l.rate}%</div></div>
     </div>
 
+    ${judamboInfo}
+
     <div class="lc-progress-wrap">
       <div class="lc-progress-top">
         <span>${startDisp.slice(0,7)} 시작</span>
@@ -519,6 +557,7 @@ function showEditMain(){
 function showForm(id){
   const p = id ? loans.find(x=>x.id===id) : {};
   const isEdit = !!id;
+  const isJudambo = (p.loanType||LOAN_TYPES[0]) === '주택담보';
 
   document.getElementById('editContent').innerHTML=`
     <div class="modal-title">${isEdit?'대출 수정':'대출 추가'}</div>
@@ -529,7 +568,39 @@ function showForm(id){
       <div class="f-row">
         <div class="f-label">대출 종류</div>
         <div class="sel-grid-5" id="loanTypeGrid">
-          ${LOAN_TYPES.map(t=>`<button class="type-btn ${(p.loanType||LOAN_TYPES[0])===t?'active':''}" data-v="${t}" onclick="pickBtn(this,'loanTypeGrid')">${t}</button>`).join('')}
+          ${LOAN_TYPES.map(t=>`<button class="type-btn ${(p.loanType||LOAN_TYPES[0])===t?'active':''}" data-v="${t}" onclick="pickLoanType(this)">${t}</button>`).join('')}
+        </div>
+      </div>
+
+      <!-- 주담대 전용 필드 -->
+      <div id="judamboFields" style="${isJudambo?'':'display:none'}">
+        <div class="f-row">
+          <div class="f-label">대출 원금 (원) <span style="color:#888;font-size:11px">· 최초 대출 금액</span></div>
+          <input class="f-input" id="fPrincipal" type="number" inputmode="numeric" placeholder="예) 300000000" value="${p.principal||''}" oninput="updateCalcPreview()">
+        </div>
+
+        <div class="f-row">
+          <div class="f-label">금리 유형</div>
+          <div class="sel-grid-3" id="rateTypeGrid">
+            ${RATE_TYPES.map(rt=>`<button class="type-btn ${(p.rateType||'fixed')===rt.key?'active':''}" data-v="${rt.key}" onclick="pickRateType(this)">${rt.label}</button>`).join('')}
+          </div>
+        </div>
+
+        <div id="mixedYearsRow" class="f-row" style="${(p.rateType||'fixed')==='mixed'?'':'display:none'}">
+          <div class="f-label">고정 기간 (년)</div>
+          <input class="f-input" id="fFixedYears" type="number" inputmode="numeric" placeholder="예) 5" value="${p.fixedYears||''}">
+        </div>
+
+        <div class="f-row">
+          <div class="f-label">상환 기간</div>
+          <div class="sel-grid-4" id="repayYearsGrid">
+            ${REPAY_YEARS.map(y=>`<button class="type-btn ${(p.repayYears||30)===y?'active':''}" data-v="${y}" onclick="pickBtn(this,'repayYearsGrid')">${y}년</button>`).join('')}
+          </div>
+        </div>
+
+        <div class="f-row">
+          <div class="f-label">거치 기간 (개월) <span style="color:#888;font-size:11px">· 원금 상환 유예</span></div>
+          <input class="f-input" id="fGracePeriod" type="number" inputmode="numeric" placeholder="0" value="${p.gracePeriod||0}" oninput="updateCalcPreview()">
         </div>
       </div>
 
@@ -554,7 +625,7 @@ function showForm(id){
       <div class="form-section-label">금액 · 금리</div>
 
       <div class="f-row">
-        <div class="f-label">대출 잔액 (원)</div>
+        <div class="f-label">대출 잔액 (원) <span style="color:#888;font-size:11px">· 현재 남은 금액</span></div>
         <input class="f-input" id="fBalance" type="number" inputmode="numeric" placeholder="0" value="${p.balance||''}" oninput="updateCalcPreview()">
       </div>
 
@@ -598,6 +669,18 @@ function showForm(id){
 function pickBtn(btn, gridId){
   document.querySelectorAll(`#${gridId} .type-btn`).forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
+}
+
+function pickLoanType(btn){
+  pickBtn(btn, 'loanTypeGrid');
+  const isJudambo = btn.dataset.v === '주택담보';
+  document.getElementById('judamboFields').style.display = isJudambo ? 'block' : 'none';
+}
+
+function pickRateType(btn){
+  pickBtn(btn, 'rateTypeGrid');
+  const isMixed = btn.dataset.v === 'mixed';
+  document.getElementById('mixedYearsRow').style.display = isMixed ? 'block' : 'none';
 }
 
 function pickRepay(btn){
@@ -727,7 +810,25 @@ function readForm(){
   if(!balance){ alert('대출 잔액을 입력해주세요.'); return null; }
   if(!rate)   { alert('금리를 입력해주세요.');    return null; }
 
-  return { name, bank, bankIcon, balance, rate, startDate:start, endDate:end, interestDay:intDay, loanType, repayMethod };
+  const result = { name, bank, bankIcon, balance, rate, startDate:start, endDate:end, interestDay:intDay, loanType, repayMethod };
+
+  // 주택담보대출 추가 필드
+  if(loanType === '주택담보'){
+    const principal   = parseInt(document.getElementById('fPrincipal')?.value)||0;
+    const rateType    = document.querySelector('#rateTypeGrid .type-btn.active')?.dataset.v||'fixed';
+    const fixedYears  = parseInt(document.getElementById('fFixedYears')?.value)||0;
+    const repayYears  = parseInt(document.querySelector('#repayYearsGrid .type-btn.active')?.dataset.v)||30;
+    const gracePeriod = parseInt(document.getElementById('fGracePeriod')?.value)||0;
+    
+    result.principal   = principal;
+    result.rateType    = rateType;
+    result.fixedYears  = fixedYears;
+    result.repayYears  = repayYears;
+    result.gracePeriod = gracePeriod;
+    result.monthlyOverride = {}; // 향후 중도상환 기능용
+  }
+
+  return result;
 }
 
 renderPage();

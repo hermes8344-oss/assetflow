@@ -574,31 +574,31 @@ function render(){
   document.getElementById('assetGrid').innerHTML=`
     <div class="grid-item" onclick="goGrid('account_page.html')">
       <div class="gi-label">계좌</div>
-      <div class="gi-value">${accTotal>0?fmtShort(accTotal):'추가하기'}</div>
+      <div class="gi-value">${fmtShort(accTotal)}</div>
     </div>
     <div class="grid-item" onclick="goGrid('card_page.html')">
       <div class="gi-label">카드</div>
-      <div class="gi-value">${cardSpend>0?fmtShort(cardSpend)+' 사용':'추가하기'}</div>
+      <div class="gi-value">${cardSpend>0?fmtShort(cardSpend)+' 사용':'이번달'}</div>
     </div>
     <div class="grid-item" onclick="goGrid('investment_page.html')">
       <div class="gi-label">투자</div>
-      <div class="gi-value">${inv>0?fmtShort(inv):'추가하기'}</div>
+      <div class="gi-value">${fmtShort(inv)}</div>
     </div>
     <div class="grid-item" onclick="goGrid('loan_page.html')">
       <div class="gi-label">대출</div>
-      <div class="gi-value red">${loan>0?'-'+fmtShort(loan):'추가하기'}</div>
+      <div class="gi-value red">${loan>0?'-'+fmtShort(loan):'없음'}</div>
     </div>
     <div class="grid-item" onclick="goGrid('insurance_page.html')">
       <div class="gi-label">보험</div>
-      <div class="gi-value">${insMo>0?fmtShort(insMo)+'/월':'추가하기'}</div>
+      <div class="gi-value">${insMo>0?fmtShort(insMo)+'/월':'등록없음'}</div>
     </div>
     <div class="grid-item" onclick="goGrid('car_page.html')">
       <div class="gi-label">자동차</div>
-      <div class="gi-value">${cars0?cars0.plate:'추가하기'}</div>
+      <div class="gi-value">${cars0?cars0.plate:'등록없음'}</div>
     </div>
     <div class="grid-item" onclick="goGrid('realestate_page.html')">
       <div class="gi-label">부동산</div>
-      <div class="gi-value">${reTotal>0?fmtShort(reTotal)+'원':'추가하기'}</div>
+      <div class="gi-value">${reTotal>0?fmtShort(reTotal)+'원':'등록없음'}</div>
     </div>`;
 
   // 수입/지출
@@ -613,11 +613,11 @@ function render(){
   document.getElementById('analysisGrid').innerHTML=`
     <div class="grid-item" onclick="goGrid('income_page.html')">
       <div class="gi-label">수입</div>
-      <div class="gi-value green">${income>0?fmtShort(income):'추가하기'}</div>
+      <div class="gi-value green">${income>0?fmtShort(income):'입력'}</div>
     </div>
     <div class="grid-item" onclick="goGrid('expense_page.html')">
       <div class="gi-label">지출</div>
-      <div class="gi-value red">${expense>0?fmtShort(expense):'추가하기'}</div>
+      <div class="gi-value red">${expense>0?fmtShort(expense):'입력'}</div>
     </div>
     <div class="grid-item" onclick="goGrid('trend_page.html')">
       <div class="gi-label">월별추이</div>
