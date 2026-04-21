@@ -58,9 +58,10 @@
   /* 편집 모달 */
   .edit-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:200; align-items:flex-end; }
   .edit-overlay.active { display:flex; }
-  .edit-sheet { background:#242424; border-radius:24px 24px 0 0; width:100%; max-height:92vh; overflow-y:auto; padding:20px 20px 40px; animation:slideUp 0.28s ease; }
+  .edit-sheet { background:#242424; border-radius:24px 24px 0 0; width:100%; max-height:92vh; overflow-y:auto; padding:20px 20px 40px; animation:slideUp 0.28s ease; transition:transform 0.2s ease; }
   @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
-  .modal-handle { width:36px; height:4px; background:#444; border-radius:2px; margin:0 auto 20px; }
+  .modal-handle { width:36px; height:4px; background:#444; border-radius:2px; margin:0 auto 20px; cursor:grab; }
+  .modal-handle:active { cursor:grabbing; }
   .modal-title  { font-size:18px; font-weight:700; margin-bottom:24px; }
   .edit-list { display:flex; flex-direction:column; gap:10px; }
   .edit-item { background:#2e2e2e; border-radius:14px; padding:14px 16px; display:flex; align-items:center; gap:12px; }
@@ -335,6 +336,43 @@ function readForm(){
 function addItem(){ const d=readForm(); if(!d)return; d.id=Date.now(); items.push(d); saveItems(items); showEditMain(); renderPage(); }
 function updateItem(id){ const d=readForm(); if(!d)return; const i=items.findIndex(x=>Number(x.id)===Number(id)); if(i!==-1)items[i]={...items[i],...d}; saveItems(items); showEditMain(); renderPage(); }
 function deleteItem(id){ items=items.filter(x=>Number(x.id)!==Number(id)); saveItems(items); showEditMain(); renderPage(); }
+
+/* ── 스와이프로 모달 닫기 ── */
+(function(){
+  let startY=0, currentY=0, isDragging=false;
+  const overlay = document.getElementById('editOverlay');
+  const sheet   = overlay?.querySelector('.edit-sheet');
+  const handle  = overlay?.querySelector('.modal-handle');
+  if(!handle||!sheet||!overlay) return;
+
+  function onStart(e){
+    const touch = e.touches?e.touches[0]:e;
+    startY = touch.clientY; currentY = startY; isDragging = true;
+    sheet.style.transition = 'none';
+  }
+  function onMove(e){
+    if(!isDragging) return;
+    const touch = e.touches?e.touches[0]:e;
+    currentY = touch.clientY;
+    const diff = currentY - startY;
+    if(diff>0) sheet.style.transform = `translateY(${diff}px)`;
+  }
+  function onEnd(){
+    if(!isDragging) return;
+    isDragging = false;
+    sheet.style.transition = 'transform 0.2s ease';
+    const diff = currentY - startY;
+    if(diff>100){ closeEdit(); }
+    else{ sheet.style.transform = 'translateY(0)'; }
+  }
+
+  handle.addEventListener('touchstart', onStart, {passive:true});
+  handle.addEventListener('touchmove',  onMove,  {passive:true});
+  handle.addEventListener('touchend',   onEnd,   {passive:true});
+  handle.addEventListener('mousedown',  onStart);
+  document.addEventListener('mousemove', e=>{ if(isDragging) onMove(e); });
+  document.addEventListener('mouseup',   onEnd);
+})();
 
 renderPage();
 </script>

@@ -118,9 +118,10 @@
   /* ── 사용자 이름 설정 모달 ── */
   .name-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:200; align-items:flex-end; }
   .name-overlay.active { display:flex; }
-  .name-sheet { background:#1e1e1e; border-radius:24px 24px 0 0; width:100%; padding:20px 20px 40px; animation:slideUp 0.25s ease; }
+  .name-sheet { background:#1e1e1e; border-radius:24px 24px 0 0; width:100%; padding:20px 20px 40px; animation:slideUp 0.25s ease; transition:transform 0.2s ease; }
   @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
-  .ns-handle { width:36px; height:4px; background:#444; border-radius:2px; margin:0 auto 20px; }
+  .ns-handle { width:36px; height:4px; background:#444; border-radius:2px; margin:0 auto 20px; cursor:grab; }
+  .ns-handle:active { cursor:grabbing; }
   .ns-title  { font-size:17px; font-weight:700; margin-bottom:20px; }
   .ns-form   { display:flex; flex-direction:column; gap:12px; }
   .ns-label  { font-size:13px; color:#888; margin-bottom:4px; }
@@ -729,6 +730,44 @@ function saveNames(){
 if(!localStorage.getItem('af_active_prefix')){
   localStorage.setItem('af_active_prefix', 'u1_');
 }
+
+/* ── 스와이프로 모달 닫기 ── */
+(function(){
+  let startY=0, currentY=0, isDragging=false;
+  const overlay = document.getElementById('nameOverlay');
+  const sheet   = overlay?.querySelector('.name-sheet');
+  const handle  = overlay?.querySelector('.ns-handle');
+  if(!handle||!sheet||!overlay) return;
+
+  function onStart(e){
+    const touch = e.touches?e.touches[0]:e;
+    startY = touch.clientY; currentY = startY; isDragging = true;
+    sheet.style.transition = 'none';
+  }
+  function onMove(e){
+    if(!isDragging) return;
+    const touch = e.touches?e.touches[0]:e;
+    currentY = touch.clientY;
+    const diff = currentY - startY;
+    if(diff>0) sheet.style.transform = `translateY(${diff}px)`;
+  }
+  function onEnd(){
+    if(!isDragging) return;
+    isDragging = false;
+    sheet.style.transition = 'transform 0.2s ease';
+    const diff = currentY - startY;
+    if(diff>100){ closeNameModal(); }
+    else{ sheet.style.transform = 'translateY(0)'; }
+  }
+
+  handle.addEventListener('touchstart', onStart, {passive:true});
+  handle.addEventListener('touchmove',  onMove,  {passive:true});
+  handle.addEventListener('touchend',   onEnd,   {passive:true});
+  handle.addEventListener('mousedown',  onStart);
+  document.addEventListener('mousemove', e=>{ if(isDragging) onMove(e); });
+  document.addEventListener('mouseup',   onEnd);
+})();
+
 applyUserUI();
 render();
 </script>
