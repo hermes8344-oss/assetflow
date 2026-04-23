@@ -224,11 +224,10 @@ const CATS = {
 
 /* ══════════════════════════════════════
    데이터 구조
-   pk('af_accounts')        : [{id, cat, name, bank, icon, iconCls, yieldPct, stockType?, principal?, startDate?}]  ← 잔액 없음
-   pk('af_accounts_history'): {"YYYY-MM": {id: balance, ...}}
-   - stockType: 'domestic' | 'overseas' (증권계좌만)
-   - principal: 투자 원금 (증권계좌만, 누적관리)
-   - startDate: 투자 시작일 (증권계좌만, YYYY-MM 형식)
+   pk('af_accounts')         : [{id, cat, name, bank, icon, iconCls, yieldPct}]  ← 잔액 없음
+   pk('af_accounts_history') : {"YYYY-MM": {id: balance, ...}}
+   pk('af_accounts_cashflow'): {"YYYY-MM": {id: amount, ...}}  ← 증권/연금 월별 입출금
+   - cashflow: 양수(입금), 음수(출금)
 ══════════════════════════════════════ */
 const DEFAULT_ACCOUNTS = [];
 
@@ -241,6 +240,11 @@ function loadHistory(){
   try{const s=localStorage.getItem(pk('af_accounts_history')); return s?JSON.parse(s):{};} catch{return {};}
 }
 function saveHistory(d){ localStorage.setItem(pk('af_accounts_history'),JSON.stringify(d)); }
+
+function loadCashflow(){
+  try{const s=localStorage.getItem(pk('af_accounts_cashflow')); return s?JSON.parse(s):{};} catch{return {};}
+}
+function saveCashflow(d){ localStorage.setItem(pk('af_accounts_cashflow'),JSON.stringify(d)); }
 
 // 기존 balance 값 → 현재 달 히스토리로 자동 이전
 function migrateOldBalance(){
@@ -258,13 +262,14 @@ function migrateOldBalance(){
   localStorage.setItem(pk('af_accounts'), JSON.stringify(clean));
 }
 
-let accounts = [], history = {}, activeCat = 'all';
+let accounts = [], history = {}, cashflow = {}, activeCat = 'all';
 let selY = CUR_YEAR, selM = CUR_MONTH, sheetY = CUR_YEAR;
 
 function init(){
   migrateOldBalance();
   accounts = loadAccounts();
   history  = loadHistory();
+  cashflow = loadCashflow();
   // 기본 계좌가 없으면 DEFAULT 저장
   if(!localStorage.getItem(pk('af_accounts'))){
     saveAccounts(DEFAULT_ACCOUNTS);
@@ -395,6 +400,12 @@ function showEditMain(){
 function showBalanceForm(id){
   const a = accounts.find(x=>x.id===id); if(!a) return;
   const cur = getBalance(id);
+  const mk = monthKey(selY, selM);
+  const curCashflow = (cashflow[mk] && cashflow[mk][id]) || 0;
+  
+  // 증권/연금 계좌인지 확인
+  const isInvestment = (a.cat === 'securities' || a.cat === 'pension');
+  
   document.getElementById('editContent').innerHTML = `
     <div class="modal-title">${a.name}<br><span style="font-size:14px;color:#888;font-weight:400">${selY}년 ${selM}월 잔액 입력</span></div>
     <div class="add-form">
@@ -402,6 +413,12 @@ function showBalanceForm(id){
         <div class="f-label">${selM}월 말 잔액 (원)</div>
         <input class="f-input" id="bInput" type="number" inputmode="numeric" placeholder="0" value="${cur||''}">
       </div>
+      ${isInvestment ? `
+      <div class="f-row">
+        <div class="f-label">${selM}월 입출금 (원) <span style="color:#888;font-size:11px">· 입금(+) / 출금(-)</span></div>
+        <input class="f-input" id="cfInput" type="number" inputmode="numeric" placeholder="예) 1000000" value="${curCashflow||''}">
+      </div>
+      ` : ''}
       <button class="btn-submit" onclick="saveBalance(${id})">저장하기</button>
       <button class="btn-cancel" onclick="showEditMain()">취소</button>
     </div>`;
@@ -409,11 +426,20 @@ function showBalanceForm(id){
 
 function saveBalance(id){
   const bal = parseInt(document.getElementById('bInput').value)||0;
+  const cfInput = document.getElementById('cfInput');
+  const cf = cfInput ? (parseInt(cfInput.value)||0) : 0;
 
   const mk  = monthKey(selY, selM);
   if(!history[mk]) history[mk] = {};
   history[mk][id] = bal;
   saveHistory(history);
+  
+  // 증권/연금 계좌면 입출금도 저장
+  if(cfInput){
+    if(!cashflow[mk]) cashflow[mk] = {};
+    cashflow[mk][id] = cf;
+    saveCashflow(cashflow);
+  }
 
   showEditMain(); renderPage();
 }

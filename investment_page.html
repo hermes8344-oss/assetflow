@@ -462,12 +462,26 @@ const BANK_ICONS = {
 };
 
 /* ── 기본 데이터 ── */
-const DEFAULT_ACCOUNTS = [];
+/* 
+  af_invest_meta: {accountId: {principal, startDate, gainAmt}}
+  - accountId는 af_accounts의 id와 매칭
+  - 계좌 목록은 account_page에서 자동 연동
+*/
+const DEFAULT_META = {};
 
-function loadAccounts(){ try{const s=localStorage.getItem(pk('af_invest')); return s?JSON.parse(s):DEFAULT_ACCOUNTS;} catch{return DEFAULT_ACCOUNTS;} }
-function saveAccounts(d){ localStorage.setItem(pk('af_invest'),JSON.stringify(d)); }
+function loadInvestMeta(){ 
+  try{
+    const s=localStorage.getItem(pk('af_invest_meta')); 
+    return s?JSON.parse(s):DEFAULT_META;
+  } catch{
+    return DEFAULT_META;
+  } 
+}
+function saveInvestMeta(d){ 
+  localStorage.setItem(pk('af_invest_meta'),JSON.stringify(d)); 
+}
 
-let accounts = loadAccounts();
+let investMeta = loadInvestMeta();
 
 /* ══════════════════════
    포맷 함수
@@ -510,81 +524,60 @@ function renderInvMonthGrid(){
 function pickInvMonth(m){ selY=sheetY; selM=m; closeMonthSheet(); renderPage(); }
 
 function renderPage(){
-  // 계좌탭의 증권·연금 계좌 잔액 불러와서 balance 오버라이드
+  // account_page의 증권·연금 계좌를 가져와서 표시
+  let accounts = [];
+  
   try {
-    const accHist   = JSON.parse(localStorage.getItem(pk('af_accounts_history'))||'{}');
-    const accList   = JSON.parse(localStorage.getItem(pk('af_accounts'))||'[]');
-    const mk        = invMonthKey(selY, selM);
+    const accList = JSON.parse(localStorage.getItem(pk('af_accounts'))||'[]');
+    const accHist = JSON.parse(localStorage.getItem(pk('af_accounts_history'))||'{}');
+    const cashflow = JSON.parse(localStorage.getItem(pk('af_accounts_cashflow'))||'{}');
+    
+    const mk = invMonthKey(selY, selM);
     const monthHist = accHist[mk]||{};
-    const secAccs   = accList.filter(a=>a.cat==='securities');
-    const pensionAccs = accList.filter(a=>a.cat==='pension');
-
-    // 계좌탭 증권계좌 → 투자탭 계좌에 잔액 반영
-    // 매칭: 이름 완전일치 우선, 그 다음 은행명 일치
-    secAccs.forEach(sa=>{
-      const bal = monthHist[sa.id];
-      if(bal == null) return;
-      // 이름 완전일치
-      let match = accounts.find(a=>a.name === sa.name);
-      // 없으면 은행명 일치 중 첫 번째
-      if(!match) match = accounts.find(a=>a.bank === sa.bank);
-      if(match) {
-        match.balance = bal;
-        // 원금/시작일 정보 연동
-        if(sa.principal) match.principal = sa.principal;
-        if(sa.startDate) match.startDate = sa.startDate;
+    const monthCf = cashflow[mk]||{};
+    
+    // 증권·연금 계좌만 필터링
+    const investAccs = accList.filter(a => a.cat==='securities' || a.cat==='pension');
+    
+    investAccs.forEach(a => {
+      const bal = monthHist[a.id]||0;
+      if(bal === 0) return; // 잔액 0인 계좌는 제외
+      
+      const meta = investMeta[a.id] || {};
+      const principal = meta.principal || 0;
+      const startDate = meta.startDate || '';
+      const gainAmt = meta.gainAmt || 0;
+      
+      // 수익률 계산
+      let gainPct = null;
+      if(principal > 0){
+        gainPct = ((gainAmt / principal) * 100).toFixed(2);
       }
+      
+      // 카테고리 매핑 (증권 → overseas/domestic, 연금 → etc)
+      let cat = 'etc';
+      if(a.cat === 'securities'){
+        cat = 'domestic'; // 기본값, 메타데이터에서 변경 가능하도록 향후 추가
+      }
+      
+      accounts.push({
+        id: a.id,
+        name: a.name,
+        bank: a.bank,
+        bankIcon: a.icon || '📈',
+        cat: meta.cat || cat,
+        balance: bal,
+        gainAmt: gainAmt,
+        gainPct: gainPct,
+        principal: principal,
+        startDate: startDate,
+        _fromAccount: true
+      });
     });
     
-    // 계좌탭 연금·IRP 계좌 → 투자탭 계좌에 잔액 반영
-    pensionAccs.forEach(pa=>{
-      const bal = monthHist[pa.id];
-      if(bal == null) return;
-      let match = accounts.find(a=>a.name === pa.name);
-      if(!match) match = accounts.find(a=>a.bank === pa.bank);
-      if(match) {
-        match.balance = bal;
-        if(pa.principal) match.principal = pa.principal;
-        if(pa.startDate) match.startDate = pa.startDate;
-      }
-    });
-    
-    // 계좌탭에만 있고 투자탭엔 없는 증권계좌 → 자동으로 투자탭에 추가 표시
-    secAccs.forEach(sa=>{
-      const bal = monthHist[sa.id]||0;
-      const alreadyIn = accounts.some(a=>a.name===sa.name||a.bank===sa.bank);
-      if(!alreadyIn && bal>0){
-        accounts.push({
-          id:'acc_'+sa.id, name:sa.name, bank:sa.bank,
-          bankIcon:'📈', 
-          cat: sa.stockType==='overseas'?'overseas':'domestic',
-          balance:bal,
-          gainAmt:0, gainPct:null, 
-          principal: sa.principal||0,
-          startDate: sa.startDate||'',
-          _fromAccount:true
-        });
-      }
-    });
-    
-    // 계좌탭에만 있고 투자탭엔 없는 연금·IRP 계좌 → 자동으로 투자탭에 추가 표시
-    pensionAccs.forEach(pa=>{
-      const bal = monthHist[pa.id]||0;
-      const alreadyIn = accounts.some(a=>a.name===pa.name||a.bank===pa.bank);
-      if(!alreadyIn && bal>0){
-        accounts.push({
-          id:'acc_'+pa.id, name:pa.name, bank:pa.bank,
-          bankIcon:'🎯', 
-          cat: 'etc',  // 연금은 '기타' 카테고리로
-          balance:bal,
-          gainAmt:0, gainPct:null, 
-          principal: pa.principal||0,
-          startDate: pa.startDate||'',
-          _fromAccount:true
-        });
-      }
-    });
-  } catch(e){ console.warn('계좌 연동 오류:', e); }
+  } catch(e){ 
+    console.warn('계좌 연동 오류:', e); 
+  }
 
   // 월 라벨
   document.getElementById('invMonthLabel').textContent = `${selM}월 투자 자산`;
@@ -733,45 +726,127 @@ function openEditModal(){ showEditMain(); document.getElementById('editOverlay')
 function closeEditModal(){ document.getElementById('editOverlay').classList.remove('active'); }
 
 function showEditMain(){
+  // account_page의 증권·연금 계좌 목록 가져오기
+  let accounts = [];
+  
+  try {
+    const accList = JSON.parse(localStorage.getItem(pk('af_accounts'))||'[]');
+    const accHist = JSON.parse(localStorage.getItem(pk('af_accounts_history'))||'{}');
+    const mk = invMonthKey(selY, selM);
+    const monthHist = accHist[mk]||{};
+    
+    const investAccs = accList.filter(a => a.cat==='securities' || a.cat==='pension');
+    
+    investAccs.forEach(a => {
+      const bal = monthHist[a.id]||0;
+      const meta = investMeta[a.id] || {};
+      
+      accounts.push({
+        id: a.id,
+        name: a.name,
+        bank: a.bank,
+        balance: bal,
+        cat: a.cat,
+        principal: meta.principal || 0,
+        startDate: meta.startDate || '',
+        gainAmt: meta.gainAmt || 0
+      });
+    });
+  } catch(e){ console.warn('계좌 연동 오류:', e); }
+  
+  if(accounts.length === 0){
+    document.getElementById('editContent').innerHTML=`
+      <div class="modal-title">투자 편집</div>
+      <div style="color:#555;font-size:14px;padding:32px 0;text-align:center">
+        등록된 증권·연금 계좌가 없어요<br>
+        <span style="font-size:12px;color:#444;margin-top:8px;display:block">계좌 페이지에서 증권/연금 계좌를 추가해주세요</span>
+      </div>`;
+    return;
+  }
+  
   let listHTML = '';
-  CATS.forEach(c=>{
-    const list = accounts.filter(a=>a.cat===c.key);
-    if(!list.length) return;
-    listHTML += `<div class="edit-cat-label">${c.label}</div>`;
-    listHTML += list.map(a=>`
+  const secAccs = accounts.filter(a => a.cat === 'securities');
+  const pensionAccs = accounts.filter(a => a.cat === 'pension');
+  
+  if(secAccs.length > 0){
+    listHTML += `<div class="edit-cat-label">증권 계좌</div>`;
+    listHTML += secAccs.map(a=>`
       <div class="edit-item">
-        <div class="ei-icon" style="background:${catBg(a.cat)}">${a.bankIcon||'📈'}</div>
+        <div class="ei-icon" style="background:rgba(79,142,247,0.12)">📈</div>
         <div class="ei-info">
           <div class="ei-name">${a.name}</div>
           <div class="ei-sub">${a.bank} · ${fmt(a.balance)}</div>
         </div>
         <div class="ei-actions">
-          <button class="btn-ea" onclick="showForm(${a.id})">수정</button>
-          <button class="btn-ea del" onclick="deleteAccount(${a.id})">삭제</button>
+          <button class="btn-ea" onclick="showMetaForm(${a.id})">수익 입력</button>
         </div>
       </div>`).join('');
-  });
+  }
+  
+  if(pensionAccs.length > 0){
+    listHTML += `<div class="edit-cat-label">연금 계좌</div>`;
+    listHTML += pensionAccs.map(a=>`
+      <div class="edit-item">
+        <div class="ei-icon" style="background:rgba(217,119,32,0.12)">🎯</div>
+        <div class="ei-info">
+          <div class="ei-name">${a.name}</div>
+          <div class="ei-sub">${a.bank} · ${fmt(a.balance)}</div>
+        </div>
+        <div class="ei-actions">
+          <button class="btn-ea" onclick="showMetaForm(${a.id})">수익 입력</button>
+        </div>
+      </div>`).join('');
+  }
 
   document.getElementById('editContent').innerHTML=`
-    <div class="modal-title">투자 편집</div>
-    <div class="edit-list">${listHTML||'<div style="color:#555;font-size:13px;padding:8px 0">등록된 계좌가 없어요</div>'}</div>
-    <button class="btn-add" onclick="showForm(null)">＋ 계좌 추가하기</button>`;
+    <div class="modal-title">투자 수익 관리</div>
+    <div style="font-size:12px;color:#666;margin:-16px 0 16px">계좌 추가는 '계좌' 페이지에서 가능해요</div>
+    <div class="edit-list">${listHTML}</div>`;
 }
 
-function showForm(id){
-  const p = id ? accounts.find(x=>x.id===id) : {};
-  const isEdit = !!id;
+function showMetaForm(accountId){
+  // account_page에서 계좌 정보 가져오기
+  let accountInfo = null;
+  try {
+    const accList = JSON.parse(localStorage.getItem(pk('af_accounts'))||'[]');
+    const accHist = JSON.parse(localStorage.getItem(pk('af_accounts_history'))||'{}');
+    const mk = invMonthKey(selY, selM);
+    const monthHist = accHist[mk]||{};
+    
+    const acc = accList.find(a => a.id === accountId);
+    if(acc){
+      const bal = monthHist[acc.id]||0;
+      const meta = investMeta[accountId] || {};
+      
+      accountInfo = {
+        id: acc.id,
+        name: acc.name,
+        bank: acc.bank,
+        balance: bal,
+        principal: meta.principal || 0,
+        startDate: meta.startDate || '',
+        gainAmt: meta.gainAmt || 0,
+        cat: meta.cat || 'domestic'
+      };
+    }
+  } catch(e){ console.warn('계좌 정보 로드 오류:', e); }
+  
+  if(!accountInfo){
+    alert('계좌 정보를 불러올 수 없습니다.');
+    return;
+  }
+  
+  const p = accountInfo;
 
   document.getElementById('editContent').innerHTML=`
-    <div class="modal-title">${isEdit?'계좌 수정':'계좌 추가'}</div>
+    <div class="modal-title">${p.name}<br><span style="font-size:14px;color:#888;font-weight:400">투자 수익 정보</span></div>
     <div class="add-form">
 
-      <div class="form-section-label">투자 구분</div>
       <div class="f-row">
         <div class="f-label">자산 종류</div>
         <div class="sel-grid" style="grid-template-columns:1fr 1fr 1fr" id="catGrid">
           ${CATS.map(c=>`
-            <button class="type-btn ${(p.cat||'overseas')===c.key?'active '+c.btnCol:''}"
+            <button class="type-btn ${p.cat===c.key?'active '+c.btnCol:''}"
                     data-v="${c.key}" data-col="${c.btnCol}"
                     onclick="pickCat(this)">
               ${c.icon}<br>${c.label}
@@ -779,43 +854,28 @@ function showForm(id){
         </div>
       </div>
 
-      <div class="form-section-label">계좌 정보</div>
-
-      <div class="f-row">
-        <div class="f-label">계좌명</div>
-        <input class="f-input" id="fName" type="text" placeholder="예) 업비트 BTC, 미래에셋 해외주식" value="${p.name||''}">
-      </div>
-      <div class="f-row">
-        <div class="f-label">증권사</div>
-        <input class="f-input" id="fBank" type="text" placeholder="예) 업비트, 빗썸, 미래에셋" value="${p.bank||''}">
-      </div>
-
-      <div class="form-section-label">금액</div>
-
-      <div class="f-row">
-        <div class="f-label">투자 원금 (원) <span style="color:#888;font-size:11px">· 선택사항</span></div>
-        <input class="f-input" id="fPrincipal" type="number" inputmode="numeric" placeholder="원금 입력 시 수익률 자동 계산" value="${p.principal||''}">
-      </div>
       <div class="f-row">
         <div class="f-label">투자 시작일 <span style="color:#888;font-size:11px">· 선택사항</span></div>
         <input class="f-input" id="fStartDate" type="month" value="${p.startDate||''}">
       </div>
+      
       <div class="f-row">
-        <div class="f-label">평가액 (원)</div>
-        <input class="f-input" id="fBalance" type="number" inputmode="numeric" placeholder="0" value="${p.balance||''}">
+        <div class="f-label">투자 원금 (원) <span style="color:#888;font-size:11px">· 선택사항</span></div>
+        <input class="f-input" id="fPrincipal" type="number" inputmode="numeric" placeholder="누적 투입 금액" value="${p.principal||''}">
       </div>
+      
       <div class="f-row">
-        <div class="f-label">수익금 (원) <span style="color:#888;font-size:11px">· 원금 입력 시 자동 계산</span></div>
-        <input class="f-input" id="fGainAmt" type="number" inputmode="numeric" placeholder="예) 1900604" value="${p.gainAmt!=null?p.gainAmt:''}" ${p.principal?'readonly':''}>
+        <div class="f-label">수익금 (원) <span style="color:#888;font-size:11px">· 증권사 앱 기준</span></div>
+        <input class="f-input" id="fGainAmt" type="number" inputmode="numeric" placeholder="예) 1900604" value="${p.gainAmt||''}">
       </div>
-      <div class="f-row">
-        <div class="f-label">수익률 (%) <span style="color:#888;font-size:11px">· 원금 입력 시 자동 계산</span></div>
-        <input class="f-input" id="fGainPct" type="number" inputmode="decimal" step="0.01" placeholder="예) 2.86" value="${p.gainPct!=null?p.gainPct:''}" ${p.principal?'readonly':''}>
+      
+      <div style="background:#2e2e2e;border-radius:10px;padding:12px 14px;margin-top:8px">
+        <div style="font-size:12px;color:#888;margin-bottom:6px">현재 상태</div>
+        <div style="font-size:13px;color:#ccc">평가액: <strong style="color:#fff">${fmt(p.balance)}</strong></div>
+        ${p.principal > 0 ? `<div style="font-size:13px;color:#ccc;margin-top:4px">수익률: <strong style="color:${((p.gainAmt||0)/p.principal*100)>=0?'#4ade80':'#f87171'}">${((p.gainAmt||0)/p.principal*100).toFixed(2)}%</strong></div>` : ''}
       </div>
 
-      <button class="btn-submit" onclick="${isEdit?`updateAccount(${id})`:'addAccount()'}">
-        ${isEdit?'저장하기':'추가하기'}
-      </button>
+      <button class="btn-submit" onclick="saveMetaForm(${accountId})">저장하기</button>
       <button class="btn-cancel" onclick="showEditMain()">취소</button>
     </div>`;
 }
@@ -827,47 +887,22 @@ function pickCat(btn){
   btn.className = `type-btn active ${btn.dataset.col}`;
 }
 
-function readForm(){
-  const name     = document.getElementById('fName').value.trim();
-  const bank     = document.getElementById('fBank').value.trim();
-  const balance  = parseInt(document.getElementById('fBalance').value)||0;
-  const principal = parseInt(document.getElementById('fPrincipal').value)||0;
+function saveMetaForm(accountId){
   const startDate = document.getElementById('fStartDate').value||'';
+  const principal = parseInt(document.getElementById('fPrincipal').value)||0;
+  const gainAmt = parseInt(document.getElementById('fGainAmt').value)||0;
+  const cat = document.querySelector('#catGrid .type-btn.active')?.dataset.v||'domestic';
   
-  let gainAmt = parseFloat(document.getElementById('fGainAmt').value)||0;
-  let gainPct = document.getElementById('fGainPct').value!==''
-    ? parseFloat(document.getElementById('fGainPct').value) : null;
+  investMeta[accountId] = {
+    startDate: startDate,
+    principal: principal,
+    gainAmt: gainAmt,
+    cat: cat
+  };
   
-  // 원금이 있으면 수익금/수익률 자동 계산
-  if(principal > 0 && balance > 0){
-    gainAmt = balance - principal;
-    gainPct = parseFloat(((gainAmt / principal) * 100).toFixed(2));
-  }
-  
-  const cat      = document.querySelector('#catGrid .type-btn.active')?.dataset.v||'overseas';
-  const bankIcon = BANK_ICONS[bank]||'📈';
-
-  if(!name)   { alert('계좌명을 입력해주세요.');  return null; }
-  if(!bank)   { alert('증권사를 입력해주세요.');  return null; }
-  if(!balance){ alert('평가액을 입력해주세요.');  return null; }
-
-  return { name, bank, bankIcon, balance, gainAmt, gainPct, cat, principal, startDate };
-}
-
-function addAccount(){
-  const a=readForm(); if(!a) return;
-  a.id=Date.now(); accounts.push(a);
-  saveAccounts(accounts); showEditMain(); renderPage();
-}
-function updateAccount(id){
-  const a=readForm(); if(!a) return;
-  const idx=accounts.findIndex(x=>x.id===id);
-  if(idx!==-1) accounts[idx]={...accounts[idx],...a};
-  saveAccounts(accounts); showEditMain(); renderPage();
-}
-function deleteAccount(id){
-  accounts=accounts.filter(x=>Number(x.id)!==Number(id));
-  saveAccounts(accounts); showEditMain(); renderPage();
+  saveInvestMeta(investMeta);
+  showEditMain();
+  renderPage();
 }
 
 renderPage();
