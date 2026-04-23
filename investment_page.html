@@ -510,13 +510,14 @@ function renderInvMonthGrid(){
 function pickInvMonth(m){ selY=sheetY; selM=m; closeMonthSheet(); renderPage(); }
 
 function renderPage(){
-  // 계좌탭의 증권 계좌 잔액 불러와서 balance 오버라이드
+  // 계좌탭의 증권·연금 계좌 잔액 불러와서 balance 오버라이드
   try {
     const accHist   = JSON.parse(localStorage.getItem(pk('af_accounts_history'))||'{}');
     const accList   = JSON.parse(localStorage.getItem(pk('af_accounts'))||'[]');
     const mk        = invMonthKey(selY, selM);
     const monthHist = accHist[mk]||{};
     const secAccs   = accList.filter(a=>a.cat==='securities');
+    const pensionAccs = accList.filter(a=>a.cat==='pension');
 
     // 계좌탭 증권계좌 → 투자탭 계좌에 잔액 반영
     // 매칭: 이름 완전일치 우선, 그 다음 은행명 일치
@@ -534,6 +535,20 @@ function renderPage(){
         if(sa.startDate) match.startDate = sa.startDate;
       }
     });
+    
+    // 계좌탭 연금·IRP 계좌 → 투자탭 계좌에 잔액 반영
+    pensionAccs.forEach(pa=>{
+      const bal = monthHist[pa.id];
+      if(bal == null) return;
+      let match = accounts.find(a=>a.name === pa.name);
+      if(!match) match = accounts.find(a=>a.bank === pa.bank);
+      if(match) {
+        match.balance = bal;
+        if(pa.principal) match.principal = pa.principal;
+        if(pa.startDate) match.startDate = pa.startDate;
+      }
+    });
+    
     // 계좌탭에만 있고 투자탭엔 없는 증권계좌 → 자동으로 투자탭에 추가 표시
     secAccs.forEach(sa=>{
       const bal = monthHist[sa.id]||0;
@@ -547,6 +562,24 @@ function renderPage(){
           gainAmt:0, gainPct:null, 
           principal: sa.principal||0,
           startDate: sa.startDate||'',
+          _fromAccount:true
+        });
+      }
+    });
+    
+    // 계좌탭에만 있고 투자탭엔 없는 연금·IRP 계좌 → 자동으로 투자탭에 추가 표시
+    pensionAccs.forEach(pa=>{
+      const bal = monthHist[pa.id]||0;
+      const alreadyIn = accounts.some(a=>a.name===pa.name||a.bank===pa.bank);
+      if(!alreadyIn && bal>0){
+        accounts.push({
+          id:'acc_'+pa.id, name:pa.name, bank:pa.bank,
+          bankIcon:'🎯', 
+          cat: 'etc',  // 연금은 '기타' 카테고리로
+          balance:bal,
+          gainAmt:0, gainPct:null, 
+          principal: pa.principal||0,
+          startDate: pa.startDate||'',
           _fromAccount:true
         });
       }

@@ -454,10 +454,14 @@ function showAddForm(){
   // 증권계좌 선택 시 추가 필드 표시
   document.querySelectorAll('#typeGrid .type-btn').forEach(btn=>{
     btn.addEventListener('click',()=>{
-      const isSec = btn.dataset.cat === 'securities';
+      const cat = btn.dataset.cat;
+      const isSec = cat === 'securities';
+      const isPension = cat === 'pension';
+      const showInvest = isSec || isPension;
+      
       document.getElementById('stockTypeRow').style.display = isSec?'block':'none';
-      document.getElementById('principalRow').style.display = isSec?'block':'none';
-      document.getElementById('startDateRow').style.display = isSec?'block':'none';
+      document.getElementById('principalRow').style.display = showInvest?'block':'none';
+      document.getElementById('startDateRow').style.display = showInvest?'block':'none';
     });
   });
 }
@@ -465,10 +469,14 @@ function showAddForm(){
 function selCatBtn(btn){ 
   document.querySelectorAll('#typeGrid .type-btn').forEach(b=>b.classList.remove('active')); 
   btn.classList.add('active');
-  const isSec = btn.dataset.cat === 'securities';
+  const cat = btn.dataset.cat;
+  const isSec = cat === 'securities';
+  const isPension = cat === 'pension';
+  const showInvest = isSec || isPension;
+  
   document.getElementById('stockTypeRow').style.display = isSec?'block':'none';
-  document.getElementById('principalRow').style.display = isSec?'block':'none';
-  document.getElementById('startDateRow').style.display = isSec?'block':'none';
+  document.getElementById('principalRow').style.display = showInvest?'block':'none';
+  document.getElementById('startDateRow').style.display = showInvest?'block':'none';
 }
 
 function selStockTypeBtn(btn){
@@ -497,6 +505,15 @@ function addAccount(){
     const startDate = document.getElementById('newStartDate').value||monthKey(selY,selM);
     
     accountData.stockType = stockType;
+    accountData.principal = principal;
+    accountData.startDate = startDate;
+  }
+  
+  // 연금·IRP 계좌도 원금/시작일 저장
+  if(cat === 'pension'){
+    const principal = parseInt(document.getElementById('newPrincipal').value)||0;
+    const startDate = document.getElementById('newStartDate').value||monthKey(selY,selM);
+    
     accountData.principal = principal;
     accountData.startDate = startDate;
   }
