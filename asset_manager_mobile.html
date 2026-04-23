@@ -542,21 +542,30 @@ function render(){
     {label:'대출',       value:loan,       color:'#374151', neg:true},
   ].filter(s=>s.value>0);
 
+  // 데이터가 없으면 빈 도넛 표시
+  const hasData = segments.length > 0;
+  const chartData = hasData ? segments.map(s=>s.value) : [100];
+  const chartColors = hasData ? segments.map(s=>s.color) : ['#2a2a2a'];
+
   if(donutInst) donutInst.destroy();
   donutInst = new Chart(document.getElementById('donutChart').getContext('2d'),{
     type:'doughnut',
     data:{ datasets:[{
-      data:segments.map(s=>s.value),
-      backgroundColor:segments.map(s=>s.color),
-      borderWidth:0, hoverOffset:6,
+      data:chartData,
+      backgroundColor:chartColors,
+      borderWidth:0, hoverOffset:hasData?6:0,
     }]},
     options:{
       cutout:'72%',
-      plugins:{legend:{display:false}, tooltip:{
-        backgroundColor:'rgba(20,20,30,0.95)',
-        padding:10, cornerRadius:10,
-        callbacks:{label:i=>' '+fmt(segments[i.dataIndex].value)}
-      }},
+      plugins:{
+        legend:{display:false}, 
+        tooltip:{
+          enabled: hasData,
+          backgroundColor:'rgba(20,20,30,0.95)',
+          padding:10, cornerRadius:10,
+          callbacks:{label:i=>' '+fmt(segments[i.dataIndex].value)}
+        }
+      },
       animation:{duration:700}
     }
   });
@@ -568,7 +577,7 @@ function render(){
         <span class="dl-name">${s.label}</span>
       </div>
       <span class="dl-amt ${s.neg?'neg':''}">${s.neg?'-':''}${fmtShort(s.value)}</span>
-    </div>`).join('');
+    </div>`).join('') + (!hasData ? '<div style="text-align:center;color:#555;font-size:12px;padding:8px 0">데이터를 입력해주세요</div>' : '');
 
   // 자산 그리드 (통합 시 그리드 클릭 → u1 기준)
   const cars0 = cars[0];

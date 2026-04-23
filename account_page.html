@@ -151,7 +151,7 @@
 
 <!-- 총 자산 -->
 <div class="total-card">
-  <div class="tac-label" id="tacLabel">이번 달 계좌 잔액</div>
+  <div class="tac-label" id="tacLabel">이번 달 계좌 잔고</div>
   <div class="tac-amount" id="totalAssetAmt">—</div>
   <div class="tac-sub"   id="totalAssetSub">—</div>
 </div>
@@ -297,8 +297,8 @@ function quickEdit(id){
 function renderPage(){
   const mk = monthKey(selY, selM);
   const isCur = selY===CUR_YEAR && selM===CUR_MONTH;
-  document.getElementById('monthLabelText').textContent = `${selM}월 계좌 잔액`;
-  document.getElementById('tacLabel').textContent = isCur ? '이번 달 계좌 잔액' : `${selY}년 ${selM}월 잔액`;
+  document.getElementById('monthLabelText').textContent = `${selM}월 계좌 잔고`;
+  document.getElementById('tacLabel').textContent = isCur ? '이번 달 계좌 잔고' : `${selY}년 ${selM}월 잔고`;
 
   const catKeys = activeCat==='all' ? Object.keys(CATS) : [activeCat];
   let totalBalance = 0, totalCount = 0;
@@ -383,7 +383,6 @@ function showEditMain(){
           <div class="ei-sub">${a.bank} · ${selM}월 ${fmt(getBalance(a.id))}</div>
         </div>
         <div class="ei-actions">
-          <button class="btn-ea" onclick="showBalanceForm(${a.id})">잔액</button>
           <button class="btn-ea" onclick="showEditForm(${a.id})">수정</button>
           <button class="btn-ea del" onclick="deleteAccount(${a.id})">삭제</button>
         </div>
@@ -396,7 +395,7 @@ function showEditMain(){
     <button class="btn-add-acc" onclick="showAddForm()">＋ 계좌 추가하기</button>`;
 }
 
-/* 월별 잔액 입력 폼 */
+/* 월별 잔고 입력 폼 */
 function showBalanceForm(id){
   const a = accounts.find(x=>x.id===id); if(!a) return;
   const cur = getBalance(id);
@@ -407,10 +406,10 @@ function showBalanceForm(id){
   const isInvestment = (a.cat === 'securities' || a.cat === 'pension');
   
   document.getElementById('editContent').innerHTML = `
-    <div class="modal-title">${a.name}<br><span style="font-size:14px;color:#888;font-weight:400">${selY}년 ${selM}월 잔액 입력</span></div>
+    <div class="modal-title">${a.name}<br><span style="font-size:14px;color:#888;font-weight:400">${selY}년 ${selM}월 잔고 입력</span></div>
     <div class="add-form">
       <div class="f-row">
-        <div class="f-label">${selM}월 말 잔액 (원)</div>
+        <div class="f-label">${selM}월 말 잔고 (원)</div>
         <input class="f-input" id="bInput" type="number" inputmode="numeric" placeholder="0" value="${cur||''}">
       </div>
       ${isInvestment ? `
@@ -471,7 +470,7 @@ function showAddForm(){
         <div class="f-label">투자 시작일</div>
         <input class="f-input" id="newStartDate" type="month" value="${selY}-${String(selM).padStart(2,'0')}">
       </div>
-      <div class="f-row"><div class="f-label">${selM}월 잔액 (원)</div><input class="f-input" id="newBalance" type="number" inputmode="numeric" placeholder="0"></div>
+      <div class="f-row"><div class="f-label">${selM}월 잔고 (원)</div><input class="f-input" id="newBalance" type="number" inputmode="numeric" placeholder="0"></div>
 
       <button class="btn-submit" onclick="addAccount()">추가하기</button>
       <button class="btn-cancel" onclick="showEditMain()">취소</button>
@@ -546,7 +545,7 @@ function addAccount(){
   
   accounts.push(accountData);
   saveAccounts(accounts);
-  // 이번 달 잔액 저장
+  // 이번 달 잔고 저장
   if(balance>0){ const mk=monthKey(selY,selM); if(!history[mk])history[mk]={}; history[mk][id]=balance; saveHistory(history); }
   showEditMain(); renderPage();
 }
@@ -562,7 +561,7 @@ function showEditForm(id){
         </div>
       </div>
       <div class="f-row"><div class="f-label">계좌명</div><input class="f-input" id="newName" type="text" value="${a.name}"></div>
-      <div class="f-row"><div class="f-label">은행/증권사</div><input class="f-input" id="newBank" type="text" value="${a.bank}"></div><input class="f-input" id="newYield" type="number" inputmode="decimal" value="${a.yieldPct??''}"></div>
+      <div class="f-row"><div class="f-label">은행/증권사</div><input class="f-input" id="newBank" type="text" value="${a.bank}"></div>
       <button class="btn-submit" onclick="updateAccount(${id})">저장하기</button>
       <button class="btn-cancel" onclick="showEditMain()">취소</button>
     </div>`;
@@ -596,10 +595,10 @@ function confirmTrash(){ if(_trashCb)_trashCb(); closeTrashModal(); }
 function openMonthTrash(){
   const mk = monthKey(selY, selM);
   const hasData = accounts.some(a=>(history[mk]||{})[a.id]>0);
-  if(!hasData){ alert(selM+'월에 입력된 잔액이 없어요.'); return; }
+  if(!hasData){ alert(selM+'월에 입력된 잔고가 없어요.'); return; }
   openTrashModal(
-    selM+'월 잔액 초기화',
-    `<strong>${selY}년 ${selM}월</strong>에 입력된<br>모든 계좌 잔액이 삭제돼요.`,
+    selM+'월 잔고 초기화',
+    `<strong>${selY}년 ${selM}월</strong>에 입력된<br>모든 계좌 잔고가 삭제돼요.`,
     ()=>{
       delete history[monthKey(selY,selM)];
       saveHistory(history);
