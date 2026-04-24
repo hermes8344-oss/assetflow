@@ -53,6 +53,7 @@
   .ic-securities{ background:#6c3fb522; }
   .ic-pension   { background:#d9772022; }
   .ic-savings   { background:#2563eb22; }
+  .ic-crypto    { background:#f7931a22; }
   .acc-info { flex:1; min-width:0; }
   .acc-name { font-size:15px; font-weight:500; color:#eee; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:2px; }
   .acc-sub  { font-size:12px; color:#666; }
@@ -168,6 +169,7 @@
   <button class="cat-tab"        data-cat="savings"    onclick="selectCat(this)">저축</button>
   <button class="cat-tab"        data-cat="securities" onclick="selectCat(this)">증권</button>
   <button class="cat-tab"        data-cat="pension"    onclick="selectCat(this)">연금</button>
+  <button class="cat-tab"        data-cat="crypto"     onclick="selectCat(this)">가상화폐</button>
 </div>
 
 <!-- 계좌 목록 -->
@@ -226,7 +228,7 @@
 <div class="sheet-overlay" id="bankSheet" onclick="if(event.target===this)closeBankSheet()">
   <div class="sheet-inner">
     <div class="sheet-handle"></div>
-    <div class="sheet-title">은행/증권사 선택</div>
+    <div class="sheet-title">은행/증권사/거래소 선택</div>
     
     <div style="margin-bottom:12px">
       <div style="font-size:13px;color:#888;font-weight:600;padding:8px 0 8px;border-bottom:1px solid #333">🏦 은행</div>
@@ -236,6 +238,11 @@
     <div style="margin-bottom:12px">
       <div style="font-size:13px;color:#888;font-weight:600;padding:8px 0 8px;border-bottom:1px solid #333">📈 증권사</div>
       <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px" id="securitiesList"></div>
+    </div>
+    
+    <div style="margin-bottom:12px">
+      <div style="font-size:13px;color:#888;font-weight:600;padding:8px 0 8px;border-bottom:1px solid #333">🪙 거래소</div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px" id="cryptoList"></div>
     </div>
     
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
@@ -266,6 +273,7 @@ const CATS = {
   savings:    {label:'저축·파킹'},
   securities: {label:'증권·CMA'},
   pension:    {label:'연금·IRP'},
+  crypto:     {label:'가상화폐'},
 };
 
 const BANKS = [
@@ -279,6 +287,11 @@ const SECURITIES = [
   '미래에셋증권', '한국투자증권', 'NH투자증권', '삼성증권', 'KB증권', '신한투자증권',
   '키움증권', '메리츠증권', '하나증권', '대신증권', '한화투자증권', '교보증권',
   '유안타증권', 'DB금융투자', '현대차증권', '다올투자증권', 'SK증권'
+];
+
+const CRYPTO_EXCHANGES = [
+  '업비트', '빗썸', '코인원', '코빗',
+  '바이낸스', '바이비트', 'OKX', '크라켄'
 ];
 
 /* ══════════════════════════════════════
@@ -556,13 +569,14 @@ function showAddForm(){
       <button class="btn-cancel" onclick="showEditMain()">취소</button>
     </div>`;
   
-  // 증권계좌 선택 시 추가 필드 표시
+  // 증권/연금/가상화폐 계좌 선택 시 추가 필드 표시
   document.querySelectorAll('#typeGrid .type-btn').forEach(btn=>{
     btn.addEventListener('click',()=>{
       const cat = btn.dataset.cat;
       const isSec = cat === 'securities';
       const isPension = cat === 'pension';
-      const showInvest = isSec || isPension;
+      const isCrypto = cat === 'crypto';
+      const showInvest = isSec || isPension || isCrypto;
       
       document.getElementById('stockTypeRow').style.display = isSec?'block':'none';
       document.getElementById('principalRow').style.display = showInvest?'block':'none';
@@ -577,7 +591,8 @@ function selCatBtn(btn){
   const cat = btn.dataset.cat;
   const isSec = cat === 'securities';
   const isPension = cat === 'pension';
-  const showInvest = isSec || isPension;
+  const isCrypto = cat === 'crypto';
+  const showInvest = isSec || isPension || isCrypto;
   
   document.getElementById('stockTypeRow').style.display = isSec?'block':'none';
   document.getElementById('principalRow').style.display = showInvest?'block':'none';
@@ -599,8 +614,8 @@ function addAccount(){
   const yieldPct= null;
   if(!name){alert('계좌명을 입력해주세요.');return;}
   if(!bank || bank==='선택하기'){alert('은행/증권사를 선택해주세요.');return;}
-  const iconMap ={checking:'🏦',savings:'💰',securities:'📈',pension:'🎯'};
-  const clsMap  ={checking:'ic-toss',savings:'ic-savings',securities:'ic-securities',pension:'ic-pension'};
+  const iconMap ={checking:'🏦',savings:'💰',securities:'📈',pension:'🎯',crypto:'🪙'};
+  const clsMap  ={checking:'ic-toss',savings:'ic-savings',securities:'ic-securities',pension:'ic-pension',crypto:'ic-crypto'};
   const id = Date.now();
   
   const accountData = {id,cat,name,bank:bank||'직접입력',icon:iconMap[cat],iconCls:clsMap[cat],yieldPct};
@@ -627,6 +642,16 @@ function addAccount(){
     accountData.startDate = startDate;
   }
   
+  // 가상화폐 계좌도 원금/시작일 저장
+  if(cat === 'crypto'){
+    const principalStr = document.getElementById('newPrincipal').value.replace(/,/g,'');
+    const principal = parseInt(principalStr)||0;
+    const startDate = document.getElementById('newStartDate').value||monthKey(selY,selM);
+    
+    accountData.principal = principal;
+    accountData.startDate = startDate;
+  }
+  
   accounts.push(accountData);
   saveAccounts(accounts);
   // 이번 달 잔고 저장
@@ -638,7 +663,8 @@ function showEditForm(id){
   const a=accounts.find(x=>x.id===id); if(!a)return;
   const isSecurities = a.cat === 'securities';
   const isPension = a.cat === 'pension';
-  const showInvest = isSecurities || isPension;
+  const isCrypto = a.cat === 'crypto';
+  const showInvest = isSecurities || isPension || isCrypto;
   
   document.getElementById('editContent').innerHTML=`
     <div class="modal-title">계좌 수정</div>
@@ -678,7 +704,8 @@ function showEditForm(id){
       const cat = btn.dataset.cat;
       const isSec = cat === 'securities';
       const isPen = cat === 'pension';
-      const showInv = isSec || isPen;
+      const isCry = cat === 'crypto';
+      const showInv = isSec || isPen || isCry;
       
       document.getElementById('stockTypeRow').style.display = isSec?'block':'none';
       document.getElementById('principalRow').style.display = showInv?'block':'none';
@@ -723,6 +750,16 @@ function updateAccount(id){
     accounts[idx].startDate = startDate;
   }
   
+  // 가상화폐 계좌도 원금/시작일 저장
+  if(cat === 'crypto'){
+    const principalInput = document.getElementById('editPrincipal');
+    const principal = principalInput ? (parseInt(principalInput.value.replace(/,/g,''))||0) : 0;
+    const startDate = document.getElementById('editStartDate')?.value||'';
+    
+    accounts[idx].principal = principal;
+    accounts[idx].startDate = startDate;
+  }
+  
   saveAccounts(accounts); showEditMain(); renderPage();
 }
 
@@ -734,7 +771,7 @@ function deleteAccount(id){
 }
 
 
-/* ── 은행/증권사 선택 ── */
+/* ── 은행/증권사/거래소 선택 ── */
 function openBankSheet(){
   // 은행 목록 생성
   const bankListEl = document.getElementById('bankList');
@@ -746,6 +783,12 @@ function openBankSheet(){
   const securitiesListEl = document.getElementById('securitiesList');
   securitiesListEl.innerHTML = SECURITIES.map(sec => 
     `<button class="m-chip" onclick="selectBank('${sec}')" style="padding:12px 8px;font-size:13px">${sec}</button>`
+  ).join('');
+  
+  // 거래소 목록 생성
+  const cryptoListEl = document.getElementById('cryptoList');
+  cryptoListEl.innerHTML = CRYPTO_EXCHANGES.map(ex => 
+    `<button class="m-chip" onclick="selectBank('${ex}')" style="padding:12px 8px;font-size:13px">${ex}</button>`
   ).join('');
   
   document.getElementById('bankSheet').classList.add('active');

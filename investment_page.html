@@ -147,7 +147,8 @@
   .ei-name { font-size:14px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .ei-sub  { font-size:12px; color:#666; margin-top:2px; }
   .ei-actions { display:flex; gap:8px; flex-shrink:0; }
-  .btn-ea { background:#3a3a3a; border:none; border-radius:8px; color:#ccc; font-size:12px; padding:6px 10px; cursor:pointer; }
+  .btn-ea { background:#3a3a3a; border:none; border-radius:8px; color:#ccc; font-size:12px; padding:6px 10px; cursor:pointer; transition:all 0.15s; }
+  .btn-ea.active { background:#007aff; color:#fff; }
   .btn-ea.del { color:#ff6b6b; }
 
   .btn-add {
@@ -307,8 +308,8 @@
   .m-dot { font-size:8px; color:#555; margin-top:2px; }
 
 
-  .month-trash-btn { background:none; border:none; color:#555; font-size:18px; cursor:pointer; padding:4px 8px; line-height:1; transition:color 0.15s; }
-  .month-trash-btn:active { color:#f87171; }
+  .month-trash-btn { background:none; border:none; color:#555; font-size:18px; cursor:pointer; padding:4px 8px; line-height:1; transition:color 0.15s; display:flex; align-items:center; justify-content:center; }
+  .month-trash-btn:active { color:#888; }
   .trash-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:500; align-items:center; justify-content:center; padding:0 24px; }
   .trash-overlay.active { display:flex; }
   .trash-sheet { background:#1e1e1e; border-radius:20px; width:100%; max-width:340px; padding:28px 24px 20px; animation:popIn 0.2s ease; }
@@ -335,7 +336,12 @@
     <span id="invMonthLabel" style="font-size:15px;font-weight:600;color:#fff">—</span>
     <span style="font-size:10px;color:#555">▼</span>
   </button>
-  <button class="month-trash-btn" onclick="openMonthTrash()" title="이 달 데이터 초기화">🗑️</button>
+  <button class="month-trash-btn" onclick="openImportModal()" title="전월 데이터 불러오기">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 3V15M12 15L8 11M12 15L16 11" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M3 15C3 15 3 21 12 21C21 21 21 15 21 15" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
 </div>
 
 <!-- 총 투자 요약 -->
@@ -359,7 +365,7 @@
 
 <!-- 하단 -->
 <div class="bottom-nav">
-  <button class="nav-btn" onclick="openEditModal()">⚙️ 자산 편집하기</button>
+  <button class="nav-btn" onclick="openEditModal()">⚙️ 투자 항목 관리</button>
 </div>
 
 <!-- ── 배당 버튼 (summary-card 아래) ── -->
@@ -414,15 +420,20 @@
     <div class="month-grid-inv" id="invMonthGrid"></div>
   </div>
 </div>
-<!-- 월별 초기화 모달 -->
-<div class="trash-overlay" id="trashOverlay" onclick="if(event.target===this)closeTrashModal()">
+<!-- 불러오기 모달 -->
+<div class="trash-overlay" id="importOverlay" onclick="if(event.target===this)closeImportModal()">
   <div class="trash-sheet">
-    <div class="trs-icon">🗑️</div>
-    <div class="trs-title" id="trsTitle">이 달 데이터 초기화</div>
-    <div class="trs-desc"  id="trsDesc">—</div>
+    <div class="trs-icon">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 3V15M12 15L8 11M12 15L16 11" stroke="#888" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M3 15C3 15 3 21 12 21C21 21 21 15 21 15" stroke="#888" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="trs-title" id="importTitle">전월 수익금 불러오기</div>
+    <div class="trs-desc" id="importDesc"></div>
+    <div id="importButtons"></div>
     <div class="trs-btns">
-      <button class="trs-cancel"  onclick="closeTrashModal()">취소</button>
-      <button class="trs-confirm" onclick="confirmTrash()">초기화</button>
+      <button class="trs-cancel" onclick="closeImportModal()">취소</button>
     </div>
   </div>
 </div>
@@ -463,11 +474,14 @@ const BANK_ICONS = {
 
 /* ── 기본 데이터 ── */
 /* 
-  af_invest_meta: {accountId: {principal, startDate, gainAmt}}
+  af_invest_meta: {accountId: {principal, startDate, gainAmt, cat}}
+  af_invest_visibility: {accountId: true/false}
   - accountId는 af_accounts의 id와 매칭
   - 계좌 목록은 account_page에서 자동 연동
+  - visibility: true(보기), false(숨기기) - 기본값 true
 */
 const DEFAULT_META = {};
+const DEFAULT_VISIBILITY = {};
 
 function loadInvestMeta(){ 
   try{
@@ -481,7 +495,20 @@ function saveInvestMeta(d){
   localStorage.setItem(pk('af_invest_meta'),JSON.stringify(d)); 
 }
 
+function loadVisibility(){ 
+  try{
+    const s=localStorage.getItem(pk('af_invest_visibility')); 
+    return s?JSON.parse(s):DEFAULT_VISIBILITY;
+  } catch{
+    return DEFAULT_VISIBILITY;
+  } 
+}
+function saveVisibility(d){ 
+  localStorage.setItem(pk('af_invest_visibility'),JSON.stringify(d)); 
+}
+
 let investMeta = loadInvestMeta();
+let investVisibility = loadVisibility();
 
 /* ══════════════════════
    포맷 함수
@@ -536,17 +563,23 @@ function renderPage(){
     const monthHist = accHist[mk]||{};
     const monthCf = cashflow[mk]||{};
     
-    // 증권·연금 계좌만 필터링
-    const investAccs = accList.filter(a => a.cat==='securities' || a.cat==='pension');
+    // 증권·연금·가상화폐 계좌만 필터링
+    const investAccs = accList.filter(a => ['securities','pension','crypto'].includes(a.cat));
     
     investAccs.forEach(a => {
       const bal = monthHist[a.id]||0;
       if(bal === 0) return; // 잔액 0인 계좌는 제외
       
+      // visibility 체크 (기본값 true)
+      const isVisible = investVisibility[a.id] !== false;
+      if(!isVisible) return; // 숨김 처리된 계좌 제외
+      
       const meta = investMeta[a.id] || {};
       const principal = meta.principal || 0;
       const startDate = meta.startDate || '';
-      const gainAmt = meta.gainAmt || 0;
+      
+      // 수익금 자동 계산: 현재 잔액 - 투자 원금
+      const gainAmt = bal - principal;
       
       // 수익률 계산
       let gainPct = null;
@@ -621,9 +654,19 @@ function renderPage(){
     const d = catTotals[c.key];
     if(d.balance===0) return '';
     const pct = total>0 ? (d.balance/total*100).toFixed(0) : 0;
-    const gainStr = d.gainAmt!==0
-      ? `${d.gainAmt>=0?'+':''}${fmt(d.gainAmt)} (${(d.gainAmt/(d.balance-d.gainAmt)*100).toFixed(2)}%)`
-      : (c.key==='deposit'?'원화 · 달러':'—');
+    
+    // 수익률 계산 (원금이 있을 때만)
+    const principal = d.balance - d.gainAmt;
+    let gainStr = '—';
+    if(d.gainAmt !== 0 && principal > 0){
+      const gainPct = (d.gainAmt / principal * 100).toFixed(2);
+      gainStr = `${d.gainAmt>=0?'+':''}${fmt(d.gainAmt)} (${d.gainAmt>=0?'+':''}${gainPct}%)`;
+    } else if(d.gainAmt !== 0){
+      gainStr = `${d.gainAmt>=0?'+':''}${fmt(d.gainAmt)}`;
+    } else if(c.key==='deposit'){
+      gainStr = '원화 · 달러';
+    }
+    
     const gainClass = d.gainAmt>0?'pos':d.gainAmt<0?'neg':'neutral';
     return `
       <div class="legend-item">
@@ -697,7 +740,7 @@ function renderPage(){
       const subText = extraInfo.length > 0 ? extraInfo.join(' · ') : a.bank;
       
       return `
-        <div class="account-item">
+        <div class="account-item" onclick="showAccountDetail(${a.id})">
           <div class="acc-icon" style="background:${catBg(a.cat)}">${a.bankIcon||'📈'}</div>
           <div class="acc-info">
             <div class="acc-name">${a.name}</div>
@@ -735,11 +778,12 @@ function showEditMain(){
     const mk = invMonthKey(selY, selM);
     const monthHist = accHist[mk]||{};
     
-    const investAccs = accList.filter(a => a.cat==='securities' || a.cat==='pension');
+    const investAccs = accList.filter(a => ['securities','pension','crypto'].includes(a.cat));
     
     investAccs.forEach(a => {
       const bal = monthHist[a.id]||0;
       const meta = investMeta[a.id] || {};
+      const isVisible = investVisibility[a.id] !== false; // 기본값 true
       
       accounts.push({
         id: a.id,
@@ -749,17 +793,18 @@ function showEditMain(){
         cat: a.cat,
         principal: meta.principal || 0,
         startDate: meta.startDate || '',
-        gainAmt: meta.gainAmt || 0
+        gainAmt: meta.gainAmt || 0,
+        isVisible: isVisible
       });
     });
   } catch(e){ console.warn('계좌 연동 오류:', e); }
   
   if(accounts.length === 0){
     document.getElementById('editContent').innerHTML=`
-      <div class="modal-title">투자 편집</div>
+      <div class="modal-title">투자 항목 관리</div>
       <div style="color:#555;font-size:14px;padding:32px 0;text-align:center">
-        등록된 증권·연금 계좌가 없어요<br>
-        <span style="font-size:12px;color:#444;margin-top:8px;display:block">계좌 페이지에서 증권/연금 계좌를 추가해주세요</span>
+        등록된 투자 계좌가 없어요<br>
+        <span style="font-size:12px;color:#444;margin-top:8px;display:block">계좌 페이지에서 증권/연금/가상화폐 계좌를 추가해주세요</span>
       </div>`;
     return;
   }
@@ -767,9 +812,10 @@ function showEditMain(){
   let listHTML = '';
   const secAccs = accounts.filter(a => a.cat === 'securities');
   const pensionAccs = accounts.filter(a => a.cat === 'pension');
+  const cryptoAccs = accounts.filter(a => a.cat === 'crypto');
   
   if(secAccs.length > 0){
-    listHTML += `<div class="edit-cat-label">증권 계좌</div>`;
+    listHTML += `<div class="edit-cat-label">화면에 보이는 증권</div>`;
     listHTML += secAccs.map(a=>`
       <div class="edit-item">
         <div class="ei-icon" style="background:rgba(79,142,247,0.12)">📈</div>
@@ -778,13 +824,15 @@ function showEditMain(){
           <div class="ei-sub">${a.bank} · ${fmt(a.balance)}</div>
         </div>
         <div class="ei-actions">
-          <button class="btn-ea" onclick="showMetaForm(${a.id})">수익 입력</button>
+          <button class="btn-ea ${a.isVisible?'active':''}" onclick="toggleVisibility(${a.id})" style="min-width:60px">
+            ${a.isVisible?'숨기기':'보기'}
+          </button>
         </div>
       </div>`).join('');
   }
   
   if(pensionAccs.length > 0){
-    listHTML += `<div class="edit-cat-label">연금 계좌</div>`;
+    listHTML += `<div class="edit-cat-label">화면에 보이는 연금</div>`;
     listHTML += pensionAccs.map(a=>`
       <div class="edit-item">
         <div class="ei-icon" style="background:rgba(217,119,32,0.12)">🎯</div>
@@ -793,40 +841,80 @@ function showEditMain(){
           <div class="ei-sub">${a.bank} · ${fmt(a.balance)}</div>
         </div>
         <div class="ei-actions">
-          <button class="btn-ea" onclick="showMetaForm(${a.id})">수익 입력</button>
+          <button class="btn-ea ${a.isVisible?'active':''}" onclick="toggleVisibility(${a.id})" style="min-width:60px">
+            ${a.isVisible?'숨기기':'보기'}
+          </button>
+        </div>
+      </div>`).join('');
+  }
+  
+  if(cryptoAccs.length > 0){
+    listHTML += `<div class="edit-cat-label">화면에 보이는 가상화폐</div>`;
+    listHTML += cryptoAccs.map(a=>`
+      <div class="edit-item">
+        <div class="ei-icon" style="background:rgba(247,147,26,0.12)">🪙</div>
+        <div class="ei-info">
+          <div class="ei-name">${a.name}</div>
+          <div class="ei-sub">${a.bank} · ${fmt(a.balance)}</div>
+        </div>
+        <div class="ei-actions">
+          <button class="btn-ea ${a.isVisible?'active':''}" onclick="toggleVisibility(${a.id})" style="min-width:60px">
+            ${a.isVisible?'숨기기':'보기'}
+          </button>
         </div>
       </div>`).join('');
   }
 
   document.getElementById('editContent').innerHTML=`
-    <div class="modal-title">투자 수익 관리</div>
-    <div style="font-size:12px;color:#666;margin:-16px 0 16px">계좌 추가는 '계좌' 페이지에서 가능해요</div>
+    <div class="modal-title">투자 항목 관리</div>
+    <div style="font-size:12px;color:#666;margin:-16px 0 16px">숨긴 투자는 총 자산에서 제외돼요</div>
     <div class="edit-list">${listHTML}</div>`;
 }
 
-function showMetaForm(accountId){
+function showAccountDetail(accountId){
   // account_page에서 계좌 정보 가져오기
   let accountInfo = null;
   try {
     const accList = JSON.parse(localStorage.getItem(pk('af_accounts'))||'[]');
     const accHist = JSON.parse(localStorage.getItem(pk('af_accounts_history'))||'{}');
+    const cashflow = JSON.parse(localStorage.getItem(pk('af_accounts_cashflow'))||'{}');
     const mk = invMonthKey(selY, selM);
     const monthHist = accHist[mk]||{};
+    const monthCf = cashflow[mk]||{};
     
     const acc = accList.find(a => a.id === accountId);
     if(acc){
       const bal = monthHist[acc.id]||0;
+      const principal = acc.principal || 0;
+      const startDate = acc.startDate || '';
+      const gainAmt = bal - principal;
+      const gainPct = principal > 0 ? ((gainAmt / principal) * 100).toFixed(2) : '0.00';
+      const cf = monthCf[acc.id]||0;
+      
+      // 자산 종류 레이블
+      const catLabels = {
+        overseas: '해외 주식',
+        domestic: '국내 주식',
+        bond: '채권·RP·기타',
+        bill: '발행어음·CMA',
+        crypto: '가상화폐',
+        deposit: '예수금',
+        etc: '기타'
+      };
       const meta = investMeta[accountId] || {};
+      const assetType = catLabels[meta.cat || 'domestic'] || '국내 주식';
       
       accountInfo = {
         id: acc.id,
         name: acc.name,
         bank: acc.bank,
         balance: bal,
-        principal: meta.principal || 0,
-        startDate: meta.startDate || '',
-        gainAmt: meta.gainAmt || 0,
-        cat: meta.cat || 'domestic'
+        principal: principal,
+        startDate: startDate,
+        gainAmt: gainAmt,
+        gainPct: gainPct,
+        assetType: assetType,
+        cashflow: cf
       };
     }
   } catch(e){ console.warn('계좌 정보 로드 오류:', e); }
@@ -837,80 +925,130 @@ function showMetaForm(accountId){
   }
   
   const p = accountInfo;
+  const gainColor = p.gainAmt >= 0 ? '#4ade80' : '#f87171';
+  const gainSign = p.gainAmt >= 0 ? '+' : '';
+  const cfColor = p.cashflow >= 0 ? '#4ade80' : '#f87171';
+  const cfSign = p.cashflow >= 0 ? '+' : '';
 
   document.getElementById('editContent').innerHTML=`
-    <div class="modal-title">${p.name}<br><span style="font-size:14px;color:#888;font-weight:400">투자 수익 정보</span></div>
+    <div class="modal-title">${p.name}<br><span style="font-size:14px;color:#888;font-weight:400">${p.bank}</span></div>
     <div class="add-form">
-
-      <div class="f-row">
-        <div class="f-label">자산 종류</div>
-        <div class="sel-grid" style="grid-template-columns:1fr 1fr 1fr" id="catGrid">
-          ${CATS.map(c=>`
-            <button class="type-btn ${p.cat===c.key?'active '+c.btnCol:''}"
-                    data-v="${c.key}" data-col="${c.btnCol}"
-                    onclick="pickCat(this)">
-              ${c.icon}<br>${c.label}
-            </button>`).join('')}
+      
+      <div style="background:#2e2e2e;border-radius:14px;padding:16px;margin-bottom:14px">
+        <div style="font-size:13px;color:#888;margin-bottom:12px">투자 정보</div>
+        
+        <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+          <span style="font-size:14px;color:#aaa">자산 종류</span>
+          <span style="font-size:14px;color:#fff;font-weight:500">${p.assetType}</span>
+        </div>
+        
+        ${p.startDate ? `
+        <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+          <span style="font-size:14px;color:#aaa">투자 시작일</span>
+          <span style="font-size:14px;color:#fff;font-weight:500">${p.startDate}</span>
+        </div>
+        ` : ''}
+        
+        <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+          <span style="font-size:14px;color:#aaa">투자 원금</span>
+          <span style="font-size:14px;color:#fff;font-weight:500">${fmt(p.principal)}</span>
+        </div>
+        
+        <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+          <span style="font-size:14px;color:#aaa">평가 잔액</span>
+          <span style="font-size:15px;color:#fff;font-weight:600">${fmt(p.balance)}</span>
+        </div>
+        
+        <div style="border-top:1px solid #3a3a3a;margin:12px 0;padding-top:12px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+            <span style="font-size:14px;color:#aaa">평가 손익</span>
+            <span style="font-size:15px;color:${gainColor};font-weight:600">${gainSign}${fmt(Math.abs(p.gainAmt))}</span>
+          </div>
+          
+          ${p.principal > 0 ? `
+          <div style="display:flex;justify-content:space-between">
+            <span style="font-size:14px;color:#aaa">수익률</span>
+            <span style="font-size:15px;color:${gainColor};font-weight:600">${gainSign}${p.gainPct}%</span>
+          </div>
+          ` : `
+          <div style="font-size:12px;color:#666;margin-top:4px">
+            💡 투자 원금을 입력하면 수익률을 확인할 수 있어요
+          </div>
+          `}
         </div>
       </div>
-
-      <div class="f-row">
-        <div class="f-label">투자 시작일 <span style="color:#888;font-size:11px">· 선택사항</span></div>
-        <input class="f-input" id="fStartDate" type="month" value="${p.startDate||''}">
-      </div>
       
-      <div class="f-row">
-        <div class="f-label">투자 원금 (원) <span style="color:#888;font-size:11px">· 선택사항</span></div>
-        <input class="f-input" id="fPrincipal" type="number" inputmode="numeric" placeholder="누적 투입 금액" value="${p.principal||''}">
+      ${p.cashflow !== 0 ? `
+      <div style="background:#2e2e2e;border-radius:14px;padding:16px;margin-bottom:14px">
+        <div style="font-size:13px;color:#888;margin-bottom:10px">${selM}월 입출금</div>
+        <div style="font-size:15px;color:${cfColor};font-weight:600">${cfSign}${fmt(Math.abs(p.cashflow))}</div>
+        <div style="font-size:12px;color:#666;margin-top:4px">${p.cashflow > 0 ? '입금' : '출금'}</div>
       </div>
+      ` : ''}
       
-      <div class="f-row">
-        <div class="f-label">수익금 (원) <span style="color:#888;font-size:11px">· 증권사 앱 기준</span></div>
-        <input class="f-input" id="fGainAmt" type="number" inputmode="numeric" placeholder="예) 1900604" value="${p.gainAmt||''}">
-      </div>
-      
-      <div style="background:#2e2e2e;border-radius:10px;padding:12px 14px;margin-top:8px">
-        <div style="font-size:12px;color:#888;margin-bottom:6px">현재 상태</div>
-        <div style="font-size:13px;color:#ccc">평가액: <strong style="color:#fff">${fmt(p.balance)}</strong></div>
-        ${p.principal > 0 ? `<div style="font-size:13px;color:#ccc;margin-top:4px">수익률: <strong style="color:${((p.gainAmt||0)/p.principal*100)>=0?'#4ade80':'#f87171'}">${((p.gainAmt||0)/p.principal*100).toFixed(2)}%</strong></div>` : ''}
+      <div style="font-size:12px;color:#666;padding:12px;background:#1e1e1e;border-radius:10px;margin-top:8px">
+        💡 투자 원금과 평가 잔액은 '계좌' 페이지에서 수정할 수 있어요
       </div>
 
-      <button class="btn-submit" onclick="saveMetaForm(${accountId})">저장하기</button>
-      <button class="btn-cancel" onclick="showEditMain()">취소</button>
+      <button class="btn-cancel" onclick="closeEditModal()">닫기</button>
     </div>`;
 }
 
-function pickCat(btn){
-  document.querySelectorAll('#catGrid .type-btn').forEach(b=>{
-    b.className = 'type-btn';
-  });
-  btn.className = `type-btn active ${btn.dataset.col}`;
+function toggleVisibility(accountId){
+  const currentState = investVisibility[accountId] !== false; // 기본값 true
+  investVisibility[accountId] = !currentState;
+  saveVisibility(investVisibility);
+  showEditMain(); // 화면 새로고침
+  renderPage(); // 메인 화면도 새로고침
 }
 
-function saveMetaForm(accountId){
-  const startDate = document.getElementById('fStartDate').value||'';
-  const principal = parseInt(document.getElementById('fPrincipal').value)||0;
-  const gainAmt = parseInt(document.getElementById('fGainAmt').value)||0;
-  const cat = document.querySelector('#catGrid .type-btn.active')?.dataset.v||'domestic';
-  
-  investMeta[accountId] = {
-    startDate: startDate,
-    principal: principal,
-    gainAmt: gainAmt,
-    cat: cat
-  };
-  
-  saveInvestMeta(investMeta);
-  showEditMain();
-  renderPage();
+/* ── 숫자 입력 콤마 포맷 ── */
+function formatNumberInput(input){
+  let val = input.value.replace(/,/g, '');
+  if(val && !isNaN(val)){
+    input.value = Number(val).toLocaleString('ko-KR');
+  }
 }
 
 renderPage();
 
-/* ══════════════════════════════════════
+/* ══════════════════════
+   전월 데이터 불러오기
+══════════════════════ */
+function getPrevMonthKey(y, m){
+  if(m === 1) return `${y-1}-12`;
+  return `${y}-${String(m-1).padStart(2,'0')}`;
+}
+
+function openImportModal(){
+  const mk = invMonthKey(selY, selM);
+  const prevMk = getPrevMonthKey(selY, selM);
+  
+  const descEl = document.getElementById('importDesc');
+  const buttonsEl = document.getElementById('importButtons');
+  
+  // 안내 메시지
+  descEl.innerHTML = `투자 잔액 불러오기는<br>'계좌' 페이지에서 진행해주세요`;
+  buttonsEl.innerHTML = '';
+  
+  document.getElementById('importOverlay').classList.add('active');
+}
+
+function closeImportModal(){
+  document.getElementById('importOverlay').classList.remove('active');
+}
+
+function importPrevMonth(mode){
+  // 전월 불러오기는 account_page에서 처리하므로 여기서는 불필요
+  // 수익금은 자동 계산되므로 별도 처리 없음
+  closeImportModal();
+  renderPage();
+}
+
+/* ══════════════════════
    배당금 기능
    af_dividends: [{id, date:"YYYY-MM-DD", name, amount}]
-══════════════════════════════════════ */
+══════════════════════ */
 function loadDividends(){ try{const s=localStorage.getItem(pk('af_dividends')); return s?JSON.parse(s):[];} catch{return [];} }
 function saveDividends(d){ localStorage.setItem(pk('af_dividends'),JSON.stringify(d)); }
 
