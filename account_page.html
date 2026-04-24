@@ -68,7 +68,7 @@
   /* 월 선택 시트 */
   .sheet-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:300; align-items:flex-end; }
   .sheet-overlay.active { display:flex; }
-  .sheet-inner { background:#242424; border-radius:24px 24px 0 0; width:100%; padding:20px 20px 40px; animation:slideUp 0.25s ease; }
+  .sheet-inner { background:#242424; border-radius:24px 24px 0 0; width:100%; max-height:80vh; overflow-y:auto; padding:20px 20px 40px; animation:slideUp 0.25s ease; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; transition:transform 0.2s ease; }
   @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
   .sheet-handle { width:36px; height:4px; background:#444; border-radius:2px; margin:0 auto 20px; }
   .sheet-title  { font-size:16px; font-weight:700; margin-bottom:20px; }
@@ -86,7 +86,7 @@
   /* 편집 모달 */
   .edit-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:200; align-items:flex-end; }
   .edit-overlay.active { display:flex; }
-  .edit-sheet { background:#242424; border-radius:24px 24px 0 0; width:100%; max-height:85vh; overflow-y:auto; padding:20px 20px 40px; animation:slideUp 0.28s ease; transition:transform 0.2s ease; }
+  .edit-sheet { background:#242424; border-radius:24px 24px 0 0; width:100%; max-height:85vh; overflow-y:auto; padding:20px 20px 40px; animation:slideUp 0.28s ease; transition:transform 0.2s ease; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
   .modal-handle { width:36px; height:4px; background:#444; border-radius:2px; margin:0 auto 20px; cursor:grab; }
   .modal-handle:active { cursor:grabbing; }
   .modal-title  { font-size:18px; font-weight:700; margin-bottom:24px; }
@@ -118,8 +118,8 @@
   .beh-text { font-size:13px; color:#888; line-height:1.5; }
   .beh-text strong { color:#fff; }
 
-  .month-trash-btn { background:none; border:none; color:#555; font-size:18px; cursor:pointer; padding:4px 8px; line-height:1; transition:color 0.15s; }
-  .month-trash-btn:active { color:#f87171; }
+  .month-trash-btn { background:none; border:none; color:#555; font-size:18px; cursor:pointer; padding:4px 8px; line-height:1; transition:color 0.15s; display:flex; align-items:center; justify-content:center; }
+  .month-trash-btn:active { color:#888; }
   .trash-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:500; align-items:center; justify-content:center; padding:0 24px; }
   .trash-overlay.active { display:flex; }
   .trash-sheet { background:#1e1e1e; border-radius:20px; width:100%; max-width:340px; padding:28px 24px 20px; animation:popIn 0.2s ease; }
@@ -146,7 +146,12 @@
     <span class="label-text" id="monthLabelText" style="font-size:15px;font-weight:600;color:#fff">—</span>
     <span style="font-size:10px;color:#555">▼</span>
   </button>
-  <button class="month-trash-btn" onclick="openMonthTrash()" title="이 달 잔액 초기화">🗑️</button>
+  <button class="month-trash-btn" onclick="openImportModal()" title="전월 데이터 불러오기">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 3V15M12 15L8 11M12 15L16 11" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M3 15C3 15 3 21 12 21C21 21 21 15 21 15" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
 </div>
 
 <!-- 총 자산 -->
@@ -199,6 +204,47 @@
   </div>
 </div>
 
+<!-- 불러오기 모달 -->
+<div class="trash-overlay" id="importOverlay" onclick="if(event.target===this)closeImportModal()">
+  <div class="trash-sheet">
+    <div class="trs-icon">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 3V15M12 15L8 11M12 15L16 11" stroke="#888" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M3 15C3 15 3 21 12 21C21 21 21 15 21 15" stroke="#888" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="trs-title" id="importTitle">전월 데이터 불러오기</div>
+    <div class="trs-desc" id="importDesc"></div>
+    <div id="importButtons"></div>
+    <div class="trs-btns">
+      <button class="trs-cancel" onclick="closeImportModal()">취소</button>
+    </div>
+  </div>
+</div>
+
+<!-- 은행/증권사 선택 시트 -->
+<div class="sheet-overlay" id="bankSheet" onclick="if(event.target===this)closeBankSheet()">
+  <div class="sheet-inner">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">은행/증권사 선택</div>
+    
+    <div style="margin-bottom:12px">
+      <div style="font-size:13px;color:#888;font-weight:600;padding:8px 0 8px;border-bottom:1px solid #333">🏦 은행</div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px" id="bankList"></div>
+    </div>
+    
+    <div style="margin-bottom:12px">
+      <div style="font-size:13px;color:#888;font-weight:600;padding:8px 0 8px;border-bottom:1px solid #333">📈 증권사</div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px" id="securitiesList"></div>
+    </div>
+    
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+      <button style="background:#2a2a2a;border:none;border-radius:10px;color:#aaa;font-size:14px;padding:12px;cursor:pointer" onclick="selectDirectInput()">✏️ 직접입력</button>
+      <button style="background:#333;border:none;border-radius:10px;color:#aaa;font-size:14px;padding:12px;cursor:pointer" onclick="closeBankSheet()">취소</button>
+    </div>
+  </div>
+</div>
+
 <!-- 편집 모달 -->
 <div class="edit-overlay" id="editOverlay" onclick="if(event.target===this)closeEditModal()">
   <div class="edit-sheet">
@@ -221,6 +267,19 @@ const CATS = {
   securities: {label:'증권·CMA'},
   pension:    {label:'연금·IRP'},
 };
+
+const BANKS = [
+  'KB국민은행', '신한은행', '하나은행', '우리은행', 'NH농협은행',
+  '카카오뱅크', '토스뱅크', '케이뱅크',
+  'IBK기업은행', 'KDB산업은행', 'iM뱅크', 'SC제일은행', '한국씨티은행',
+  '부산은행', '경남은행', '광주은행', '전북은행', '제주은행'
+];
+
+const SECURITIES = [
+  '미래에셋증권', '한국투자증권', 'NH투자증권', '삼성증권', 'KB증권', '신한투자증권',
+  '키움증권', '메리츠증권', '하나증권', '대신증권', '한화투자증권', '교보증권',
+  '유안타증권', 'DB금융투자', '현대차증권', '다올투자증권', 'SK증권'
+];
 
 /* ══════════════════════════════════════
    데이터 구조
@@ -366,8 +425,25 @@ function renderSheetGrid(){
 function pickMonth(m){ selY=sheetY; selM=m; closeMonthSheet(); renderPage(); }
 
 /* ── 편집 모달 ── */
-function openEditModal(){ showEditMain(); document.getElementById('editOverlay').classList.add('active'); }
-function closeEditModal(){ document.getElementById('editOverlay').classList.remove('active'); }
+function openEditModal(){ 
+  showEditMain(); 
+  document.getElementById('editOverlay').classList.add('active');
+  // iOS body 스크롤 차단
+  document.body.style.overflow = 'hidden';
+  document.body.style.position = 'fixed';
+  document.body.style.width = '100%';
+  document.body.style.top = `-${window.scrollY}px`;
+}
+function closeEditModal(){ 
+  document.getElementById('editOverlay').classList.remove('active');
+  // iOS body 스크롤 복원
+  const scrollY = document.body.style.top;
+  document.body.style.overflow = '';
+  document.body.style.position = '';
+  document.body.style.width = '';
+  document.body.style.top = '';
+  window.scrollTo(0, parseInt(scrollY || '0') * -1);
+}
 
 function showEditMain(){
   let listHtml = '';
@@ -410,12 +486,12 @@ function showBalanceForm(id){
     <div class="add-form">
       <div class="f-row">
         <div class="f-label">${selM}월 말 잔고 (원)</div>
-        <input class="f-input" id="bInput" type="number" inputmode="numeric" placeholder="0" value="${cur||''}">
+        <input class="f-input" id="bInput" type="text" inputmode="numeric" placeholder="0" value="${cur?cur.toLocaleString('ko-KR'):''}" oninput="formatNumberInput(this)">
       </div>
       ${isInvestment ? `
       <div class="f-row">
         <div class="f-label">${selM}월 입출금 (원) <span style="color:#888;font-size:11px">· 입금(+) / 출금(-)</span></div>
-        <input class="f-input" id="cfInput" type="number" inputmode="numeric" placeholder="예) 1000000" value="${curCashflow||''}">
+        <input class="f-input" id="cfInput" type="text" inputmode="numeric" placeholder="예) 1000000" value="${curCashflow?curCashflow.toLocaleString('ko-KR'):''}" oninput="formatNumberInput(this)" style="text-align:left">
       </div>
       ` : ''}
       <button class="btn-submit" onclick="saveBalance(${id})">저장하기</button>
@@ -424,9 +500,10 @@ function showBalanceForm(id){
 }
 
 function saveBalance(id){
-  const bal = parseInt(document.getElementById('bInput').value)||0;
+  const balStr = document.getElementById('bInput').value.replace(/,/g,'');
+  const bal = parseInt(balStr)||0;
   const cfInput = document.getElementById('cfInput');
-  const cf = cfInput ? (parseInt(cfInput.value)||0) : 0;
+  const cf = cfInput ? (parseInt(cfInput.value.replace(/,/g,''))||0) : 0;
 
   const mk  = monthKey(selY, selM);
   if(!history[mk]) history[mk] = {};
@@ -460,17 +537,20 @@ function showAddForm(){
           <button class="type-btn" data-stock="overseas" onclick="selStockTypeBtn(this)">해외</button>
         </div>
       </div>
-      <div class="f-row"><div class="f-label">계좌명</div><input class="f-input" id="newName" type="text" placeholder="예) 토스뱅크 파킹통장"></div>
-      <div class="f-row"><div class="f-label">은행/증권사</div><input class="f-input" id="newBank" type="text" placeholder="예) 토스뱅크"></div>
+      <div class="f-row"><div class="f-label">계좌명</div><input class="f-input" id="newName" type="text" placeholder="예) 토스뱅크 파킹통장" enterkeyhint="done"></div>
+      <div class="f-row">
+        <div class="f-label">은행/증권사</div>
+        <button class="f-input" id="newBank" type="button" onclick="openBankSheet()" style="text-align:left;cursor:pointer;color:#888">선택하기</button>
+      </div>
       <div id="principalRow" style="display:none" class="f-row">
         <div class="f-label">투자 원금 (원) <span style="color:#888;font-size:11px">· 누적 관리</span></div>
-        <input class="f-input" id="newPrincipal" type="number" inputmode="numeric" placeholder="0">
+        <input class="f-input" id="newPrincipal" type="text" inputmode="numeric" placeholder="0" oninput="formatNumberInput(this)">
       </div>
       <div id="startDateRow" style="display:none" class="f-row">
         <div class="f-label">투자 시작일</div>
         <input class="f-input" id="newStartDate" type="month" value="${selY}-${String(selM).padStart(2,'0')}">
       </div>
-      <div class="f-row"><div class="f-label">${selM}월 잔고 (원)</div><input class="f-input" id="newBalance" type="number" inputmode="numeric" placeholder="0"></div>
+      <div class="f-row"><div class="f-label">${selM}월 잔고 (원)</div><input class="f-input" id="newBalance" type="text" inputmode="numeric" placeholder="0" oninput="formatNumberInput(this)"></div>
 
       <button class="btn-submit" onclick="addAccount()">추가하기</button>
       <button class="btn-cancel" onclick="showEditMain()">취소</button>
@@ -512,11 +592,13 @@ function selStockTypeBtn(btn){
 
 function addAccount(){
   const name    = document.getElementById('newName').value.trim();
-  const bank    = document.getElementById('newBank').value.trim();
-  const balance = parseInt(document.getElementById('newBalance').value)||0;
+  const bank    = document.getElementById('newBank').textContent.trim();
+  const balanceStr = document.getElementById('newBalance').value.replace(/,/g,'');
+  const balance = parseInt(balanceStr)||0;
   const cat     = document.querySelector('#typeGrid .type-btn.active')?.dataset.cat||'checking';
   const yieldPct= null;
   if(!name){alert('계좌명을 입력해주세요.');return;}
+  if(!bank || bank==='선택하기'){alert('은행/증권사를 선택해주세요.');return;}
   const iconMap ={checking:'🏦',savings:'💰',securities:'📈',pension:'🎯'};
   const clsMap  ={checking:'ic-toss',savings:'ic-savings',securities:'ic-securities',pension:'ic-pension'};
   const id = Date.now();
@@ -526,7 +608,8 @@ function addAccount(){
   // 증권계좌면 추가 필드
   if(cat === 'securities'){
     const stockType = document.querySelector('[data-stock].type-btn.active')?.dataset.stock||'domestic';
-    const principal = parseInt(document.getElementById('newPrincipal').value)||0;
+    const principalStr = document.getElementById('newPrincipal').value.replace(/,/g,'');
+    const principal = parseInt(principalStr)||0;
     const startDate = document.getElementById('newStartDate').value||monthKey(selY,selM);
     
     accountData.stockType = stockType;
@@ -536,7 +619,8 @@ function addAccount(){
   
   // 연금·IRP 계좌도 원금/시작일 저장
   if(cat === 'pension'){
-    const principal = parseInt(document.getElementById('newPrincipal').value)||0;
+    const principalStr = document.getElementById('newPrincipal').value.replace(/,/g,'');
+    const principal = parseInt(principalStr)||0;
     const startDate = document.getElementById('newStartDate').value||monthKey(selY,selM);
     
     accountData.principal = principal;
@@ -552,6 +636,10 @@ function addAccount(){
 
 function showEditForm(id){
   const a=accounts.find(x=>x.id===id); if(!a)return;
+  const isSecurities = a.cat === 'securities';
+  const isPension = a.cat === 'pension';
+  const showInvest = isSecurities || isPension;
+  
   document.getElementById('editContent').innerHTML=`
     <div class="modal-title">계좌 수정</div>
     <div class="add-form">
@@ -560,21 +648,81 @@ function showEditForm(id){
           ${Object.entries(CATS).map(([k,v])=>`<button class="type-btn ${k===a.cat?'active':''}" data-cat="${k}" onclick="selCatBtn(this)">${v.label}</button>`).join('')}
         </div>
       </div>
-      <div class="f-row"><div class="f-label">계좌명</div><input class="f-input" id="newName" type="text" value="${a.name}"></div>
-      <div class="f-row"><div class="f-label">은행/증권사</div><input class="f-input" id="newBank" type="text" value="${a.bank}"></div>
+      <div id="stockTypeRow" style="display:${isSecurities?'block':'none'}">
+        <div class="f-label">증권계좌 구분</div>
+        <div class="type-grid">
+          <button class="type-btn ${a.stockType==='domestic'?'active':''}" data-stock="domestic" onclick="selStockTypeBtn(this)">국내</button>
+          <button class="type-btn ${a.stockType==='overseas'?'active':''}" data-stock="overseas" onclick="selStockTypeBtn(this)">해외</button>
+        </div>
+      </div>
+      <div class="f-row"><div class="f-label">계좌명</div><input class="f-input" id="newName" type="text" value="${a.name}" enterkeyhint="done"></div>
+      <div class="f-row">
+        <div class="f-label">은행/증권사</div>
+        <button class="f-input" id="newBank" type="button" onclick="openBankSheet()" style="text-align:left;cursor:pointer;color:#fff">${a.bank}</button>
+      </div>
+      <div id="principalRow" style="display:${showInvest?'block':'none'}" class="f-row">
+        <div class="f-label">투자 원금 (원) <span style="color:#888;font-size:11px">· 누적 관리</span></div>
+        <input class="f-input" id="editPrincipal" type="text" inputmode="numeric" placeholder="0" value="${a.principal?(a.principal).toLocaleString('ko-KR'):''}" oninput="formatNumberInput(this)">
+      </div>
+      <div id="startDateRow" style="display:${showInvest?'block':'none'}" class="f-row">
+        <div class="f-label">투자 시작일</div>
+        <input class="f-input" id="editStartDate" type="month" value="${a.startDate||''}">
+      </div>
       <button class="btn-submit" onclick="updateAccount(${id})">저장하기</button>
       <button class="btn-cancel" onclick="showEditMain()">취소</button>
     </div>`;
+  
+  // 계좌 구분 변경 시 추가 필드 표시/숨김
+  document.querySelectorAll('#typeGrid .type-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const cat = btn.dataset.cat;
+      const isSec = cat === 'securities';
+      const isPen = cat === 'pension';
+      const showInv = isSec || isPen;
+      
+      document.getElementById('stockTypeRow').style.display = isSec?'block':'none';
+      document.getElementById('principalRow').style.display = showInv?'block':'none';
+      document.getElementById('startDateRow').style.display = showInv?'block':'none';
+    });
+  });
 }
 
 function updateAccount(id){
   const name=document.getElementById('newName').value.trim();
-  const bank=document.getElementById('newBank').value.trim();
+  const bank=document.getElementById('newBank').textContent.trim();
   const cat=document.querySelector('#typeGrid .type-btn.active')?.dataset.cat||'checking';
   const yieldPct=null;
   if(!name){alert('계좌명을 입력해주세요.');return;}
+  if(!bank || bank==='선택하기'){alert('은행/증권사를 선택해주세요.');return;}
+  
   const idx=accounts.findIndex(x=>x.id===id);
-  if(idx!==-1) accounts[idx]={...accounts[idx],name,bank,cat,yieldPct};
+  if(idx===-1) return;
+  
+  // 기본 필드 업데이트
+  accounts[idx]={...accounts[idx],name,bank,cat,yieldPct};
+  
+  // 증권계좌면 추가 필드 업데이트
+  if(cat === 'securities'){
+    const stockType = document.querySelector('[data-stock].type-btn.active')?.dataset.stock||'domestic';
+    const principalInput = document.getElementById('editPrincipal');
+    const principal = principalInput ? (parseInt(principalInput.value.replace(/,/g,''))||0) : 0;
+    const startDate = document.getElementById('editStartDate')?.value||'';
+    
+    accounts[idx].stockType = stockType;
+    accounts[idx].principal = principal;
+    accounts[idx].startDate = startDate;
+  }
+  
+  // 연금·IRP 계좌도 원금/시작일 저장
+  if(cat === 'pension'){
+    const principalInput = document.getElementById('editPrincipal');
+    const principal = principalInput ? (parseInt(principalInput.value.replace(/,/g,''))||0) : 0;
+    const startDate = document.getElementById('editStartDate')?.value||'';
+    
+    accounts[idx].principal = principal;
+    accounts[idx].startDate = startDate;
+  }
+  
   saveAccounts(accounts); showEditMain(); renderPage();
 }
 
@@ -584,6 +732,155 @@ function deleteAccount(id){
   Object.keys(history).forEach(mk=>{ delete history[mk][id]; });
   saveAccounts(accounts); saveHistory(history); showEditMain(); renderPage();
 }
+
+
+/* ── 은행/증권사 선택 ── */
+function openBankSheet(){
+  // 은행 목록 생성
+  const bankListEl = document.getElementById('bankList');
+  bankListEl.innerHTML = BANKS.map(bank => 
+    `<button class="m-chip" onclick="selectBank('${bank}')" style="padding:12px 8px;font-size:13px">${bank}</button>`
+  ).join('');
+  
+  // 증권사 목록 생성
+  const securitiesListEl = document.getElementById('securitiesList');
+  securitiesListEl.innerHTML = SECURITIES.map(sec => 
+    `<button class="m-chip" onclick="selectBank('${sec}')" style="padding:12px 8px;font-size:13px">${sec}</button>`
+  ).join('');
+  
+  document.getElementById('bankSheet').classList.add('active');
+}
+
+function closeBankSheet(){
+  document.getElementById('bankSheet').classList.remove('active');
+}
+
+function selectBank(name){
+  const bankBtn = document.getElementById('newBank');
+  bankBtn.textContent = name;
+  bankBtn.style.color = '#fff';
+  closeBankSheet();
+}
+
+function selectDirectInput(){
+  const bankBtn = document.getElementById('newBank');
+  const currentValue = bankBtn.textContent === '선택하기' ? '' : bankBtn.textContent;
+  const userInput = prompt('은행/증권사 이름을 입력하세요', currentValue);
+  if(userInput !== null && userInput.trim()){
+    bankBtn.textContent = userInput.trim();
+    bankBtn.style.color = '#fff';
+  }
+  closeBankSheet();
+}
+
+
+/* ── 전월 데이터 불러오기 ── */
+function openImportModal(){
+  const mk = monthKey(selY, selM);
+  const prevMk = getPrevMonthKey(selY, selM);
+  
+  // 전월 데이터 확인
+  const prevData = history[prevMk] || {};
+  const prevCashflow = cashflow[prevMk] || {};
+  const hasPrevData = Object.keys(prevData).length > 0;
+  
+  const descEl = document.getElementById('importDesc');
+  const buttonsEl = document.getElementById('importButtons');
+  
+  // 케이스 1: 전월 데이터 없음
+  if(!hasPrevData){
+    descEl.innerHTML = `<strong>${prevMk}</strong>에<br>입력된 데이터가 없어요.`;
+    buttonsEl.innerHTML = '';
+    document.getElementById('importOverlay').classList.add('active');
+    return;
+  }
+  
+  // 현재 월에 이미 데이터가 있는지 확인
+  const currentData = history[mk] || {};
+  const hasCurrentData = Object.keys(currentData).length > 0;
+  
+  // 케이스 2: 전월 데이터 있음 + 현재 월에 데이터 있음 (덮어쓰기 경고)
+  if(hasCurrentData){
+    descEl.innerHTML = `⚠️ <strong>${selY}년 ${selM}월</strong>에 이미 입력된<br>데이터가 있어요. 덮어쓸까요?`;
+  } 
+  // 케이스 3: 전월 데이터 있음 + 현재 월 비어있음
+  else {
+    descEl.innerHTML = `어떤 방식으로 불러올까요?`;
+  }
+  
+  // 2개 버튼 표시
+  buttonsEl.innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
+      <button style="background:#2a2a2a;border:2px solid #555;border-radius:12px;color:#fff;font-size:14px;padding:16px;cursor:pointer;text-align:left" onclick="importPrevMonth('structure')">
+        <div style="font-weight:600;margin-bottom:4px">📋 항목만 복사</div>
+        <div style="font-size:12px;color:#888">전월 계좌 목록만 가져오고 잔고는 0원</div>
+      </button>
+      <button style="background:#2a2a2a;border:2px solid #555;border-radius:12px;color:#fff;font-size:14px;padding:16px;cursor:pointer;text-align:left" onclick="importPrevMonth('full')">
+        <div style="font-weight:600;margin-bottom:4px">💾 항목+데이터 복사</div>
+        <div style="font-size:12px;color:#888">전월 계좌 목록과 잔고를 모두 가져오기</div>
+      </button>
+    </div>
+  `;
+  
+  document.getElementById('importOverlay').classList.add('active');
+}
+
+function closeImportModal(){
+  document.getElementById('importOverlay').classList.remove('active');
+}
+
+function importPrevMonth(mode){
+  const mk = monthKey(selY, selM);
+  const prevMk = getPrevMonthKey(selY, selM);
+  const prevData = history[prevMk] || {};
+  const prevCashflow = cashflow[prevMk] || {};
+  
+  if(mode === 'structure'){
+    // 항목만 복사: 잔고 0원으로 초기화
+    const newData = {};
+    Object.keys(prevData).forEach(accountId => {
+      newData[accountId] = 0;
+    });
+    history[mk] = newData;
+    
+    // 입출금도 0원으로 초기화
+    const newCashflow = {};
+    Object.keys(prevCashflow).forEach(accountId => {
+      newCashflow[accountId] = 0;
+    });
+    cashflow[mk] = newCashflow;
+    
+  } else if(mode === 'full'){
+    // 항목+데이터 복사: 전월 데이터 그대로 복사
+    history[mk] = {...prevData};
+    cashflow[mk] = {...prevCashflow};
+  }
+  
+  saveHistory(history);
+  saveCashflow(cashflow);
+  closeImportModal();
+  renderPage();
+}
+
+/* ── 숫자 콤마 포맷 ── */
+function formatNumberInput(input){
+  let val = input.value.replace(/,/g, '');
+  // 음수 허용 (입출금 필드용)
+  if(val && !isNaN(val)){
+    input.value = Number(val).toLocaleString('ko-KR');
+  }
+}
+
+function getPrevMonthKey(y, m){
+  let prevY = y;
+  let prevM = m - 1;
+  if(prevM < 1){
+    prevM = 12;
+    prevY = y - 1;
+  }
+  return monthKey(prevY, prevM);
+}
+
 
 
 /* ── 월별 초기화 ── */
@@ -608,6 +905,7 @@ function openMonthTrash(){
 }
 
 /* ── 스와이프로 모달 닫기 ── */
+// 편집 모달
 (function(){
   let startY=0, currentY=0, isDragging=false;
   const overlay = document.getElementById('editOverlay');
@@ -632,7 +930,44 @@ function openMonthTrash(){
     isDragging = false;
     sheet.style.transition = 'transform 0.2s ease';
     const diff = currentY - startY;
-    if(diff>100){ closeEdit(); }
+    if(diff>100){ closeEditModal(); }
+    else{ sheet.style.transform = 'translateY(0)'; }
+  }
+
+  handle.addEventListener('touchstart', onStart, {passive:true});
+  handle.addEventListener('touchmove',  onMove,  {passive:true});
+  handle.addEventListener('touchend',   onEnd,   {passive:true});
+  handle.addEventListener('mousedown',  onStart);
+  document.addEventListener('mousemove', e=>{ if(isDragging) onMove(e); });
+  document.addEventListener('mouseup',   onEnd);
+})();
+
+// 은행 선택 시트
+(function(){
+  let startY=0, currentY=0, isDragging=false;
+  const overlay = document.getElementById('bankSheet');
+  const sheet   = overlay?.querySelector('.sheet-inner');
+  const handle  = overlay?.querySelector('.sheet-handle');
+  if(!handle||!sheet||!overlay) return;
+
+  function onStart(e){
+    const touch = e.touches?e.touches[0]:e;
+    startY = touch.clientY; currentY = startY; isDragging = true;
+    sheet.style.transition = 'none';
+  }
+  function onMove(e){
+    if(!isDragging) return;
+    const touch = e.touches?e.touches[0]:e;
+    currentY = touch.clientY;
+    const diff = currentY - startY;
+    if(diff>0) sheet.style.transform = `translateY(${diff}px)`;
+  }
+  function onEnd(){
+    if(!isDragging) return;
+    isDragging = false;
+    sheet.style.transition = 'transform 0.2s ease';
+    const diff = currentY - startY;
+    if(diff>100){ closeBankSheet(); }
     else{ sheet.style.transform = 'translateY(0)'; }
   }
 

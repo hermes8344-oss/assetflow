@@ -123,8 +123,8 @@
   .sheet-overlay.active { display:flex; }
   .sheet-inner {
     background:#242424; border-radius:24px 24px 0 0;
-    width:100%; padding:20px 20px 40px;
-    animation:slideUp 0.25s ease;
+    width:100%; max-height:80vh; overflow-y:auto; padding:20px 20px 40px;
+    animation:slideUp 0.25s ease; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; transition:transform 0.2s ease;
   }
   @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
   .sheet-handle { width:36px; height:4px; background:#444; border-radius:2px; margin:0 auto 20px; }
@@ -161,7 +161,7 @@
   .edit-sheet {
     background:#242424; border-radius:24px 24px 0 0;
     width:100%; max-height:85vh; overflow-y:auto;
-    padding:20px 20px 40px; animation:slideUp 0.28s ease;
+    padding:20px 20px 40px; animation:slideUp 0.28s ease; transition:transform 0.2s ease; overscroll-behavior:contain; -webkit-overflow-scrolling:touch;
   }
   .modal-handle { width:36px; height:4px; background:#444; border-radius:2px; margin:0 auto 20px; cursor:grab; }
   .modal-handle:active { cursor:grabbing; }
@@ -214,8 +214,8 @@
     color:#aaa; font-size:15px; padding:14px; cursor:pointer; margin-top:6px;
   }
 
-  .month-trash-btn { background:none; border:none; color:#555; font-size:18px; cursor:pointer; padding:4px 8px; line-height:1; transition:color 0.15s; }
-  .month-trash-btn:active { color:#f87171; }
+  .month-trash-btn { background:none; border:none; color:#555; font-size:18px; cursor:pointer; padding:4px 8px; line-height:1; transition:color 0.15s; display:flex; align-items:center; justify-content:center; }
+  .month-trash-btn:active { color:#888; }
   .trash-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:500; align-items:center; justify-content:center; padding:0 24px; }
   .trash-overlay.active { display:flex; }
   .trash-sheet { background:#1e1e1e; border-radius:20px; width:100%; max-width:340px; padding:28px 24px 20px; animation:popIn 0.2s ease; }
@@ -241,7 +241,12 @@
     <span id="monthLabelText" style="font-size:15px;font-weight:600;color:#fff">—</span>
     <span style="font-size:10px;color:#555">▼</span>
   </button>
-  <button class="month-trash-btn" onclick="openMonthTrash()" title="이 달 데이터 초기화">🗑️</button>
+  <button class="month-trash-btn" onclick="openImportModal()" title="전월 데이터 불러오기">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 3V15M12 15L8 11M12 15L16 11" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M3 15C3 15 3 21 12 21C21 21 21 15 21 15" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
 </div>
 
 <div class="card-list" id="cardList"></div>
@@ -268,6 +273,24 @@
     <div class="month-grid" id="monthGrid"></div>
   </div>
 </div>
+<!-- 불러오기 모달 -->
+<div class="trash-overlay" id="importOverlay" onclick="if(event.target===this)closeImportModal()">
+  <div class="trash-sheet">
+    <div class="trs-icon">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 3V15M12 15L8 11M12 15L16 11" stroke="#888" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M3 15C3 15 3 21 12 21C21 21 21 15 21 15" stroke="#888" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="trs-title" id="importTitle">전월 데이터 불러오기</div>
+    <div class="trs-desc" id="importDesc"></div>
+    <div id="importButtons"></div>
+    <div class="trs-btns">
+      <button class="trs-cancel" onclick="closeImportModal()">취소</button>
+    </div>
+  </div>
+</div>
+
 <!-- 월별 초기화 모달 -->
 <div class="trash-overlay" id="trashOverlay" onclick="if(event.target===this)closeTrashModal()">
   <div class="trash-sheet">
@@ -277,6 +300,23 @@
     <div class="trs-btns">
       <button class="trs-cancel"  onclick="closeTrashModal()">취소</button>
       <button class="trs-confirm" onclick="confirmTrash()">초기화</button>
+    </div>
+  </div>
+</div>
+
+<!-- 카드사 선택 시트 -->
+<div class="sheet-overlay" id="cardCompanySheet" onclick="if(event.target===this)closeCardCompanySheet()">
+  <div class="sheet-inner">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">카드사 선택</div>
+    
+    <div style="margin-bottom:12px">
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px" id="cardCompanyList"></div>
+    </div>
+    
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+      <button style="background:#2a2a2a;border:none;border-radius:10px;color:#aaa;font-size:14px;padding:12px;cursor:pointer" onclick="selectDirectCardInput()">✏️ 직접입력</button>
+      <button style="background:#333;border:none;border-radius:10px;color:#aaa;font-size:14px;padding:12px;cursor:pointer" onclick="closeCardCompanySheet()">취소</button>
     </div>
   </div>
 </div>
@@ -300,6 +340,12 @@ const NOW = new Date();
 const CUR_YEAR = NOW.getFullYear(), CUR_MONTH = NOW.getMonth()+1;
 function monthKey(y,m){ return `${y}-${String(m).padStart(2,'0')}`; }
 
+const CARD_COMPANIES = [
+  '삼성카드', '현대카드', '신한카드', 'KB국민카드', '우리카드', '하나카드',
+  '롯데카드', 'BC카드', 'NH농협카드', '씨티카드', 'IBK기업은행카드',
+  '카카오뱅크', '토스뱅크', '케이뱅크', 'SC제일은행'
+];
+
 const DEFAULT_META = [];
 const k0=monthKey(CUR_YEAR,CUR_MONTH);
 const k1=CUR_MONTH===1?monthKey(CUR_YEAR-1,12):monthKey(CUR_YEAR,CUR_MONTH-1);
@@ -319,7 +365,11 @@ function renderPage(){
   document.getElementById('monthLabelText').textContent=`${selM}월에 쓴 돈`;
   document.getElementById('totalLabel').textContent=isCur?'이번 달 총 지출':`${selM}월 총 지출`;
   const ms=spend[monthKey(selY,selM)]||{};
-  const rows=meta.map(c=>({...c,amount:ms[c.id]||0})).filter(c=>c.amount>0).sort((a,b)=>b.amount-a.amount);
+  
+  // 해당 월에 데이터가 있는 카드들 (0원 포함)
+  const cardsWithData = meta.filter(c => ms[c.id] !== undefined);
+  const rows = cardsWithData.map(c=>({...c,amount:ms[c.id]||0})).sort((a,b)=>b.amount-a.amount);
+  
   const el=document.getElementById('cardList');
   if(!rows.length){
     el.innerHTML=`<div class="empty-month"><div class="empty-icon">💳</div><div class="empty-text">${selY}년 ${selM}월 카드 데이터가 없어요<br><span style="font-size:12px;color:#555">자산 편집하기에서 지출을 입력해보세요</span></div></div>`;
@@ -368,8 +418,23 @@ function openMonthTrash(){
 }
 renderPage(); }
 
-function openEditModal(){ showEditMain(); document.getElementById('editOverlay').classList.add('active'); }
-function closeEditModal(){ document.getElementById('editOverlay').classList.remove('active'); }
+function openEditModal(){ 
+  showEditMain(); 
+  document.getElementById('editOverlay').classList.add('active');
+  document.body.style.overflow = 'hidden';
+  document.body.style.position = 'fixed';
+  document.body.style.width = '100%';
+  document.body.style.top = `-${window.scrollY}px`;
+}
+function closeEditModal(){ 
+  document.getElementById('editOverlay').classList.remove('active');
+  const scrollY = document.body.style.top;
+  document.body.style.overflow = '';
+  document.body.style.position = '';
+  document.body.style.width = '';
+  document.body.style.top = '';
+  window.scrollTo(0, parseInt(scrollY || '0') * -1);
+}
 function showEditMain(){
   document.getElementById('editContent').innerHTML=`
     <div class="modal-title">카드 편집</div>
@@ -393,8 +458,12 @@ function showAddForm(){
         <div class="type-grid" id="typeGrid">
           ${['체크카드','신용카드','선불카드','법인카드'].map((t,i)=>`<button class="type-btn ${i===0?'active':''}" data-type="${t}" onclick="selType(this)">${t}</button>`).join('')}
         </div></div>
-      <div class="f-row"><div class="f-label">카드명</div><input class="f-input" id="newName" type="text" placeholder="예) 토스뱅크 체크카드"></div>
-      <div class="f-row"><div class="f-label">${selM}월 지출액 (원)</div><input class="f-input" id="newSpent" type="number" inputmode="numeric" placeholder="0"></div>
+      <div class="f-row"><div class="f-label">카드명</div><input class="f-input" id="newName" type="text" placeholder="예) 토스뱅크 체크카드" enterkeyhint="done"></div>
+      <div class="f-row">
+        <div class="f-label">카드사</div>
+        <button class="f-input" id="newCompany" type="button" onclick="openCardCompanySheet()" style="text-align:left;cursor:pointer;color:#888">선택하기</button>
+      </div>
+      <div class="f-row"><div class="f-label">${selM}월 지출액 (원)</div><input class="f-input" id="newSpent" type="text" inputmode="numeric" placeholder="0" oninput="formatNumberInput(this)"></div>
       <button class="btn-submit" onclick="addCard()">추가하기</button>
       <button class="btn-cancel" onclick="showEditMain()">취소</button>
     </div>`;
@@ -402,11 +471,14 @@ function showAddForm(){
 function selType(btn){ document.querySelectorAll('#typeGrid .type-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
 function addCard(){
   const name=document.getElementById('newName').value.trim();
-  const amt=parseInt(document.getElementById('newSpent').value)||0;
+  const company=document.getElementById('newCompany').textContent.trim();
+  const amtStr=document.getElementById('newSpent').value.replace(/,/g,'');
+  const amt=parseInt(amtStr)||0;
   const type=document.querySelector('#typeGrid .type-btn.active')?.dataset.type||'체크카드';
   if(!name){alert('카드명을 입력해주세요.');return;}
+  if(!company || company==='선택하기'){alert('카드사를 선택해주세요.');return;}
   const id=Date.now();
-  meta.push({id,name,type,color:'card-generic',label:name.slice(0,4)});
+  meta.push({id,name,company,type,color:'card-generic',label:name.slice(0,4)});
   saveMeta(meta);
   if(amt>0){ const k=monthKey(selY,selM); if(!spend[k])spend[k]={}; spend[k][id]=amt; saveSpend(spend); }
   showEditMain(); renderPage();
@@ -414,6 +486,7 @@ function addCard(){
 function showEditForm(id){
   const c=meta.find(x=>x.id===id); if(!c)return;
   const cur=(spend[monthKey(selY,selM)]||{})[id]||0;
+  const company = c.company || '미설정';
   document.getElementById('editContent').innerHTML=`
     <div class="modal-title">카드 수정</div>
     <div class="add-form">
@@ -421,19 +494,26 @@ function showEditForm(id){
         <div class="type-grid" id="typeGrid">
           ${['체크카드','신용카드','선불카드','법인카드'].map(t=>`<button class="type-btn ${t===c.type?'active':''}" data-type="${t}" onclick="selType(this)">${t}</button>`).join('')}
         </div></div>
-      <div class="f-row"><div class="f-label">카드명</div><input class="f-input" id="editName" type="text" value="${c.name}"></div>
-      <div class="f-row"><div class="f-label">${selM}월 지출액 (원)</div><input class="f-input" id="editSpent" type="number" inputmode="numeric" value="${cur}"></div>
+      <div class="f-row"><div class="f-label">카드명</div><input class="f-input" id="editName" type="text" value="${c.name}" enterkeyhint="done"></div>
+      <div class="f-row">
+        <div class="f-label">카드사</div>
+        <button class="f-input" id="editCompany" type="button" onclick="openCardCompanySheet()" style="text-align:left;cursor:pointer;color:#fff">${company}</button>
+      </div>
+      <div class="f-row"><div class="f-label">${selM}월 지출액 (원)</div><input class="f-input" id="editSpent" type="text" inputmode="numeric" value="${cur?cur.toLocaleString('ko-KR'):''}" oninput="formatNumberInput(this)"></div>
       <button class="btn-submit" onclick="updateCard(${id})">저장하기</button>
       <button class="btn-cancel" onclick="showEditMain()">취소</button>
     </div>`;
 }
 function updateCard(id){
   const name=document.getElementById('editName').value.trim();
-  const amt=parseInt(document.getElementById('editSpent').value)||0;
+  const company=document.getElementById('editCompany').textContent.trim();
+  const amtStr=document.getElementById('editSpent').value.replace(/,/g,'');
+  const amt=parseInt(amtStr)||0;
   const type=document.querySelector('#typeGrid .type-btn.active')?.dataset.type||'체크카드';
   if(!name){alert('카드명을 입력해주세요.');return;}
+  if(!company || company==='선택하기' || company==='미설정'){alert('카드사를 선택해주세요.');return;}
   const idx=meta.findIndex(x=>x.id===id);
-  if(idx!==-1)meta[idx]={...meta[idx],name,type};
+  if(idx!==-1)meta[idx]={...meta[idx],name,company,type};
   saveMeta(meta);
   const k=monthKey(selY,selM); if(!spend[k])spend[k]={}; spend[k][id]=amt; saveSpend(spend);
   showEditMain(); renderPage();
@@ -444,7 +524,127 @@ function deleteCard(id){
   showEditMain(); renderPage();
 }
 
+/* ── 카드사 선택 ── */
+function openCardCompanySheet(){
+  const listEl = document.getElementById('cardCompanyList');
+  listEl.innerHTML = CARD_COMPANIES.map(company => 
+    `<button class="m-chip" onclick="selectCardCompany('${company}')" style="padding:12px 8px;font-size:13px">${company}</button>`
+  ).join('');
+  document.getElementById('cardCompanySheet').classList.add('active');
+}
+
+function closeCardCompanySheet(){
+  document.getElementById('cardCompanySheet').classList.remove('active');
+}
+
+function selectCardCompany(name){
+  const companyBtn = document.getElementById('newCompany') || document.getElementById('editCompany');
+  if(companyBtn){
+    companyBtn.textContent = name;
+    companyBtn.style.color = '#fff';
+  }
+  closeCardCompanySheet();
+}
+
+function selectDirectCardInput(){
+  const companyBtn = document.getElementById('newCompany') || document.getElementById('editCompany');
+  const currentValue = companyBtn.textContent === '선택하기' || companyBtn.textContent === '미설정' ? '' : companyBtn.textContent;
+  const userInput = prompt('카드사 이름을 입력하세요', currentValue);
+  if(userInput !== null && userInput.trim()){
+    companyBtn.textContent = userInput.trim();
+    companyBtn.style.color = '#fff';
+  }
+  closeCardCompanySheet();
+}
+
+/* ── 숫자 콤마 포맷 ── */
+function formatNumberInput(input){
+  let val = input.value.replace(/,/g, '');
+  if(val && !isNaN(val)){
+    input.value = Number(val).toLocaleString('ko-KR');
+  }
+}
+
+/* ── 전월 데이터 불러오기 ── */
+function getPrevMonthKey(y, m){
+  let prevY = y;
+  let prevM = m - 1;
+  if(prevM < 1){
+    prevM = 12;
+    prevY = y - 1;
+  }
+  return monthKey(prevY, prevM);
+}
+
+function openImportModal(){
+  const mk = monthKey(selY, selM);
+  const prevMk = getPrevMonthKey(selY, selM);
+  
+  const prevData = spend[prevMk] || {};
+  const hasPrevData = Object.keys(prevData).length > 0;
+  
+  const descEl = document.getElementById('importDesc');
+  const buttonsEl = document.getElementById('importButtons');
+  
+  if(!hasPrevData){
+    descEl.innerHTML = `<strong>${prevMk}</strong>에<br>입력된 데이터가 없어요.`;
+    buttonsEl.innerHTML = '';
+    document.getElementById('importOverlay').classList.add('active');
+    return;
+  }
+  
+  const currentData = spend[mk] || {};
+  const hasCurrentData = Object.keys(currentData).length > 0;
+  
+  if(hasCurrentData){
+    descEl.innerHTML = `⚠️ <strong>${selY}년 ${selM}월</strong>에 이미 입력된<br>데이터가 있어요. 덮어쓸까요?`;
+  } else {
+    descEl.innerHTML = `어떤 방식으로 불러올까요?`;
+  }
+  
+  buttonsEl.innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
+      <button style="background:#2a2a2a;border:2px solid #555;border-radius:12px;color:#fff;font-size:14px;padding:16px;cursor:pointer;text-align:left" onclick="importPrevMonth('structure')">
+        <div style="font-weight:600;margin-bottom:4px">📋 항목만 복사</div>
+        <div style="font-size:12px;color:#888">전월 카드 목록만 가져오고 지출은 0원</div>
+      </button>
+      <button style="background:#2a2a2a;border:2px solid #555;border-radius:12px;color:#fff;font-size:14px;padding:16px;cursor:pointer;text-align:left" onclick="importPrevMonth('full')">
+        <div style="font-weight:600;margin-bottom:4px">💾 항목+데이터 복사</div>
+        <div style="font-size:12px;color:#888">전월 카드 목록과 지출을 모두 가져오기</div>
+      </button>
+    </div>
+  `;
+  
+  document.getElementById('importOverlay').classList.add('active');
+}
+
+function closeImportModal(){
+  document.getElementById('importOverlay').classList.remove('active');
+}
+
+function importPrevMonth(mode){
+  const mk = monthKey(selY, selM);
+  const prevMk = getPrevMonthKey(selY, selM);
+  const prevData = spend[prevMk] || {};
+  
+  if(mode === 'structure'){
+    // 항목만 복사: 0원으로 초기화
+    const newData = {};
+    Object.keys(prevData).forEach(cardId => {
+      newData[cardId] = 0;
+    });
+    spend[mk] = newData;
+  } else if(mode === 'full'){
+    spend[mk] = {...prevData};
+  }
+  
+  saveSpend(spend);
+  closeImportModal();
+  renderPage();
+}
+
 /* ── 스와이프로 모달 닫기 ── */
+// 편집 모달
 (function(){
   let startY=0, currentY=0, isDragging=false;
   const overlay = document.getElementById('editOverlay');
@@ -469,7 +669,44 @@ function deleteCard(id){
     isDragging = false;
     sheet.style.transition = 'transform 0.2s ease';
     const diff = currentY - startY;
-    if(diff>100){ closeEdit(); }
+    if(diff>100){ closeEditModal(); }
+    else{ sheet.style.transform = 'translateY(0)'; }
+  }
+
+  handle.addEventListener('touchstart', onStart, {passive:true});
+  handle.addEventListener('touchmove',  onMove,  {passive:true});
+  handle.addEventListener('touchend',   onEnd,   {passive:true});
+  handle.addEventListener('mousedown',  onStart);
+  document.addEventListener('mousemove', e=>{ if(isDragging) onMove(e); });
+  document.addEventListener('mouseup',   onEnd);
+})();
+
+// 카드사 선택 시트
+(function(){
+  let startY=0, currentY=0, isDragging=false;
+  const overlay = document.getElementById('cardCompanySheet');
+  const sheet   = overlay?.querySelector('.sheet-inner');
+  const handle  = overlay?.querySelector('.sheet-handle');
+  if(!handle||!sheet||!overlay) return;
+
+  function onStart(e){
+    const touch = e.touches?e.touches[0]:e;
+    startY = touch.clientY; currentY = startY; isDragging = true;
+    sheet.style.transition = 'none';
+  }
+  function onMove(e){
+    if(!isDragging) return;
+    const touch = e.touches?e.touches[0]:e;
+    currentY = touch.clientY;
+    const diff = currentY - startY;
+    if(diff>0) sheet.style.transform = `translateY(${diff}px)`;
+  }
+  function onEnd(){
+    if(!isDragging) return;
+    isDragging = false;
+    sheet.style.transition = 'transform 0.2s ease';
+    const diff = currentY - startY;
+    if(diff>100){ closeCardCompanySheet(); }
     else{ sheet.style.transform = 'translateY(0)'; }
   }
 
