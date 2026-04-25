@@ -390,6 +390,18 @@ function renderPage(){
       <div class="account-list">
         ${list.map(a=>{
           const bal = getBalance(a.id);
+          const isInvest = ['securities','pension','crypto'].includes(a.cat);
+          const principal = a.principal || 0;
+          
+          let gainHtml = '';
+          if(isInvest && principal > 0 && bal > 0){
+            const gainAmt = bal - principal;
+            const gainPct = ((gainAmt / principal) * 100).toFixed(2);
+            const gainColor = gainAmt >= 0 ? '#4ade80' : '#f87171';
+            const gainSign = gainAmt >= 0 ? '+' : '';
+            gainHtml = `<div class="acc-gain" style="color:${gainColor};font-size:12px;margin-top:2px">${gainSign}${gainPct}% (${gainSign}${fmt(Math.abs(gainAmt))})</div>`;
+          }
+          
           return `
             <div class="account-item" onclick="quickEdit(${a.id})">
               <div class="acc-icon ${a.iconCls}">${a.icon}</div>
@@ -399,7 +411,7 @@ function renderPage(){
               </div>
               <div class="acc-amount-wrap">
                 <div class="acc-amount">${fmt(bal)}</div>
-
+                ${gainHtml}
               </div>
             </div>`;
         }).join('')}
@@ -491,16 +503,42 @@ function showBalanceForm(id){
   const mk = monthKey(selY, selM);
   const curCashflow = (cashflow[mk] && cashflow[mk][id]) || 0;
   
-  // 증권/연금 계좌인지 확인
-  const isInvestment = (a.cat === 'securities' || a.cat === 'pension');
+  // 증권/연금/가상화폐 계좌인지 확인
+  const isInvestment = ['securities','pension','crypto'].includes(a.cat);
+  const principal = a.principal || 0;
+  
+  let previewHtml = '';
+  if(isInvestment && principal > 0 && cur > 0){
+    const gainAmt = cur - principal;
+    const gainPct = ((gainAmt / principal) * 100).toFixed(2);
+    const gainColor = gainAmt >= 0 ? '#4ade80' : '#f87171';
+    const gainSign = gainAmt >= 0 ? '+' : '';
+    
+    previewHtml = `
+      <div id="balancePreview" style="margin-top:12px;padding:14px;background:#2e2e2e;border-radius:12px">
+        <div style="font-size:12px;color:#888;margin-bottom:8px">💰 수익 미리보기</div>
+        <div style="font-size:15px;color:${gainColor};font-weight:600">
+          ${gainSign}${gainPct}% (${gainSign}${fmt(Math.abs(gainAmt))})
+        </div>
+        <div style="font-size:11px;color:#666;margin-top:4px">투자 원금 ${fmt(principal)} 기준</div>
+      </div>`;
+  } else if(isInvestment && principal === 0){
+    previewHtml = `
+      <div id="balancePreview" style="margin-top:12px;padding:14px;background:#2e2e2e;border-radius:12px">
+        <div style="font-size:12px;color:#666">💡 투자 원금을 입력하면 수익률을 확인할 수 있어요</div>
+      </div>`;
+  }
   
   document.getElementById('editContent').innerHTML = `
     <div class="modal-title">${a.name}<br><span style="font-size:14px;color:#888;font-weight:400">${selY}년 ${selM}월 잔고 입력</span></div>
     <div class="add-form">
       <div class="f-row">
         <div class="f-label">${selM}월 말 잔고 (원)</div>
-        <input class="f-input" id="bInput" type="text" inputmode="numeric" placeholder="0" value="${cur?cur.toLocaleString('ko-KR'):''}" oninput="formatNumberInput(this)">
+        <input class="f-input" id="bInput" type="text" inputmode="numeric" placeholder="0" 
+               value="${cur?cur.toLocaleString('ko-KR'):''}" 
+               oninput="formatNumberInput(this);updateBalancePreview(${id})">
       </div>
+      ${previewHtml}
       ${isInvestment ? `
       <div class="f-row">
         <div class="f-label">${selM}월 입출금 (원) <span style="color:#888;font-size:11px">· 입금(+) / 출금(-)</span></div>
@@ -510,6 +548,46 @@ function showBalanceForm(id){
       <button class="btn-submit" onclick="saveBalance(${id})">저장하기</button>
       <button class="btn-cancel" onclick="showEditMain()">취소</button>
     </div>`;
+}
+
+function updateBalancePreview(accountId){
+  const a = accounts.find(x=>x.id===accountId);
+  if(!a) return;
+  
+  const isInvestment = ['securities','pension','crypto'].includes(a.cat);
+  if(!isInvestment) return;
+  
+  const principal = a.principal || 0;
+  if(principal === 0) return;
+  
+  const balStr = document.getElementById('bInput').value.replace(/,/g,'');
+  const bal = parseInt(balStr)||0;
+  
+  if(bal === 0){
+    const preview = document.getElementById('balancePreview');
+    if(preview){
+      preview.innerHTML = `
+        <div style="font-size:12px;color:#888;margin-bottom:8px">💰 수익 미리보기</div>
+        <div style="font-size:15px;color:#888;font-weight:600">-</div>
+        <div style="font-size:11px;color:#666;margin-top:4px">투자 원금 ${fmt(principal)} 기준</div>`;
+    }
+    return;
+  }
+  
+  const gainAmt = bal - principal;
+  const gainPct = ((gainAmt / principal) * 100).toFixed(2);
+  const gainColor = gainAmt >= 0 ? '#4ade80' : '#f87171';
+  const gainSign = gainAmt >= 0 ? '+' : '';
+  
+  const preview = document.getElementById('balancePreview');
+  if(preview){
+    preview.innerHTML = `
+      <div style="font-size:12px;color:#888;margin-bottom:8px">💰 수익 미리보기</div>
+      <div style="font-size:15px;color:${gainColor};font-weight:600">
+        ${gainSign}${gainPct}% (${gainSign}${fmt(Math.abs(gainAmt))})
+      </div>
+      <div style="font-size:11px;color:#666;margin-top:4px">투자 원금 ${fmt(principal)} 기준</div>`;
+  }
 }
 
 function saveBalance(id){

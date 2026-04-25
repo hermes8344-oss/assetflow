@@ -8,237 +8,324 @@
 <style>
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   body {
-    background:#111; color:#fff;
+    background:#000; color:#fff;
     font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;
     min-height:100vh; padding-bottom:40px;
   }
 
-  /* ── 사용자 선택 바 ── */
-  .user-bar {
-    display:flex; gap:8px; padding:8px 20px 12px;
-    overflow-x:auto; scrollbar-width:none;
-  }
-  .user-bar::-webkit-scrollbar { display:none; }
+  /* ── 헤더 ── */
+  .header { padding:16px 20px; display:flex; align-items:center; justify-content:space-between; }
+  .header-left { display:flex; align-items:center; gap:6px; }
+  .user-switch { display:flex; gap:6px; }
   .user-btn {
-    display:flex; align-items:center; gap:7px;
-    background:#1a1a1a; border:2px solid transparent;
-    border-radius:20px; color:#888; font-size:13px; font-weight:500;
-    padding:7px 14px; cursor:pointer; white-space:nowrap; flex-shrink:0;
-    transition:all 0.18s;
+    background:#2a2a2a; border:2px solid transparent; border-radius:20px;
+    color:#888; font-size:13px; font-weight:500; padding:6px 16px;
+    cursor:pointer; transition:all 0.15s;
   }
+  .user-btn.active { border-color:#007aff; color:#007aff; background:rgba(0,122,255,0.08); }
   .user-btn:active { opacity:0.7; }
-  .user-btn.u1.active  { border-color:#4da3ff; color:#4da3ff; background:rgba(77,163,255,0.1); }
-  .user-btn.u2.active  { border-color:#f472b6; color:#f472b6; background:rgba(244,114,182,0.1); }
-  .user-btn.all.active { border-color:#4ade80; color:#4ade80; background:rgba(74,222,128,0.1); }
-
-  /* 사용자 이름 편집 힌트 */
-  .user-edit-hint { font-size:11px; color:#444; padding:0 20px 8px; }
-
-  /* ── 총자산 ── */
-  .asset-header { padding:4px 20px 16px; }
-  .ah-label {
-    font-size:13px; color:#888; margin-bottom:8px;
-    display:flex; align-items:center; gap:6px;
-  }
-  .ah-dot   { width:7px; height:7px; border-radius:50%; }
-  .ah-dot.u1  { background:#4da3ff; }
-  .ah-dot.u2  { background:#f472b6; }
-  .ah-dot.all { background:#4ade80; }
-  .ah-amount {
-    font-size:36px; font-weight:700; letter-spacing:-1px; line-height:1.1;
-    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-  }
-  .ah-change { font-size:14px; margin-top:6px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
-  .ah-change-val { font-weight:600; }
-  .ah-change-val.pos { color:#4ade80; }
-  .ah-change-val.neg { color:#f87171; }
-  .ah-change-sub { font-size:13px; color:#555; }
-
-  /* ── 도넛 카드 ── */
-  .donut-card { margin:0 16px 16px; background:#1a1a1a; border-radius:20px; padding:20px; }
-  .donut-wrap { display:flex; align-items:center; gap:18px; }
-  .donut-canvas-wrap { position:relative; width:140px; height:140px; flex-shrink:0; }
-  .donut-center {
-    position:absolute; inset:0;
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-    pointer-events:none;
-  }
-  .dc-label  { font-size:10px; color:#666; margin-bottom:3px; }
-  .dc-amount { font-size:13px; font-weight:700; }
-  .dc-amount.pos { color:#4ade80; }
-  .dc-amount.neg { color:#f87171; }
-  .donut-legend { flex:1; display:flex; flex-direction:column; gap:10px; }
-  .dl-item  { display:flex; align-items:center; justify-content:space-between; }
-  .dl-left  { display:flex; align-items:center; gap:7px; }
-  .dl-dot   { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
-  .dl-name  { font-size:12px; color:#aaa; }
-  .dl-amt   { font-size:13px; font-weight:600; color:#fff; }
-  .dl-amt.neg { color:#f87171; }
-
-  /* ── 섹션 헤더 ── */
-  .section-hd { display:flex; justify-content:space-between; align-items:center; padding:4px 20px 10px; }
-  .sh-title { font-size:15px; font-weight:700; }
-
-  /* ── 그리드 ── */
-  .asset-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:0 16px 16px; }
-  .grid-item {
-    background:#1a1a1a; border-radius:14px; padding:16px 10px;
-    text-align:center; cursor:pointer; transition:all 0.15s;
+  .header-right { display:flex; align-items:center; gap:6px; }
+  .header-icon-btn {
+    background:#2a2a2a; border:none; border-radius:50%; color:#aaa;
+    font-size:16px; padding:8px; cursor:pointer; width:36px; height:36px;
     display:flex; align-items:center; justify-content:center;
   }
-  .grid-item:active { opacity:0.6; }
-  .gi-label { font-size:13px; color:#eee; font-weight:500; }
-  .gi-value { font-size:12px; font-weight:600; color:#eee; line-height:1.3; }
-  .gi-value.red   { color:#f87171; }
-  .gi-value.green { color:#4ade80; }
 
-  /* ── 구분선 ── */
-  .sep { height:1px; background:#222; margin:0 16px 16px; }
+  /* ── 순자산 카드 ── */
+  .networth-card { margin:0 20px 20px; background:#1a1a1a; border-radius:20px; padding:24px; }
+  .nw-amount { font-size:36px; font-weight:700; letter-spacing:-1px; margin-bottom:8px; color:#fff; }
+  .nw-change { font-size:13px; display:flex; align-items:center; gap:4px; color:#4ade80; }
+  .nw-change.neg { color:#f87171; }
+  .nw-change::before { content:'▲'; font-size:12px; margin-right:2px; }
+  .nw-change.neg::before { content:'▼'; }
 
-  /* ── 수입/지출 ── */
-  .inout-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:0 16px 16px; }
-  .inout-card { background:#1a1a1a; border-radius:14px; padding:16px; }
-  .ic-label  { font-size:12px; color:#888; margin-bottom:8px; display:flex; align-items:center; gap:5px; }
-  .ic-dot    { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
-  .ic-amount { font-size:20px; font-weight:700; }
-  .ic-sub    { font-size:11px; color:#555; margin-top:4px; }
+  /* ── 목표 퀵뷰 ── */
+  .goal-quick { margin:0 20px 20px; background:#242424; border-radius:16px; padding:18px; }
+  .gq-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+  .gq-title { font-size:14px; font-weight:600; }
+  .gq-detail { font-size:12px; color:#007aff; cursor:pointer; }
+  .gq-progress-bg { height:8px; background:#2a2a2a; border-radius:4px; overflow:hidden; margin-bottom:10px; }
+  .gq-progress-bar { height:100%; background:linear-gradient(90deg, #34d399, #10b981); border-radius:4px; transition:width 0.3s; }
+  .gq-info { display:flex; justify-content:space-between; font-size:13px; }
+  .gq-current { color:#10b981; font-weight:600; }
+  .gq-target { color:#888; }
 
-  /* ── 저축 ── */
-  .saving-card {
-    margin:0 16px 16px; background:#1a1a1a; border-radius:14px; padding:14px 16px;
-    display:flex; justify-content:space-between; align-items:center;
-  }
-  .sc-left   { font-size:13px; color:#888; }
-  .sc-right  { text-align:right; }
-  .sc-amount { font-size:16px; font-weight:700; color:#4da3ff; }
-  .sc-rate   { font-size:12px; color:#555; margin-top:2px; }
+  /* ── 자산/부채 요약 ── */
+  .asset-debt-card { margin:0 20px 20px; background:#242424; border-radius:16px; padding:20px; }
+  .ad-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+  .ad-row:last-child { margin-bottom:0; }
+  .ad-label { font-size:13px; color:#888; }
+  .ad-amount { font-size:18px; font-weight:600; }
 
-  /* ── 분석 ── */
-  .analysis-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:0 16px 16px; }
+  /* ── 자산 구성 카드 ── */
+  .composition-card { margin:0 20px 24px; background:#242424; border-radius:16px; padding:20px; }
+  .comp-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+  .comp-title { font-size:14px; font-weight:600; }
+  .comp-toggle { background:#2a2a2a; border:none; border-radius:12px; color:#666; font-size:11px; padding:6px 12px; cursor:pointer; transition:all 0.15s; }
+  .comp-toggle.active { background:#333; color:#aaa; }
+  .comp-total-label { font-size:13px; color:#888; margin-bottom:6px; }
+  .comp-total-amount { font-size:28px; font-weight:700; letter-spacing:-0.5px; margin-bottom:20px; }
+  .comp-bar-wrap { margin-bottom:24px; }
+  .comp-bar { display:flex; height:20px; border-radius:10px; overflow:hidden; }
+  .comp-bar-seg { height:100%; transition:width 0.3s; }
+  .comp-list { display:flex; flex-direction:column; gap:16px; }
+  .comp-item { display:flex; flex-direction:column; gap:4px; }
+  .comp-item-header { display:flex; align-items:center; justify-content:space-between; }
+  .comp-item-left { display:flex; align-items:center; gap:8px; }
+  .comp-item-bar { width:4px; height:20px; border-radius:2px; }
+  .comp-item-name { font-size:14px; font-weight:500; color:#fff; }
+  .comp-item-amount { font-size:16px; font-weight:600; color:#fff; }
+  .comp-item-footer { display:flex; align-items:center; justify-content:space-between; padding-left:12px; }
+  .comp-item-ratio { font-size:13px; color:#888; }
+  .comp-item-change { font-size:13px; color:#666; }
+  .comp-item-change.pos { color:#4ade80; }
+  .comp-item-change.neg { color:#f87171; }
 
-  /* ── 사용자 이름 설정 모달 ── */
-  .name-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:200; align-items:flex-end; }
+  /* ── 편집 모달 ── */
+  .comp-edit-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1000; display:none; align-items:flex-end; }
+  .comp-edit-overlay.active { display:flex; }
+  .comp-edit-sheet { background:#1e1e1e; border-radius:20px 20px 0 0; width:100%; max-height:70vh; overflow-y:auto; padding:20px; }
+  .comp-edit-handle { width:40px; height:4px; background:#444; border-radius:2px; margin:0 auto 20px; }
+  .comp-edit-title { font-size:16px; font-weight:600; margin-bottom:20px; text-align:center; }
+  .comp-edit-list { display:flex; flex-direction:column; gap:12px; margin-bottom:20px; }
+  .comp-edit-item { display:flex; align-items:center; justify-content:space-between; padding:14px; background:#242424; border-radius:12px; cursor:pointer; }
+  .comp-edit-item-left { display:flex; align-items:center; gap:12px; }
+  .comp-edit-item-bar { width:4px; height:24px; border-radius:2px; }
+  .comp-edit-item-name { font-size:14px; font-weight:500; }
+  .comp-edit-toggle { width:44px; height:24px; background:#3a3a3a; border-radius:12px; position:relative; transition:all 0.15s; cursor:pointer; }
+  .comp-edit-toggle.active { background:#007aff; }
+  .comp-edit-toggle::after { content:''; position:absolute; top:2px; left:2px; width:20px; height:20px; background:#fff; border-radius:50%; transition:all 0.15s; }
+  .comp-edit-toggle.active::after { left:22px; }
+  .comp-edit-close { width:100%; background:#333; border:none; border-radius:12px; color:#fff; font-size:15px; padding:14px; cursor:pointer; margin-top:10px; }
+
+  /* ── 자산 그리드 ── */
+  .section-title { font-size:15px; font-weight:600; padding:0 20px 12px; }
+  .asset-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; padding:0 20px 24px; }
+  .asset-card { background:#242424; border-radius:14px; padding:16px; text-align:center; cursor:pointer; transition:all 0.15s; }
+  .asset-card:active { opacity:0.7; transform:scale(0.98); }
+  .ac-label { font-size:14px; color:#fff; font-weight:500; }
+
+  /* ── 분석 그리드 ── */
+  .analysis-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; padding:0 20px 24px; }
+
+  /* ── 요약 카드 ── */
+  .summary-card { margin:0 20px 24px; background:#242424; border-radius:16px; padding:18px; }
+  .summary-row { display:flex; justify-content:space-between; margin-bottom:10px; }
+  .summary-row:last-child { margin-bottom:0; }
+  .sm-label { font-size:13px; color:#888; }
+  .sm-value { font-size:14px; font-weight:600; }
+
+  /* ── 이름 설정 모달 ── */
+  .name-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:2000; display:none; align-items:flex-end; }
   .name-overlay.active { display:flex; }
-  .name-sheet { background:#1e1e1e; border-radius:24px 24px 0 0; width:100%; padding:20px 20px 40px; animation:slideUp 0.25s ease; transition:transform 0.2s ease; }
-  @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
-  .ns-handle { width:36px; height:4px; background:#444; border-radius:2px; margin:0 auto 20px; cursor:grab; }
-  .ns-handle:active { cursor:grabbing; }
-  .ns-title  { font-size:17px; font-weight:700; margin-bottom:20px; }
-  .ns-form   { display:flex; flex-direction:column; gap:12px; }
-  .ns-label  { font-size:13px; color:#888; margin-bottom:4px; }
-  .ns-input  {
-    width:100%; background:#2a2a2a; border:1px solid #333;
-    border-radius:10px; color:#fff; font-size:15px;
-    padding:13px 14px; outline:none;
-  }
-  .ns-input:focus { border-color:#007aff; }
-  .ns-btn-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:4px; }
-  .ns-save   { background:#007aff; border:none; border-radius:12px; color:#fff; font-size:15px; font-weight:600; padding:14px; cursor:pointer; }
-  .ns-cancel { background:#2a2a2a; border:none; border-radius:12px; color:#aaa; font-size:15px; padding:14px; cursor:pointer; }
+  .name-sheet { background:#1e1e1e; border-radius:20px 20px 0 0; width:100%; padding:20px; }
+  .ns-handle { width:40px; height:4px; background:#444; border-radius:2px; margin:0 auto 20px; }
+  .ns-title { font-size:16px; font-weight:600; text-align:center; margin-bottom:20px; }
+  .ns-form { display:flex; flex-direction:column; gap:16px; margin-bottom:20px; }
+  .ns-label { font-size:13px; color:#888; margin-bottom:6px; }
+  .ns-input { width:100%; background:#242424; border:1px solid #333; border-radius:10px; color:#fff; font-size:15px; padding:12px; }
+  .ns-input:focus { outline:none; border-color:#007aff; }
+  .ns-btn-row { display:flex; gap:10px; }
+  .ns-cancel, .ns-save { flex:1; border:none; border-radius:10px; font-size:15px; padding:12px; cursor:pointer; }
+  .ns-cancel { background:#333; color:#fff; }
+  .ns-save { background:#007aff; color:#fff; }
 
   /* ── 초기화 모달 ── */
-  .reset-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:400; align-items:center; justify-content:center; padding:0 24px; }
+  .reset-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:2000; display:none; align-items:center; justify-content:center; }
   .reset-overlay.active { display:flex; }
-  .reset-sheet {
-    background:#1e1e1e; border-radius:20px; width:100%; max-width:340px;
-    padding:28px 24px 20px; animation:popIn 0.2s ease;
-  }
-  @keyframes popIn { from{transform:scale(0.92);opacity:0} to{transform:scale(1);opacity:1} }
-  .rs-icon   { font-size:36px; text-align:center; margin-bottom:14px; }
-  .rs-title  { font-size:18px; font-weight:700; text-align:center; margin-bottom:8px; }
-  .rs-desc   { font-size:14px; color:#888; text-align:center; line-height:1.6; margin-bottom:20px; }
-  .rs-desc strong { color:#f87171; }
-  .rs-btns   { display:flex; flex-direction:column; gap:8px; }
-  .rs-cancel { background:#2a2a2a; border:none; border-radius:12px; color:#aaa; font-size:15px; padding:14px; cursor:pointer; width:100%; }
-  .rs-confirm { background:#f8717122; border:2px solid #f87171; border-radius:12px; color:#f87171; font-size:15px; font-weight:700; padding:14px; cursor:pointer; width:100%; }
-  /* 2단계 확인 입력 */
+  .reset-sheet { background:#1e1e1e; border-radius:20px; width:90%; max-width:400px; padding:30px 24px; }
+  .rs-icon { font-size:48px; text-align:center; margin-bottom:16px; }
+  .rs-title { font-size:18px; font-weight:600; text-align:center; margin-bottom:12px; }
+  .rs-desc { font-size:14px; color:#aaa; text-align:center; line-height:1.6; margin-bottom:24px; }
+  .rs-input-wrap { margin-bottom:24px; }
+  .rs-input { width:100%; background:#242424; border:1px solid #333; border-radius:10px; color:#fff; font-size:15px; padding:12px; text-align:center; }
+  .rs-input:focus { outline:none; border-color:#007aff; }
+  .rs-btns { display:flex; gap:10px; }
+  .rs-cancel, .rs-confirm { flex:1; border:none; border-radius:10px; font-size:15px; padding:12px; cursor:pointer; }
+  .rs-cancel { background:#333; color:#fff; }
+  .rs-confirm { background:#f87171; color:#fff; }
   .rs-step2 { display:none; }
-  .rs-step2.active { display:block; }
-  .rs-step1 { display:block; }
-  .rs-step1.hidden { display:none; }
-  .rs-input-wrap { margin-bottom:16px; }
-  .rs-input-label { font-size:13px; color:#888; margin-bottom:8px; text-align:center; }
-  .rs-input { width:100%; background:#2a2a2a; border:2px solid #f87171; border-radius:10px; color:#f87171; font-size:16px; font-weight:700; padding:12px; text-align:center; outline:none; letter-spacing:2px; }
-
 </style>
 </head>
 <body>
 
-
-
-<!-- 사용자 선택 바 -->
-<div class="user-bar">
-  <button class="user-btn u1 active" id="btn-u1" onclick="switchUser('u1')">
-        <span id="name-u1">사용자1</span>
-  </button>
-  <button class="user-btn u2" id="btn-u2" onclick="switchUser('u2')">
-        <span id="name-u2">사용자2</span>
-  </button>
-  <button class="user-btn all" id="btn-all" onclick="switchUser('all')">
-<span>통합</span>
-  </button>
-  <button class="user-btn" onclick="openNameModal()" style="border-color:#333;color:#555;padding:7px 12px">✏️</button>
-  <button class="user-btn" onclick="openResetModal()" style="border-color:#f8717133;color:#f87171;padding:7px 12px">🗑️</button>
-</div>
-
-<!-- 총자산 -->
-<div class="asset-header">
-  <div class="ah-label">
-    <div class="ah-dot" id="ahDot"></div>
-    <span id="ahLabelText">총 자산</span>
+<!-- 헤더 -->
+<div class="header">
+  <div class="header-left">
+    <div class="user-switch">
+      <button class="user-btn" id="btnU1" onclick="switchUser('u1')">사용자1</button>
+      <button class="user-btn" id="btnU2" onclick="switchUser('u2')">사용자2</button>
+      <button class="user-btn" id="btnAll" onclick="switchUser('all')">통합</button>
+    </div>
   </div>
-  <div class="ah-amount" id="totalAsset">—</div>
-  <div class="ah-change">
-    <span class="ah-change-val" id="changeVal">—</span>
-    <span class="ah-change-sub" id="changeSub">투자수익 기준</span>
+  <div class="header-right">
+    <button class="header-icon-btn" onclick="openNameModal()">✏️</button>
+    <button class="header-icon-btn" onclick="openResetModal()">🗑️</button>
   </div>
 </div>
 
-<!-- 도넛 -->
-<div class="donut-card">
-  <div class="donut-wrap">
-    <div class="donut-canvas-wrap">
-      <canvas id="donutChart" width="140" height="140"></canvas>
-      <div class="donut-center">
-        <div class="dc-label">순자산</div>
-        <div class="dc-amount" id="netAmountCenter">—</div>
+<!-- 순자산 카드 -->
+<div class="networth-card">
+  <div class="nw-amount" id="networthAmount">0원</div>
+  <div class="nw-change" id="networthChange">전월 대비 +0원</div>
+</div>
+
+<!-- 목표 퀵뷰 (임시 숨김 - 나중에 goal_page 완성 후 활성화) -->
+<!--
+<div class="goal-quick">
+  <div class="gq-header">
+    <div class="gq-title">🏠 주택자금 모으기</div>
+    <div class="gq-detail" onclick="location.href='goal_page.html'">자세히 →</div>
+  </div>
+  <div class="gq-progress-bg">
+    <div class="gq-progress-bar" style="width:43.8%"></div>
+  </div>
+  <div class="gq-info">
+    <div class="gq-current">87,500,000원 (43.8%)</div>
+    <div class="gq-target">목표: 200,000,000원</div>
+  </div>
+</div>
+-->
+
+<!-- 자산/부채 요약 -->
+<div class="asset-debt-card">
+  <div class="ad-row">
+    <div class="ad-label">총 자산</div>
+    <div class="ad-amount" id="totalAssetAmount">0원</div>
+  </div>
+  <div class="ad-row">
+    <div class="ad-label">총 부채</div>
+    <div class="ad-amount" id="totalDebtAmount" style="color:#f87171">0원</div>
+  </div>
+</div>
+
+<!-- 자산 구성 -->
+<div class="composition-card">
+  <div class="comp-header">
+    <div class="comp-title">자산 구성</div>
+    <button class="comp-toggle" onclick="openCompEdit()">편집</button>
+  </div>
+  
+  <div class="comp-total-label">총 자산</div>
+  <div class="comp-total-amount" id="compTotalAmount">0원</div>
+  
+  <div class="comp-bar-wrap">
+    <div class="comp-bar" id="compBar"></div>
+  </div>
+  
+  <div class="comp-list" id="compList"></div>
+</div>
+
+<!-- 자산 그리드 -->
+<div class="section-title">자산 관리</div>
+<div class="asset-grid">
+  <div class="asset-card" onclick="goGrid('account_page.html')">
+    <div class="ac-label">계좌</div>
+  </div>
+  <div class="asset-card" onclick="goGrid('card_page.html')">
+    <div class="ac-label">카드</div>
+  </div>
+  <div class="asset-card" onclick="goGrid('investment_page.html')">
+    <div class="ac-label">투자</div>
+  </div>
+  <div class="asset-card" onclick="goGrid('loan_page.html')">
+    <div class="ac-label">대출</div>
+  </div>
+  <div class="asset-card" onclick="goGrid('insurance_page.html')">
+    <div class="ac-label">보험</div>
+  </div>
+  <div class="asset-card" onclick="goGrid('car_page.html')">
+    <div class="ac-label">자동차</div>
+  </div>
+  <div class="asset-card" onclick="goGrid('realestate_page.html')">
+    <div class="ac-label">부동산</div>
+  </div>
+</div>
+
+<!-- 분석 그리드 -->
+<div class="section-title">분석</div>
+<div class="analysis-grid">
+  <div class="asset-card" onclick="goGrid('income_page.html')">
+    <div class="ac-label">수입</div>
+  </div>
+  <div class="asset-card" onclick="goGrid('expense_page.html')">
+    <div class="ac-label">고정지출</div>
+  </div>
+  <div class="asset-card" onclick="goGrid('trend_page.html')">
+    <div class="ac-label">월별추이</div>
+  </div>
+  <div class="asset-card" onclick="location.href='goal_page.html'">
+    <div class="ac-label">목표관리</div>
+  </div>
+</div>
+
+<!-- 이번 달 요약 -->
+<div class="summary-card">
+  <div class="summary-row">
+    <div class="sm-label">이번 달 수입</div>
+    <div class="sm-value" id="summaryIncome">—</div>
+  </div>
+  <div class="summary-row">
+    <div class="sm-label">고정 지출</div>
+    <div class="sm-value" id="summaryExpense">—</div>
+  </div>
+  <div class="summary-row">
+    <div class="sm-label">저축 가능액</div>
+    <div class="sm-value" id="summarySaving" style="color:#4ade80">—</div>
+  </div>
+</div>
+
+<!-- 편집 모달 -->
+<div class="comp-edit-overlay" id="compEditOverlay" onclick="if(event.target===this)closeCompEdit()">
+  <div class="comp-edit-sheet">
+    <div class="comp-edit-handle"></div>
+    <div class="comp-edit-title">표시할 자산 선택</div>
+    
+    <div class="comp-edit-list">
+      <div class="comp-edit-item" onclick="toggleCategory('checking')">
+        <div class="comp-edit-item-left">
+          <div class="comp-edit-item-bar" style="background:#4f8ef7"></div>
+          <div class="comp-edit-item-name">입출금</div>
+        </div>
+        <div class="comp-edit-toggle active" id="toggle-checking"></div>
+      </div>
+      
+      <div class="comp-edit-item" onclick="toggleCategory('investment')">
+        <div class="comp-edit-item-left">
+          <div class="comp-edit-item-bar" style="background:#10b981"></div>
+          <div class="comp-edit-item-name">투자</div>
+        </div>
+        <div class="comp-edit-toggle active" id="toggle-investment"></div>
+      </div>
+      
+      <div class="comp-edit-item" onclick="toggleCategory('realestate')">
+        <div class="comp-edit-item-left">
+          <div class="comp-edit-item-bar" style="background:#f59e0b"></div>
+          <div class="comp-edit-item-name">부동산</div>
+        </div>
+        <div class="comp-edit-toggle active" id="toggle-realestate"></div>
+      </div>
+      
+      <div class="comp-edit-item" onclick="toggleCategory('car')">
+        <div class="comp-edit-item-left">
+          <div class="comp-edit-item-bar" style="background:#6366f1"></div>
+          <div class="comp-edit-item-name">자동차</div>
+        </div>
+        <div class="comp-edit-toggle active" id="toggle-car"></div>
+      </div>
+      
+      <div class="comp-edit-item" onclick="toggleCategory('crypto')">
+        <div class="comp-edit-item-left">
+          <div class="comp-edit-item-bar" style="background:#f7931a"></div>
+          <div class="comp-edit-item-name">가상화폐</div>
+        </div>
+        <div class="comp-edit-toggle active" id="toggle-crypto"></div>
       </div>
     </div>
-    <div class="donut-legend" id="donutLegend"></div>
+    
+    <button class="comp-edit-close" onclick="closeCompEdit()">완료</button>
   </div>
 </div>
-
-<!-- 내 자산 -->
-<div class="section-hd"><span class="sh-title" id="assetGridTitle">내 자산</span></div>
-<div class="asset-grid" id="assetGrid"></div>
-<div class="sep"></div>
-
-<!-- 이번 달 -->
-<div class="section-hd"><span class="sh-title">이번 달</span></div>
-<div class="inout-grid">
-  <div class="inout-card">
-    <div class="ic-label"><div class="ic-dot" style="background:#4ade80"></div>수입</div>
-    <div class="ic-amount" style="color:#4ade80" id="incomeAmt">—</div>
-    <div class="ic-sub" id="incomeSub">—</div>
-  </div>
-  <div class="inout-card">
-    <div class="ic-label"><div class="ic-dot" style="background:#f87171"></div>고정지출</div>
-    <div class="ic-amount" style="color:#f87171" id="expenseAmt">—</div>
-    <div class="ic-sub" id="expenseSub">—</div>
-  </div>
-</div>
-<div class="saving-card">
-  <span class="sc-left">예상 저축</span>
-  <div class="sc-right">
-    <div class="sc-amount" id="savingAmt">—</div>
-    <div class="sc-rate"   id="savingRate">—</div>
-  </div>
-</div>
-<div class="sep"></div>
-
-<!-- 분석 -->
-<div class="section-hd"><span class="sh-title">분석</span></div>
-<div class="analysis-grid" id="analysisGrid"></div>
 
 <!-- 이름 설정 모달 -->
 <div class="name-overlay" id="nameOverlay" onclick="if(event.target===this)closeNameModal()">
@@ -257,7 +344,7 @@
     </div>
     <div class="ns-btn-row">
       <button class="ns-cancel" onclick="closeNameModal()">취소</button>
-      <button class="ns-save"   onclick="saveNames()">저장</button>
+      <button class="ns-save" onclick="saveNames()">저장</button>
     </div>
   </div>
 </div>
@@ -266,8 +353,7 @@
 <div class="reset-overlay" id="resetOverlay" onclick="if(event.target===this)closeResetModal()">
   <div class="reset-sheet">
     <div class="rs-icon">🗑️</div>
-
-    <!-- 1단계 -->
+    
     <div id="rsStep1" class="rs-step1">
       <div class="rs-title">데이터 초기화</div>
       <div class="rs-desc">
@@ -280,8 +366,7 @@
         <button class="rs-confirm" onclick="goStep2()">계속 진행하기</button>
       </div>
     </div>
-
-    <!-- 2단계 -->
+    
     <div id="rsStep2" class="rs-step2">
       <div class="rs-title">정말 삭제할까요?</div>
       <div class="rs-desc">확인을 위해 아래에 <strong>"삭제"</strong>를 입력해주세요</div>
@@ -296,480 +381,348 @@
   </div>
 </div>
 
-
 <script>
-/* ══════════════════════════════════════
-   사용자 시스템
-   currentUser: 'u1' | 'u2' | 'all'
-   prefix:       'u1_' | 'u2_'
-   통합(all) 시 두 prefix 모두 읽어서 합산
-══════════════════════════════════════ */
-let currentUser = localStorage.getItem('af_current_user')||'u1';
+/* ════════ 기존 로직 시작 ════════ */
+const CY = new Date().getFullYear();
+const CM = new Date().getMonth() + 1;
 
-function getNames(){
+let currentUser = localStorage.getItem('af_current_user') || 'u1';
+
+function safe(k) { try { return JSON.parse(localStorage.getItem(k)) || []; } catch { return []; }}
+function safeObj(k) { try { return JSON.parse(localStorage.getItem(k)) || {}; } catch { return {}; }}
+function monthKey(y, m) { return `${y}-${String(m).padStart(2, '0')}`; }
+
+function calcAssetsForPrefix(p) {
+  const accList = safe(p + 'af_accounts');
+  const accHist = safeObj(p + 'af_accounts_history');
+  const mk = monthKey(CY, CM);
+  const monthHist = accHist[mk] || {};
+
+  let accTotal = 0, accSecur = 0, accPension = 0, crypto = 0;
+  accList.forEach(a => {
+    const bal = monthHist[a.id] || 0;
+    if (a.cat === 'checking' || a.cat === 'saving') accTotal += bal;
+    else if (a.cat === 'securities') accSecur += bal;
+    else if (a.cat === 'pension') accPension += bal;
+    else if (a.cat === 'crypto') crypto += bal;
+  });
+
+  const invList = safe(p + 'af_invest');
+  const inv = invList.reduce((s, x) => s + (x.balance || 0), 0);
+  const invGain = invList.reduce((s, x) => s + (x.gainAmt || 0), 0);
+
+  const loans = safe(p + 'af_loans');
+  const loan = loans.reduce((s, x) => s + (x.balance || 0), 0);
+
+  const ins = safe(p + 'af_ins_meta');
+  const insMo = ins.reduce((s, x) => s + (x.isPaid ? 0 : (x.premium || 0)), 0);
+
+  const cars = safe(p + 'af_cars');
+
+  const reList = safe(p + 'af_realestate');
+  const reHist = safeObj(p + 'af_re_history');
+  const reMk = reHist[mk] || {};
+  let reTotal = 0, reRentDebt = 0;
+  reList.forEach(r => {
+    const price = reMk[r.id] || 0;
+    reTotal += price;
+    if (r.rentType === 'jeonse') reRentDebt += (r.rentDeposit || 0);
+  });
+
+  const total = accTotal + accSecur + accPension + inv + crypto + reTotal;
+  const net = total - loan - reRentDebt;
+
   return {
-    u1: localStorage.getItem('af_name_u1')||'사용자1',
-    u2: localStorage.getItem('af_name_u2')||'사용자2',
+    accTotal, accSecur, accPension, inv, crypto, reTotal, reRentDebt,
+    invGain, loan, insMo, total, net, cars
   };
 }
 
-function applyUserUI(){
-  const names = getNames();
-  document.getElementById('name-u1').textContent = names.u1;
-  document.getElementById('name-u2').textContent = names.u2;
-
-  ['u1','u2','all'].forEach(u=>{
-    document.getElementById('btn-'+u).classList.toggle('active', currentUser===u);
-  });
-
-  // ah-dot 색상
-  const dotEl = document.getElementById('ahDot');
-  dotEl.className = 'ah-dot '+(currentUser==='u2'?'u2':currentUser==='all'?'all':'u1');
-
-  // 라벨
-  const labelMap = {u1:names.u1+'의 자산', u2:names.u2+'의 자산', all:'통합 자산'};
-  document.getElementById('ahLabelText').textContent = labelMap[currentUser];
-  document.getElementById('assetGridTitle').textContent = currentUser==='all'?'통합 자산':'내 자산';
+function calcIncomeForPrefix(p) {
+  const meta = safe(p + 'af_inc_meta');
+  const spend = safeObj(p + 'af_inc_spend');
+  const ms = spend[monthKey(CY, CM)] || {};
+  return meta.reduce((s, it) => s + (ms[it.id] != null ? ms[it.id] : (it.amount || 0)), 0);
 }
 
-function switchUser(u){
-  currentUser = u;
-  localStorage.setItem('af_current_user', u);
-  // 그리드들이 읽을 활성 prefix 저장
-  if(u!=='all') localStorage.setItem('af_active_prefix', u+'_');
-  else           localStorage.setItem('af_active_prefix', 'u1_'); // all일땐 u1 기준(그리드)
-  applyUserUI();
+function calcExpenseForPrefix(p) {
+  const FREQ = { monthly: 12, bi2: 6, q: 4, semi: 2, once: 1 };
+  return safe(p + 'af_expense').reduce((s, x) => {
+    const t = FREQ[x.freq] || 12;
+    return s + (x.type === 'monthly' ? x.amount : Math.round((x.amount || 0) * t / 12));
+  }, 0);
+}
+
+function getAggregated() {
+  if (currentUser === 'all') {
+    const a1 = calcAssetsForPrefix('u1_'), a2 = calcAssetsForPrefix('u2_');
+    const i1 = calcIncomeForPrefix('u1_'), i2 = calcIncomeForPrefix('u2_');
+    const e1 = calcExpenseForPrefix('u1_'), e2 = calcExpenseForPrefix('u2_');
+    return {
+      accTotal: a1.accTotal + a2.accTotal,
+      accSecur: a1.accSecur + a2.accSecur,
+      accPension: a1.accPension + a2.accPension,
+      inv: a1.inv + a2.inv,
+      crypto: a1.crypto + a2.crypto,
+      reTotal: a1.reTotal + a2.reTotal,
+      reRentDebt: a1.reRentDebt + a2.reRentDebt,
+      invGain: a1.invGain + a2.invGain,
+      loan: a1.loan + a2.loan,
+      insMo: a1.insMo + a2.insMo,
+      total: a1.total + a2.total,
+      net: a1.net + a2.net,
+      cars: a1.cars,
+      income: i1 + i2,
+      expense: e1 + a1.insMo + e2 + a2.insMo,
+      isAll: true
+    };
+  } else {
+    const p = currentUser + '_';
+    const a = calcAssetsForPrefix(p);
+    const income = calcIncomeForPrefix(p);
+    const expense = calcExpenseForPrefix(p) + a.insMo;
+    return {
+      accTotal: a.accTotal, accSecur: a.accSecur, accPension: a.accPension,
+      inv: a.inv, crypto: a.crypto, reTotal: a.reTotal, reRentDebt: a.reRentDebt,
+      invGain: a.invGain, loan: a.loan, insMo: a.insMo,
+      total: a.total, net: a.net, cars: a.cars,
+      income, expense, isAll: false
+    };
+  }
+}
+
+function fmt(n) { return Math.round(Math.abs(n)).toLocaleString('ko-KR') + '원'; }
+function fmtShort(n) {
+  const abs = Math.abs(Math.round(n)), sign = n < 0 ? '-' : '';
+  if (abs >= 100000000) {
+    const uk = Math.floor(abs / 100000000), man = Math.floor((abs % 100000000) / 10000);
+    return sign + (man > 0 ? `${uk}.${man}억` : `${uk}억`);
+  }
+  if (abs >= 10000) return sign + Math.floor(abs / 10000) + '만';
+  return sign + abs + '원';
+}
+
+/* ════════ 자산 구성 편집 ════════ */
+let visibleCategories = {
+  checking: true,
+  investment: true,
+  realestate: true,
+  car: true,
+  crypto: true
+};
+
+function loadVisibleCategories() {
+  const saved = localStorage.getItem('af_comp_visible');
+  if (saved) {
+    visibleCategories = JSON.parse(saved);
+  }
+}
+
+function saveVisibleCategories() {
+  localStorage.setItem('af_comp_visible', JSON.stringify(visibleCategories));
+}
+
+function openCompEdit() {
+  Object.keys(visibleCategories).forEach(cat => {
+    const toggle = document.getElementById(`toggle-${cat}`);
+    if (toggle) {
+      if (visibleCategories[cat]) {
+        toggle.classList.add('active');
+      } else {
+        toggle.classList.remove('active');
+      }
+    }
+  });
+  document.getElementById('compEditOverlay').classList.add('active');
+}
+
+function closeCompEdit() {
+  document.getElementById('compEditOverlay').classList.remove('active');
+  saveVisibleCategories();
   render();
 }
 
-/* ══════════════════════════════════════
-   데이터 집계 (prefix 기반)
-══════════════════════════════════════ */
-const NOW=new Date(), CY=NOW.getFullYear(), CM=NOW.getMonth()+1;
-function monthKey(y,m){ return `${y}-${String(m).padStart(2,'0')}`; }
-
-function safe(key, fallback=[]){
-  try{ return JSON.parse(localStorage.getItem(key)||'null')||fallback; } catch{ return fallback; }
-}
-function safeObj(key){ try{ return JSON.parse(localStorage.getItem(key)||'null')||{}; } catch{ return {}; } }
-
-function calcAssetsForPrefix(p){
-  const accounts = safe(p+'af_accounts');
-  const invest   = safe(p+'af_invest');
-  const loans    = safe(p+'af_loans');
-  const ins      = safe(p+'af_ins_meta');
-  const cars     = safe(p+'af_cars');
-
-  // 계좌 월별 히스토리
-  const accHist = safeObj(p+'af_accounts_history');
-  const mk      = monthKey(CY,CM);
-  const monthH  = accHist[mk]||{};
-
-  // 카테고리별 분리 (히스토리 기반)
-  const getAcc = (cat) => accounts
-    .filter(a=>a.cat===cat)
-    .reduce((s,a)=>s+(monthH[a.id]||0),0);
-
-  const accCash     = getAcc('checking');   // 입출금
-  const accSavings  = getAcc('savings');    // 저축·파킹
-  const accSecur    = getAcc('securities'); // 증권·CMA
-  const accPension  = getAcc('pension');    // 연금·IRP
-
-  // 계좌 합계 (입출금+저축만 — 증권/연금은 별도)
-  const accTotal = accCash + accSavings;
-
-  // 투자탭 (가상화폐 제외한 순수 투자)
-  const inv      = invest.filter(a=>a.cat!=='crypto').reduce((s,a)=>s+(a.balance||0),0);
-  const crypto   = invest.filter(a=>a.cat==='crypto').reduce((s,a)=>s+(a.balance||0),0);
-  const invGain  = invest.reduce((s,a)=>s+(a.gainAmt||0),0);
-
-  const loan  = loans.reduce((s,l)=>s+(l.balance||0),0);
-  const insMo = ins.filter(x=>!x.isPaid).reduce((s,x)=>s+(x.premium||0),0);
-
-  // 부동산 (월별 시세 히스토리)
-  const reList = safe(p+'af_realestate');
-  const reHist = safeObj(p+'af_re_history');
-  const reMH   = reHist[mk]||{};
-  const reTotal= reList.reduce((s,re)=>s+(reMH[re.id]||0),0);
-  // 전세보증금 부채
-  const reRentDebt = reList.filter(re=>re.rentType==='jeon'||re.rentType==='semi')
-                           .reduce((s,re)=>s+(re.rentDeposit||0),0);
-
-  // 총자산 = 입출금+저축 + 증권 + 연금 + 투자
-  const total = accTotal + accSecur + accPension + inv;
-  const net   = total - loan;
-
-  // 총자산 재계산 (부동산 + 가상화폐 포함)
-  const totalFull = accTotal + accSecur + accPension + inv + crypto + reTotal;
-  const netFull   = totalFull - loan - reRentDebt;
-
-  return {
-    accTotal,       // 입출금+저축
-    accSecur,       // 증권·CMA
-    accPension,     // 연금·IRP
-    inv,            // 투자탭 (가상화폐 제외)
-    crypto,         // 가상화폐
-    reTotal,        // 부동산 시세
-    reRentDebt,     // 전세보증금 부채
-    invGain,
-    loan,
-    insMo,
-    total:  totalFull,
-    net:    netFull,
-    cars,
-  };
-}
-
-function calcIncomeForPrefix(p){
-  const meta  = safe(p+'af_inc_meta');
-  const spend = safeObj(p+'af_inc_spend');
-  const ms    = spend[monthKey(CY,CM)]||{};
-  return meta.reduce((s,it)=>s+(ms[it.id]!=null?ms[it.id]:(it.amount||0)),0);
-}
-
-function calcExpenseForPrefix(p){
-  const FREQ={monthly:12,bi2:6,q:4,semi:2,once:1};
-  return safe(p+'af_expense').reduce((s,x)=>{
-    const t=FREQ[x.freq]||12;
-    return s+(x.type==='monthly'?x.amount:Math.round((x.amount||0)*t/12));
-  },0);
-}
-
-function calcCardSpendForPrefix(p){
-  const meta  = safe(p+'af_cards_meta');
-  const spend = safeObj(p+'af_cards_spend');
-  const ms    = spend[monthKey(CY,CM)]||{};
-  return meta.reduce((s,c)=>s+(ms[c.id]||0),0);
-}
-
-function getAggregated(){
-  if(currentUser==='all'){
-    const a1=calcAssetsForPrefix('u1_'), a2=calcAssetsForPrefix('u2_');
-    const i1=calcIncomeForPrefix('u1_'),  i2=calcIncomeForPrefix('u2_');
-    const e1=calcExpenseForPrefix('u1_'), e2=calcExpenseForPrefix('u2_');
-    const c1=calcCardSpendForPrefix('u1_'), c2=calcCardSpendForPrefix('u2_');
-    return {
-      accTotal:  a1.accTotal  + a2.accTotal,
-      accSecur:  a1.accSecur  + a2.accSecur,
-      accPension:a1.accPension+ a2.accPension,
-      inv:       a1.inv       + a2.inv,
-      crypto:    a1.crypto    + a2.crypto,
-      reTotal:   a1.reTotal   + a2.reTotal,
-      reRentDebt:a1.reRentDebt+ a2.reRentDebt,
-      invGain:   a1.invGain   + a2.invGain,
-      loan:      a1.loan      + a2.loan,
-      insMo:     a1.insMo     + a2.insMo,
-      total:     a1.total     + a2.total,
-      net:       a1.net       + a2.net,
-      cars:      a1.cars,
-      income:    i1+i2,
-      expense:   e1+a1.insMo+e2+a2.insMo,
-      cardSpend: c1+c2,
-      isAll:true
-    };
-  } else {
-    const p=currentUser+'_';
-    const a=calcAssetsForPrefix(p);
-    const income  = calcIncomeForPrefix(p);
-    const expense = calcExpenseForPrefix(p)+a.insMo;
-    const cardSpend = calcCardSpendForPrefix(p);
-    return {
-      accTotal:   a.accTotal,
-      accSecur:   a.accSecur,
-      accPension: a.accPension,
-      inv:        a.inv,
-      crypto:     a.crypto,
-      reTotal:    a.reTotal,
-      reRentDebt: a.reRentDebt,
-      invGain:    a.invGain,
-      loan:       a.loan,
-      insMo:      a.insMo,
-      total:      a.total,
-      net:        a.net,
-      cars:       a.cars,
-      income, expense, cardSpend, isAll:false
-    };
+function toggleCategory(category) {
+  visibleCategories[category] = !visibleCategories[category];
+  const toggle = document.getElementById(`toggle-${category}`);
+  if (toggle) {
+    toggle.classList.toggle('active');
   }
 }
 
-/* 포맷 */
-function fmt(n){ return Math.round(Math.abs(n)).toLocaleString('ko-KR')+'원'; }
-function fmtShort(n){
-  const abs=Math.abs(Math.round(n)), sign=n<0?'-':'';
-  if(abs>=100000000){
-    const uk=Math.floor(abs/100000000), man=Math.floor((abs%100000000)/10000);
-    return man>0?`${sign}${uk}억 ${man}만`:`${sign}${uk}억`;
-  }
-  if(abs>=10000) return `${sign}${Math.floor(abs/10000)}만`;
-  return sign+abs.toLocaleString('ko-KR');
-}
-
-/* ══════════════════════════════════════
-   렌더링
-══════════════════════════════════════ */
-let donutInst=null;
-
-function render(){
+/* ════════ 렌더링 ════════ */
+function render() {
   const D = getAggregated();
   const { accTotal, accSecur, accPension, inv, crypto, reTotal, reRentDebt,
-          invGain, loan, insMo, total, net,
-          cars, income, expense, cardSpend } = D;
-  const saving  = income-expense;
-  const savRate = income>0?Math.round(saving/income*100):0;
+    invGain, loan, insMo, total, net, cars, income, expense } = D;
 
+  // 순자산 카드
+  document.getElementById('networthAmount').textContent = fmt(net);
+  const changeEl = document.getElementById('networthChange');
+  const changeText = `전월 대비 ${invGain >= 0 ? '+' : ''}${fmt(Math.abs(invGain))}`;
+  changeEl.textContent = changeText;
+  changeEl.className = 'nw-change ' + (invGain >= 0 ? '' : 'neg');
 
-  // 총자산
-  document.getElementById('totalAsset').textContent = fmt(total);
+  // 자산/부채 요약
+  document.getElementById('totalAssetAmount').textContent = fmt(total);
+  document.getElementById('totalDebtAmount').textContent = fmt(loan + reRentDebt);
 
-  // 변화
-  const chEl = document.getElementById('changeVal');
-  chEl.textContent = (invGain>=0?'+':'')+fmt(invGain);
-  chEl.className = 'ah-change-val '+(invGain>=0?'pos':'neg');
+  // 자산 구성
+  document.getElementById('compTotalAmount').textContent = fmt(total);
 
-  // 순자산
-  const ncEl = document.getElementById('netAmountCenter');
-  ncEl.textContent = fmtShort(net);
-  ncEl.className = 'dc-amount '+(net>=0?'pos':'neg');
+  const categories = [
+    { key: 'checking', name: '입출금', color: '#4f8ef7', amount: accTotal, change: 0 },
+    { key: 'investment', name: '투자', color: '#10b981', amount: inv + accSecur + accPension, change: invGain },
+    { key: 'realestate', name: '부동산', color: '#f59e0b', amount: reTotal, change: 0 },
+    { key: 'car', name: '자동차', color: '#6366f1', amount: cars.reduce((s, c) => s + (c.purchasePrice || 0), 0), change: 0 },
+    { key: 'crypto', name: '가상화폐', color: '#f7931a', amount: crypto, change: 0 }
+  ].filter(c => visibleCategories[c.key] && c.amount > 0);
 
-  // 도넛
-  const segments = [
-    {label:'계좌·현금', value:accTotal,   color:'#4ade80'},
-    {label:'증권·CMA',  value:accSecur,   color:'#22c55e'},
-    {label:'투자',       value:inv,        color:'#4da3ff'},
-    {label:'가상화폐',   value:crypto,     color:'#f7931a'},
-    {label:'연금·IRP',  value:accPension, color:'#a855f7'},
-    {label:'부동산',     value:reTotal,    color:'#f59e0b'},
-    {label:'대출',       value:loan,       color:'#374151', neg:true},
-  ].filter(s=>s.value>0);
+  const visibleTotal = categories.reduce((s, c) => s + c.amount, 0);
 
-  // 데이터가 없으면 빈 도넛 표시
-  const hasData = segments.length > 0;
-  const chartData = hasData ? segments.map(s=>s.value) : [100];
-  const chartColors = hasData ? segments.map(s=>s.color) : ['#2a2a2a'];
+  // 막대 그래프
+  const barHTML = categories.map(c => {
+    const pct = visibleTotal > 0 ? (c.amount / visibleTotal * 100).toFixed(1) : 0;
+    return `<div class="comp-bar-seg" style="width:${pct}%;background:${c.color}"></div>`;
+  }).join('');
+  document.getElementById('compBar').innerHTML = barHTML;
 
-  if(donutInst) donutInst.destroy();
-  donutInst = new Chart(document.getElementById('donutChart').getContext('2d'),{
-    type:'doughnut',
-    data:{ datasets:[{
-      data:chartData,
-      backgroundColor:chartColors,
-      borderWidth:0, hoverOffset:hasData?6:0,
-    }]},
-    options:{
-      cutout:'72%',
-      plugins:{
-        legend:{display:false}, 
-        tooltip:{
-          enabled: hasData,
-          backgroundColor:'rgba(20,20,30,0.95)',
-          padding:10, cornerRadius:10,
-          callbacks:{label:i=>' '+fmt(segments[i.dataIndex].value)}
-        }
-      },
-      animation:{duration:700}
-    }
-  });
+  // 리스트
+  const listHTML = categories.map(c => {
+    const pct = visibleTotal > 0 ? Math.round(c.amount / visibleTotal * 100) : 0;
+    const changeClass = c.change > 0 ? 'pos' : (c.change < 0 ? 'neg' : '');
+    const changeText = c.change !== 0 ? `${c.change >= 0 ? '+' : ''}${fmt(Math.abs(c.change))}` : '변동 없음';
 
-  document.getElementById('donutLegend').innerHTML = segments.map(s=>`
-    <div class="dl-item">
-      <div class="dl-left">
-        <div class="dl-dot" style="background:${s.color}"></div>
-        <span class="dl-name">${s.label}</span>
-      </div>
-      <span class="dl-amt ${s.neg?'neg':''}">${s.neg?'-':''}${fmtShort(s.value)}</span>
-    </div>`).join('') + (!hasData ? '<div style="text-align:center;color:#555;font-size:12px;padding:8px 0">데이터를 입력해주세요</div>' : '');
+    return `
+      <div class="comp-item" data-category="${c.key}">
+        <div class="comp-item-header">
+          <div class="comp-item-left">
+            <div class="comp-item-bar" style="background:${c.color}"></div>
+            <div class="comp-item-name">${c.name}</div>
+          </div>
+          <div class="comp-item-amount">${fmt(c.amount)}</div>
+        </div>
+        <div class="comp-item-footer">
+          <div class="comp-item-ratio">${pct}%</div>
+          <div class="comp-item-change ${changeClass}">${changeText}</div>
+        </div>
+      </div>`;
+  }).join('');
+  document.getElementById('compList').innerHTML = listHTML;
 
-  // 자산 그리드 (통합 시 그리드 클릭 → u1 기준)
-  const cars0 = cars[0];
-  document.getElementById('assetGrid').innerHTML=`
-    <div class="grid-item" onclick="goGrid('account_page.html')">
-      <div class="gi-label">계좌</div>
-    </div>
-    <div class="grid-item" onclick="goGrid('card_page.html')">
-      <div class="gi-label">카드</div>
-    </div>
-    <div class="grid-item" onclick="goGrid('investment_page.html')">
-      <div class="gi-label">투자</div>
-    </div>
-    <div class="grid-item" onclick="goGrid('loan_page.html')">
-      <div class="gi-label">대출</div>
-    </div>
-    <div class="grid-item" onclick="goGrid('insurance_page.html')">
-      <div class="gi-label">보험</div>
-    </div>
-    <div class="grid-item" onclick="goGrid('car_page.html')">
-      <div class="gi-label">자동차</div>
-    </div>
-    <div class="grid-item" onclick="goGrid('realestate_page.html')">
-      <div class="gi-label">부동산</div>
-    </div>`;
-
-  // 수입/지출
-  document.getElementById('incomeAmt').textContent  = income>0?fmtShort(income):'미입력';
-  document.getElementById('incomeSub').textContent  = income>0?'근로·임대·투자':'수입 페이지에서 입력';
-  document.getElementById('expenseAmt').textContent = expense>0?fmtShort(expense):'미입력';
-  document.getElementById('expenseSub').textContent = expense>0?`보험 ${fmtShort(insMo)} 포함`:'지출 페이지에서 입력';
-  document.getElementById('savingAmt').textContent  = income>0?fmtShort(saving):'—';
-  document.getElementById('savingRate').textContent = income>0?`저축률 ${savRate}%`:'수입을 입력하면 계산돼요';
-
-  // 분석
-  document.getElementById('analysisGrid').innerHTML=`
-    <div class="grid-item" onclick="goGrid('income_page.html')">
-      <div class="gi-label">수입</div>
-    </div>
-    <div class="grid-item" onclick="goGrid('expense_page.html')">
-      <div class="gi-label">지출</div>
-    </div>
-    <div class="grid-item" onclick="goGrid('trend_page.html')">
-      <div class="gi-label">월별추이</div>
-    </div>`;
+  // 요약
+  const saving = income - expense;
+  document.getElementById('summaryIncome').textContent = income > 0 ? fmtShort(income) : '미입력';
+  document.getElementById('summaryExpense').textContent = expense > 0 ? fmtShort(expense) : '미입력';
+  document.getElementById('summarySaving').textContent = income > 0 ? fmtShort(saving) : '—';
 }
 
-/* 그리드 이동 시 prefix 저장 */
-function goGrid(page){
-  // 통합 뷰에서 그리드 이동 시 u1 기준
-  const prefix = currentUser==='all'?'u1_':currentUser+'_';
+function switchUser(user) {
+  currentUser = user;
+  localStorage.setItem('af_current_user', user);
+  
+  // 버튼 활성화
+  document.getElementById('btnU1').classList.toggle('active', user === 'u1');
+  document.getElementById('btnU2').classList.toggle('active', user === 'u2');
+  document.getElementById('btnAll').classList.toggle('active', user === 'all');
+  
+  // 이름 업데이트
+  const n1 = localStorage.getItem('af_name_u1') || '사용자1';
+  const n2 = localStorage.getItem('af_name_u2') || '사용자2';
+  document.getElementById('btnU1').textContent = n1;
+  document.getElementById('btnU2').textContent = n2;
+  
+  render();
+}
+
+function goGrid(page) {
+  const prefix = currentUser === 'all' ? 'u1_' : currentUser + '_';
   localStorage.setItem('af_active_prefix', prefix);
   location.href = page;
 }
 
-
-/* ══════════════════════════════════════
-   데이터 초기화
-══════════════════════════════════════ */
-const RESET_KEYS = [
-  'af_accounts','af_accounts_history',
-  'af_invest','af_loans',
-  'af_cards_meta','af_cards_spend',
-  'af_ins_meta','af_expense',
-  'af_inc_meta','af_inc_spend',
-  'af_cars','af_dividends',
-  'af_realestate','af_re_history',
-];
-
-function openResetModal(){
-  const names = getNames();
-  const label = currentUser==='all'
-    ? '통합(전체 사용자)'
-    : currentUser==='u1' ? names.u1 : names.u2;
-  document.getElementById('rsTargetName').textContent = label;
-  document.getElementById('rsConfirmInput').value = '';
-  document.getElementById('rsFinalBtn').disabled = true;
-  document.getElementById('rsFinalBtn').style.opacity = '0.4';
-  // 1단계로 초기화
-  document.getElementById('rsStep1').classList.remove('hidden');
-  document.getElementById('rsStep1').classList.add('rs-step1');
-  document.getElementById('rsStep2').classList.remove('active');
-  document.getElementById('resetOverlay').classList.add('active');
-}
-function closeResetModal(){
-  document.getElementById('resetOverlay').classList.remove('active');
-}
-function goStep2(){
-  document.getElementById('rsStep1').classList.add('hidden');
-  document.getElementById('rsStep2').classList.add('active');
-  setTimeout(()=>document.getElementById('rsConfirmInput').focus(), 100);
-}
-function backStep1(){
-  document.getElementById('rsStep1').classList.remove('hidden');
-  document.getElementById('rsStep2').classList.remove('active');
-}
-function checkResetInput(){
-  const val = document.getElementById('rsConfirmInput').value;
-  const ok  = val === '삭제';
-  document.getElementById('rsFinalBtn').disabled = !ok;
-  document.getElementById('rsFinalBtn').style.opacity = ok ? '1' : '0.4';
-}
-function executeReset(){
-  const prefixes = currentUser==='all' ? ['u1_','u2_'] : [currentUser+'_'];
-  prefixes.forEach(p=>{
-    RESET_KEYS.forEach(key=>{
-      localStorage.removeItem(p+key);
-    });
-    // 정비 데이터 (af_maint_로 시작하는 것)
-    Object.keys(localStorage).filter(k=>k.startsWith(p+'af_maint_')).forEach(k=>{
-      localStorage.removeItem(k);
-    });
-  });
-  closeResetModal();
-  render();
-  // 완료 토스트
-  showToast(currentUser==='all'?'전체 데이터가 초기화됐어요':'데이터가 초기화됐어요');
-}
-
-/* 토스트 메시지 */
-function showToast(msg){
-  const t = document.createElement('div');
-  t.textContent = msg;
-  t.style.cssText = 'position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 20px;border-radius:20px;font-size:14px;z-index:999;white-space:nowrap;animation:fadeInOut 2.5s ease forwards';
-  document.head.insertAdjacentHTML('beforeend','<style>@keyframes fadeInOut{0%{opacity:0;transform:translateX(-50%) translateY(10px)}15%{opacity:1;transform:translateX(-50%) translateY(0)}85%{opacity:1}100%{opacity:0}}</style>');
-  document.body.appendChild(t);
-  setTimeout(()=>t.remove(), 2500);
-}
-
-/* 이름 모달 */
-function openNameModal(){
-  const names = getNames();
-  document.getElementById('nsInput1').value = names.u1;
-  document.getElementById('nsInput2').value = names.u2;
+/* ════════ 이름 설정 ════════ */
+function openNameModal() {
+  document.getElementById('nsInput1').value = localStorage.getItem('af_name_u1') || '';
+  document.getElementById('nsInput2').value = localStorage.getItem('af_name_u2') || '';
   document.getElementById('nameOverlay').classList.add('active');
 }
-function closeNameModal(){ document.getElementById('nameOverlay').classList.remove('active'); }
-function saveNames(){
-  const n1 = document.getElementById('nsInput1').value.trim()||'사용자1';
-  const n2 = document.getElementById('nsInput2').value.trim()||'사용자2';
+
+function closeNameModal() {
+  document.getElementById('nameOverlay').classList.remove('active');
+}
+
+function saveNames() {
+  const n1 = document.getElementById('nsInput1').value.trim() || '사용자1';
+  const n2 = document.getElementById('nsInput2').value.trim() || '사용자2';
   localStorage.setItem('af_name_u1', n1);
   localStorage.setItem('af_name_u2', n2);
   closeNameModal();
-  applyUserUI();
+  switchUser(currentUser);
+}
+
+/* ════════ 초기화 ════════ */
+const RESET_KEYS = [
+  'af_accounts', 'af_accounts_history', 'af_accounts_cashflow',
+  'af_invest', 'af_invest_visibility', 'af_loans',
+  'af_cards_meta', 'af_cards_spend',
+  'af_ins_meta', 'af_expense',
+  'af_inc_meta', 'af_inc_spend',
+  'af_cars', 'af_dividends',
+  'af_realestate', 'af_re_history',
+];
+
+function openResetModal() {
+  const names = { u1: localStorage.getItem('af_name_u1') || '사용자1',
+                  u2: localStorage.getItem('af_name_u2') || '사용자2',
+                  all: '전체' };
+  document.getElementById('rsTargetName').textContent = names[currentUser];
+  document.getElementById('rsStep1').style.display = 'block';
+  document.getElementById('rsStep2').style.display = 'none';
+  document.getElementById('resetOverlay').classList.add('active');
+}
+
+function closeResetModal() {
+  document.getElementById('resetOverlay').classList.remove('active');
+  document.getElementById('rsConfirmInput').value = '';
+}
+
+function goStep2() {
+  document.getElementById('rsStep1').style.display = 'none';
+  document.getElementById('rsStep2').style.display = 'block';
+}
+
+function backStep1() {
+  document.getElementById('rsStep1').style.display = 'block';
+  document.getElementById('rsStep2').style.display = 'none';
+  document.getElementById('rsConfirmInput').value = '';
+}
+
+function checkResetInput() {
+  const val = document.getElementById('rsConfirmInput').value.trim();
+  const btn = document.getElementById('rsFinalBtn');
+  if (val === '삭제') {
+    btn.disabled = false;
+    btn.style.opacity = '1';
+  } else {
+    btn.disabled = true;
+    btn.style.opacity = '0.4';
+  }
+}
+
+function executeReset() {
+  const prefixes = currentUser === 'all' ? ['u1_', 'u2_'] : [currentUser + '_'];
+  prefixes.forEach(p => {
+    RESET_KEYS.forEach(k => localStorage.removeItem(p + k));
+  });
+  closeResetModal();
   render();
 }
 
-/* 초기화 */
-// 최초 접속 시 u1_ prefix 설정
-if(!localStorage.getItem('af_active_prefix')){
-  localStorage.setItem('af_active_prefix', 'u1_');
-}
-
-/* ── 스와이프로 모달 닫기 ── */
-(function(){
-  let startY=0, currentY=0, isDragging=false;
-  const overlay = document.getElementById('nameOverlay');
-  const sheet   = overlay?.querySelector('.name-sheet');
-  const handle  = overlay?.querySelector('.ns-handle');
-  if(!handle||!sheet||!overlay) return;
-
-  function onStart(e){
-    const touch = e.touches?e.touches[0]:e;
-    startY = touch.clientY; currentY = startY; isDragging = true;
-    sheet.style.transition = 'none';
-  }
-  function onMove(e){
-    if(!isDragging) return;
-    const touch = e.touches?e.touches[0]:e;
-    currentY = touch.clientY;
-    const diff = currentY - startY;
-    if(diff>0) sheet.style.transform = `translateY(${diff}px)`;
-  }
-  function onEnd(){
-    if(!isDragging) return;
-    isDragging = false;
-    sheet.style.transition = 'transform 0.2s ease';
-    const diff = currentY - startY;
-    if(diff>100){ closeNameModal(); }
-    else{ sheet.style.transform = 'translateY(0)'; }
-  }
-
-  handle.addEventListener('touchstart', onStart, {passive:true});
-  handle.addEventListener('touchmove',  onMove,  {passive:true});
-  handle.addEventListener('touchend',   onEnd,   {passive:true});
-  handle.addEventListener('mousedown',  onStart);
-  document.addEventListener('mousemove', e=>{ if(isDragging) onMove(e); });
-  document.addEventListener('mouseup',   onEnd);
-})();
-
-applyUserUI();
-render();
+/* ════════ 초기화 ════════ */
+loadVisibleCategories();
+switchUser(currentUser);
 </script>
+
 </body>
 </html>

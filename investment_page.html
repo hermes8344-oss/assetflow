@@ -587,10 +587,18 @@ function renderPage(){
         gainPct = ((gainAmt / principal) * 100).toFixed(2);
       }
       
+      // 전월 대비 증감 계산
+      const prevMk = invMonthKey(selY === 1 ? selY - 1 : selY, selM === 1 ? 12 : selM - 1);
+      const prevBal = (monthHist && monthHist[a.id]) ? (accHist[prevMk]?.[a.id] || 0) : 0;
+      const balChange = bal - prevBal;
+      const balChangePct = prevBal > 0 ? ((balChange / prevBal) * 100).toFixed(2) : null;
+      
       // 카테고리 매핑 (증권 → overseas/domestic, 연금 → etc)
       let cat = 'etc';
       if(a.cat === 'securities'){
         cat = 'domestic'; // 기본값, 메타데이터에서 변경 가능하도록 향후 추가
+      } else if(a.cat === 'crypto'){
+        cat = 'crypto';
       }
       
       accounts.push({
@@ -604,6 +612,9 @@ function renderPage(){
         gainPct: gainPct,
         principal: principal,
         startDate: startDate,
+        balChange: balChange,
+        balChangePct: balChangePct,
+        prevBal: prevBal,
         _fromAccount: true
       });
     });
@@ -719,25 +730,19 @@ function renderPage(){
     // 해당 카테고리 계좌들
     listHTML += `<div class="cat-account-group">`;
     listHTML += list.map(a=>{
-      // 원금이 있으면 수익률 자동 계산
-      let gainAmt = a.gainAmt || 0;
-      let gainPct = a.gainPct;
+      const subText = a.bank||'';
       
-      if(a.principal && a.principal > 0 && a.balance > 0){
-        gainAmt = a.balance - a.principal;
-        gainPct = ((gainAmt / a.principal) * 100).toFixed(2);
+      // 수익률 계산 (투자 원금 기준)
+      const principal = a.principal || 0;
+      let gainStr = '';
+      let gainClass = 'neutral';
+      
+      if(principal > 0 && a.balance > 0){
+        const gainAmt = a.balance - principal;
+        const gainPct = ((gainAmt / principal) * 100).toFixed(2);
+        gainStr = `${gainAmt>=0?'+':''}${gainPct}% (${gainAmt>=0?'+':''}${fmt(Math.abs(gainAmt))})`;
+        gainClass = gainAmt > 0 ? 'pos' : (gainAmt < 0 ? 'neg' : 'neutral');
       }
-      
-      const gainStr = gainPct !== null && gainPct !== undefined
-        ? `${gainAmt>=0?'+':''}${fmt(gainAmt)} (${gainPct>=0?'+':''}${gainPct}%)`
-        : (gainAmt!==0 ? `${gainAmt>=0?'+':''}${fmt(gainAmt)}` : '');
-      const gainClass = gainAmt>0?'pos':gainAmt<0?'neg':'neutral';
-      
-      // 추가 정보 (원금, 시작일)
-      const extraInfo = [];
-      if(a.principal > 0) extraInfo.push(`원금 ${fmtShort(a.principal)}`);
-      if(a.startDate) extraInfo.push(`${a.startDate} ~`);
-      const subText = extraInfo.length > 0 ? extraInfo.join(' · ') : a.bank;
       
       return `
         <div class="account-item" onclick="showAccountDetail(${a.id})">
@@ -891,6 +896,12 @@ function showAccountDetail(accountId){
       const gainPct = principal > 0 ? ((gainAmt / principal) * 100).toFixed(2) : '0.00';
       const cf = monthCf[acc.id]||0;
       
+      // 전월 잔고 계산
+      const prevMk = invMonthKey(selY === 1 ? selY - 1 : selY, selM === 1 ? 12 : selM - 1);
+      const prevBal = accHist[prevMk]?.[acc.id] || 0;
+      const balChange = bal - prevBal;
+      const balChangePct = prevBal > 0 ? ((balChange / prevBal) * 100).toFixed(2) : null;
+      
       // 자산 종류 레이블
       const catLabels = {
         overseas: '해외 주식',
@@ -914,7 +925,10 @@ function showAccountDetail(accountId){
         gainAmt: gainAmt,
         gainPct: gainPct,
         assetType: assetType,
-        cashflow: cf
+        cashflow: cf,
+        prevBal: prevBal,
+        balChange: balChange,
+        balChangePct: balChangePct
       };
     }
   } catch(e){ console.warn('계좌 정보 로드 오류:', e); }
@@ -929,6 +943,8 @@ function showAccountDetail(accountId){
   const gainSign = p.gainAmt >= 0 ? '+' : '';
   const cfColor = p.cashflow >= 0 ? '#4ade80' : '#f87171';
   const cfSign = p.cashflow >= 0 ? '+' : '';
+  const changeColor = p.balChange >= 0 ? '#4ade80' : '#f87171';
+  const changeSign = p.balChange >= 0 ? '+' : '';
 
   document.getElementById('editContent').innerHTML=`
     <div class="modal-title">${p.name}<br><span style="font-size:14px;color:#888;font-weight:400">${p.bank}</span></div>
@@ -961,7 +977,7 @@ function showAccountDetail(accountId){
         
         <div style="border-top:1px solid #3a3a3a;margin:12px 0;padding-top:12px">
           <div style="display:flex;justify-content:space-between;margin-bottom:8px">
-            <span style="font-size:14px;color:#aaa">평가 손익</span>
+            <span style="font-size:14px;color:#aaa">평가 손익 (누적)</span>
             <span style="font-size:15px;color:${gainColor};font-weight:600">${gainSign}${fmt(Math.abs(p.gainAmt))}</span>
           </div>
           
@@ -977,6 +993,19 @@ function showAccountDetail(accountId){
           `}
         </div>
       </div>
+      
+      ${p.prevBal > 0 ? `
+      <div style="background:#2e2e2e;border-radius:14px;padding:16px;margin-bottom:14px">
+        <div style="font-size:13px;color:#888;margin-bottom:10px">📊 전월 대비</div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline">
+          <span style="font-size:14px;color:#aaa">잔액 증감</span>
+          <div style="text-align:right">
+            <div style="font-size:15px;color:${changeColor};font-weight:600">${changeSign}${fmt(Math.abs(p.balChange))}</div>
+            ${p.balChangePct !== null ? `<div style="font-size:12px;color:${changeColor};margin-top:2px">${changeSign}${p.balChangePct}%</div>` : ''}
+          </div>
+        </div>
+      </div>
+      ` : ''}
       
       ${p.cashflow !== 0 ? `
       <div style="background:#2e2e2e;border-radius:14px;padding:16px;margin-bottom:14px">
