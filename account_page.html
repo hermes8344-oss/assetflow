@@ -460,7 +460,17 @@ function openEditModal(){
   document.body.style.top = `-${window.scrollY}px`;
 }
 function closeEditModal(){ 
-  document.getElementById('editOverlay').classList.remove('active');
+  const overlay = document.getElementById('editOverlay');
+  const sheet = overlay?.querySelector('.edit-sheet');
+  
+  // transform 초기화
+  if(sheet){
+    sheet.style.transform = 'translateY(0)';
+    sheet.style.transition = '';
+  }
+  
+  overlay.classList.remove('active');
+  
   // iOS body 스크롤 복원
   const scrollY = document.body.style.top;
   document.body.style.overflow = '';
@@ -546,7 +556,7 @@ function showBalanceForm(id){
       </div>
       ` : ''}
       <button class="btn-submit" onclick="saveBalance(${id})">저장하기</button>
-      <button class="btn-cancel" onclick="showEditMain()">취소</button>
+      <button class="btn-cancel" onclick="closeEditModal()">취소</button>
     </div>`;
 }
 
@@ -608,7 +618,8 @@ function saveBalance(id){
     saveCashflow(cashflow);
   }
 
-  showEditMain(); renderPage();
+  closeEditModal(); 
+  renderPage();
 }
 
 /* 계좌 정보 수정 */

@@ -241,12 +241,6 @@
     <span id="monthLabelText" style="font-size:15px;font-weight:600;color:#fff">—</span>
     <span style="font-size:10px;color:#555">▼</span>
   </button>
-  <button class="month-trash-btn" onclick="openImportModal()" title="전월 데이터 불러오기">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M12 3V15M12 15L8 11M12 15L16 11" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M3 15C3 15 3 21 12 21C21 21 21 15 21 15" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-  </button>
 </div>
 
 <div class="card-list" id="cardList"></div>
@@ -273,23 +267,7 @@
     <div class="month-grid" id="monthGrid"></div>
   </div>
 </div>
-<!-- 불러오기 모달 -->
-<div class="trash-overlay" id="importOverlay" onclick="if(event.target===this)closeImportModal()">
-  <div class="trash-sheet">
-    <div class="trs-icon">
-      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 3V15M12 15L8 11M12 15L16 11" stroke="#888" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M3 15C3 15 3 21 12 21C21 21 21 15 21 15" stroke="#888" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    </div>
-    <div class="trs-title" id="importTitle">전월 데이터 불러오기</div>
-    <div class="trs-desc" id="importDesc"></div>
-    <div id="importButtons"></div>
-    <div class="trs-btns">
-      <button class="trs-cancel" onclick="closeImportModal()">취소</button>
-    </div>
-  </div>
-</div>
+
 
 <!-- 월별 초기화 모달 -->
 <div class="trash-overlay" id="trashOverlay" onclick="if(event.target===this)closeTrashModal()">
@@ -329,6 +307,14 @@
   </div>
 </div>
 
+<!-- 빠른 입력 모달 -->
+<div class="edit-overlay" id="quickEditOverlay" onclick="if(event.target===this)closeQuickEdit()">
+  <div class="edit-sheet">
+    <div class="modal-handle"></div>
+    <div id="quickEditContent"></div>
+  </div>
+</div>
+
 <script>
 
 /* ── 사용자 prefix 시스템 ── */
@@ -339,6 +325,18 @@ function pk(key){ return getPrefix()+key; }
 const NOW = new Date();
 const CUR_YEAR = NOW.getFullYear(), CUR_MONTH = NOW.getMonth()+1;
 function monthKey(y,m){ return `${y}-${String(m).padStart(2,'0')}`; }
+
+/* ── 전체 월 키 생성 (최근 5년) ── */
+function getAllMonthKeys(){
+  const keys = [];
+  for(let y = CUR_YEAR - 5; y <= CUR_YEAR; y++){
+    const maxM = (y === CUR_YEAR) ? CUR_MONTH : 12;
+    for(let m = 1; m <= maxM; m++){
+      keys.push(monthKey(y, m));
+    }
+  }
+  return keys;
+}
 
 const CARD_COMPANIES = [
   '삼성카드', '현대카드', '신한카드', 'KB국민카드', '우리카드', '하나카드',
@@ -376,7 +374,7 @@ function renderPage(){
     document.getElementById('totalValue').textContent='0원'; return;
   }
   el.innerHTML=rows.map(c=>`
-    <div class="card-item">
+    <div class="card-item" onclick="quickEdit(${c.id})">
       <div class="card-icon ${c.color}"><span class="card-label">${c.label.replace(/\n/g,'<br>')}</span></div>
       <div class="card-info"><div class="card-name">${c.name}</div><div class="card-sub">${c.type}</div></div>
       <div class="card-amount"><div class="amount">${fmt(c.amount)}</div></div>
@@ -384,6 +382,63 @@ function renderPage(){
   document.getElementById('totalValue').textContent=fmt(rows.reduce((s,c)=>s+c.amount,0));
 }
 function fmt(n){ return n.toLocaleString('ko-KR')+'원'; }
+
+/* ── 빠른 입력 모달 ── */
+function quickEdit(id){
+  const c = meta.find(x => x.id === id);
+  if(!c) return;
+  const cur = (spend[monthKey(selY,selM)] || {})[id] || 0;
+  
+  document.getElementById('quickEditContent').innerHTML = `
+    <div class="modal-title">${c.name}</div>
+    <div class="add-form">
+      <div class="f-row">
+        <div class="f-label">${selM}월 지출액 (원)</div>
+        <input class="f-input" id="quickSpent" type="text" inputmode="numeric" 
+               value="${cur ? cur.toLocaleString('ko-KR') : ''}" 
+               oninput="formatNumberInput(this)" 
+               autofocus>
+      </div>
+      <button class="btn-submit" onclick="saveQuickEdit(${id})">저장</button>
+      <button class="btn-cancel" onclick="closeQuickEdit()">취소</button>
+    </div>
+  `;
+  
+  document.getElementById('quickEditOverlay').classList.add('active');
+  
+  // autofocus 강제 실행
+  setTimeout(() => {
+    const input = document.getElementById('quickSpent');
+    if(input) {
+      input.focus();
+      input.select();
+    }
+  }, 100);
+}
+
+function closeQuickEdit(){
+  const overlay = document.getElementById('quickEditOverlay');
+  const sheet = overlay?.querySelector('.edit-sheet');
+  
+  // transform 초기화
+  if(sheet){
+    sheet.style.transform = 'translateY(0)';
+    sheet.style.transition = '';
+  }
+  
+  overlay.classList.remove('active');
+}
+
+function saveQuickEdit(id){
+  const amtStr = document.getElementById('quickSpent').value.replace(/,/g,'');
+  const amt = parseInt(amtStr) || 0;
+  const k = monthKey(selY, selM);
+  if(!spend[k]) spend[k] = {};
+  spend[k][id] = amt;
+  saveSpend(spend);
+  closeQuickEdit();
+  renderPage();
+}
 
 function openMonthSheet(){ sheetY=selY; renderSheetGrid(); document.getElementById('monthSheetOv').classList.add('active'); }
 function closeMonthSheet(){ document.getElementById('monthSheetOv').classList.remove('active'); }
@@ -427,7 +482,17 @@ function openEditModal(){
   document.body.style.top = `-${window.scrollY}px`;
 }
 function closeEditModal(){ 
-  document.getElementById('editOverlay').classList.remove('active');
+  const overlay = document.getElementById('editOverlay');
+  const sheet = overlay?.querySelector('.edit-sheet');
+  
+  // transform 초기화
+  if(sheet){
+    sheet.style.transform = 'translateY(0)';
+    sheet.style.transition = '';
+  }
+  
+  overlay.classList.remove('active');
+  
   const scrollY = document.body.style.top;
   document.body.style.overflow = '';
   document.body.style.position = '';
@@ -463,12 +528,34 @@ function showAddForm(){
         <div class="f-label">카드사</div>
         <button class="f-input" id="newCompany" type="button" onclick="openCardCompanySheet()" style="text-align:left;cursor:pointer;color:#888">선택하기</button>
       </div>
-      <div class="f-row"><div class="f-label">${selM}월 지출액 (원)</div><input class="f-input" id="newSpent" type="text" inputmode="numeric" placeholder="0" oninput="formatNumberInput(this)"></div>
-      <button class="btn-submit" onclick="addCard()">추가하기</button>
+      <button class="btn-submit" onclick="addCardNoAmount()">추가하기</button>
       <button class="btn-cancel" onclick="showEditMain()">취소</button>
     </div>`;
 }
 function selType(btn){ document.querySelectorAll('#typeGrid .type-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
+
+function addCardNoAmount(){
+  const name=document.getElementById('newName').value.trim();
+  const company=document.getElementById('newCompany').textContent.trim();
+  const type=document.querySelector('#typeGrid .type-btn.active')?.dataset.type||'체크카드';
+  if(!name){alert('카드명을 입력해주세요.');return;}
+  if(!company || company==='선택하기'){alert('카드사를 선택해주세요.');return;}
+  const id=Date.now();
+  meta.push({id,name,company,type,color:'card-generic',label:name.slice(0,4)});
+  saveMeta(meta);
+  
+  // 전체 기간에 0원 자동 추가
+  const allMonths = getAllMonthKeys();
+  allMonths.forEach(mk => {
+    if(!spend[mk]) spend[mk] = {};
+    if(spend[mk][id] === undefined) spend[mk][id] = 0;
+  });
+  
+  saveSpend(spend);
+  showEditMain(); 
+  renderPage();
+}
+
 function addCard(){
   const name=document.getElementById('newName').value.trim();
   const company=document.getElementById('newCompany').textContent.trim();
@@ -480,12 +567,25 @@ function addCard(){
   const id=Date.now();
   meta.push({id,name,company,type,color:'card-generic',label:name.slice(0,4)});
   saveMeta(meta);
-  if(amt>0){ const k=monthKey(selY,selM); if(!spend[k])spend[k]={}; spend[k][id]=amt; saveSpend(spend); }
-  showEditMain(); renderPage();
+  
+  // 전체 기간에 0원 자동 추가
+  const allMonths = getAllMonthKeys();
+  allMonths.forEach(mk => {
+    if(!spend[mk]) spend[mk] = {};
+    if(spend[mk][id] === undefined) spend[mk][id] = 0;
+  });
+  
+  // 현재 월에만 입력한 금액 반영
+  const k=monthKey(selY,selM);
+  if(!spend[k])spend[k]={};
+  spend[k][id]=amt;
+  
+  saveSpend(spend);
+  showEditMain(); 
+  renderPage();
 }
 function showEditForm(id){
   const c=meta.find(x=>x.id===id); if(!c)return;
-  const cur=(spend[monthKey(selY,selM)]||{})[id]||0;
   const company = c.company || '미설정';
   document.getElementById('editContent').innerHTML=`
     <div class="modal-title">카드 수정</div>
@@ -499,8 +599,7 @@ function showEditForm(id){
         <div class="f-label">카드사</div>
         <button class="f-input" id="editCompany" type="button" onclick="openCardCompanySheet()" style="text-align:left;cursor:pointer;color:#fff">${company}</button>
       </div>
-      <div class="f-row"><div class="f-label">${selM}월 지출액 (원)</div><input class="f-input" id="editSpent" type="text" inputmode="numeric" value="${cur?cur.toLocaleString('ko-KR'):''}" oninput="formatNumberInput(this)"></div>
-      <button class="btn-submit" onclick="updateCard(${id})">저장하기</button>
+      <button class="btn-submit" onclick="updateCardNoAmount(${id})">저장하기</button>
       <button class="btn-cancel" onclick="showEditMain()">취소</button>
     </div>`;
 }
@@ -517,6 +616,19 @@ function updateCard(id){
   saveMeta(meta);
   const k=monthKey(selY,selM); if(!spend[k])spend[k]={}; spend[k][id]=amt; saveSpend(spend);
   showEditMain(); renderPage();
+}
+
+function updateCardNoAmount(id){
+  const name=document.getElementById('editName').value.trim();
+  const company=document.getElementById('editCompany').textContent.trim();
+  const type=document.querySelector('#typeGrid .type-btn.active')?.dataset.type||'체크카드';
+  if(!name){alert('카드명을 입력해주세요.');return;}
+  if(!company || company==='선택하기' || company==='미설정'){alert('카드사를 선택해주세요.');return;}
+  const idx=meta.findIndex(x=>x.id===id);
+  if(idx!==-1)meta[idx]={...meta[idx],name,company,type};
+  saveMeta(meta);
+  showEditMain(); 
+  renderPage();
 }
 function deleteCard(id){
   meta=meta.filter(x=>Number(x.id)!==Number(id)); saveMeta(meta);
@@ -565,84 +677,6 @@ function formatNumberInput(input){
   }
 }
 
-/* ── 전월 데이터 불러오기 ── */
-function getPrevMonthKey(y, m){
-  let prevY = y;
-  let prevM = m - 1;
-  if(prevM < 1){
-    prevM = 12;
-    prevY = y - 1;
-  }
-  return monthKey(prevY, prevM);
-}
-
-function openImportModal(){
-  const mk = monthKey(selY, selM);
-  const prevMk = getPrevMonthKey(selY, selM);
-  
-  const prevData = spend[prevMk] || {};
-  const hasPrevData = Object.keys(prevData).length > 0;
-  
-  const descEl = document.getElementById('importDesc');
-  const buttonsEl = document.getElementById('importButtons');
-  
-  if(!hasPrevData){
-    descEl.innerHTML = `<strong>${prevMk}</strong>에<br>입력된 데이터가 없어요.`;
-    buttonsEl.innerHTML = '';
-    document.getElementById('importOverlay').classList.add('active');
-    return;
-  }
-  
-  const currentData = spend[mk] || {};
-  const hasCurrentData = Object.keys(currentData).length > 0;
-  
-  if(hasCurrentData){
-    descEl.innerHTML = `⚠️ <strong>${selY}년 ${selM}월</strong>에 이미 입력된<br>데이터가 있어요. 덮어쓸까요?`;
-  } else {
-    descEl.innerHTML = `어떤 방식으로 불러올까요?`;
-  }
-  
-  buttonsEl.innerHTML = `
-    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
-      <button style="background:#2a2a2a;border:2px solid #555;border-radius:12px;color:#fff;font-size:14px;padding:16px;cursor:pointer;text-align:left" onclick="importPrevMonth('structure')">
-        <div style="font-weight:600;margin-bottom:4px">📋 항목만 복사</div>
-        <div style="font-size:12px;color:#888">전월 카드 목록만 가져오고 지출은 0원</div>
-      </button>
-      <button style="background:#2a2a2a;border:2px solid #555;border-radius:12px;color:#fff;font-size:14px;padding:16px;cursor:pointer;text-align:left" onclick="importPrevMonth('full')">
-        <div style="font-weight:600;margin-bottom:4px">💾 항목+데이터 복사</div>
-        <div style="font-size:12px;color:#888">전월 카드 목록과 지출을 모두 가져오기</div>
-      </button>
-    </div>
-  `;
-  
-  document.getElementById('importOverlay').classList.add('active');
-}
-
-function closeImportModal(){
-  document.getElementById('importOverlay').classList.remove('active');
-}
-
-function importPrevMonth(mode){
-  const mk = monthKey(selY, selM);
-  const prevMk = getPrevMonthKey(selY, selM);
-  const prevData = spend[prevMk] || {};
-  
-  if(mode === 'structure'){
-    // 항목만 복사: 0원으로 초기화
-    const newData = {};
-    Object.keys(prevData).forEach(cardId => {
-      newData[cardId] = 0;
-    });
-    spend[mk] = newData;
-  } else if(mode === 'full'){
-    spend[mk] = {...prevData};
-  }
-  
-  saveSpend(spend);
-  closeImportModal();
-  renderPage();
-}
-
 /* ── 스와이프로 모달 닫기 ── */
 // 편집 모달
 (function(){
@@ -670,6 +704,43 @@ function importPrevMonth(mode){
     sheet.style.transition = 'transform 0.2s ease';
     const diff = currentY - startY;
     if(diff>100){ closeEditModal(); }
+    else{ sheet.style.transform = 'translateY(0)'; }
+  }
+
+  handle.addEventListener('touchstart', onStart, {passive:true});
+  handle.addEventListener('touchmove',  onMove,  {passive:true});
+  handle.addEventListener('touchend',   onEnd,   {passive:true});
+  handle.addEventListener('mousedown',  onStart);
+  document.addEventListener('mousemove', e=>{ if(isDragging) onMove(e); });
+  document.addEventListener('mouseup',   onEnd);
+})();
+
+// 빠른 입력 모달
+(function(){
+  let startY=0, currentY=0, isDragging=false;
+  const overlay = document.getElementById('quickEditOverlay');
+  const sheet   = overlay?.querySelector('.edit-sheet');
+  const handle  = overlay?.querySelector('.modal-handle');
+  if(!handle||!sheet||!overlay) return;
+
+  function onStart(e){
+    const touch = e.touches?e.touches[0]:e;
+    startY = touch.clientY; currentY = startY; isDragging = true;
+    sheet.style.transition = 'none';
+  }
+  function onMove(e){
+    if(!isDragging) return;
+    const touch = e.touches?e.touches[0]:e;
+    currentY = touch.clientY;
+    const diff = currentY - startY;
+    if(diff>0) sheet.style.transform = `translateY(${diff}px)`;
+  }
+  function onEnd(){
+    if(!isDragging) return;
+    isDragging = false;
+    sheet.style.transition = 'transform 0.2s ease';
+    const diff = currentY - startY;
+    if(diff>100){ closeQuickEdit(); }
     else{ sheet.style.transform = 'translateY(0)'; }
   }
 

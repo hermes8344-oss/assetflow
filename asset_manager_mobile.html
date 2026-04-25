@@ -231,9 +231,6 @@
   <div class="asset-card" onclick="goGrid('loan_page.html')">
     <div class="ac-label">대출</div>
   </div>
-  <div class="asset-card" onclick="goGrid('insurance_page.html')">
-    <div class="ac-label">보험</div>
-  </div>
   <div class="asset-card" onclick="goGrid('car_page.html')">
     <div class="ac-label">자동차</div>
   </div>
@@ -438,6 +435,44 @@ function calcAssetsForPrefix(p) {
   };
 }
 
+// 전월 데이터 계산 함수
+function calcPrevAssetsForPrefix(p) {
+  const prevY = CM === 1 ? CY - 1 : CY;
+  const prevM = CM === 1 ? 12 : CM - 1;
+  const prevMk = monthKey(prevY, prevM);
+
+  const accList = safe(p + 'af_accounts');
+  const accHist = safeObj(p + 'af_accounts_history');
+  const prevMonthHist = accHist[prevMk] || {};
+
+  let accTotal = 0, accSecur = 0, accPension = 0, crypto = 0;
+  accList.forEach(a => {
+    const bal = prevMonthHist[a.id] || 0;
+    if (a.cat === 'checking' || a.cat === 'saving') accTotal += bal;
+    else if (a.cat === 'securities') accSecur += bal;
+    else if (a.cat === 'pension') accPension += bal;
+    else if (a.cat === 'crypto') crypto += bal;
+  });
+
+  const invList = safe(p + 'af_invest');
+  const inv = invList.reduce((s, x) => s + (x.balance || 0), 0);
+
+  const cars = safe(p + 'af_cars');
+
+  const reList = safe(p + 'af_realestate');
+  const reHist = safeObj(p + 'af_re_history');
+  const prevReMk = reHist[prevMk] || {};
+  let reTotal = 0;
+  reList.forEach(r => {
+    const price = prevReMk[r.id] || 0;
+    reTotal += price;
+  });
+
+  return {
+    accTotal, accSecur, accPension, inv, crypto, reTotal, cars
+  };
+}
+
 function calcIncomeForPrefix(p) {
   const meta = safe(p + 'af_inc_meta');
   const spend = safeObj(p + 'af_inc_spend');
@@ -556,6 +591,24 @@ function render() {
   const { accTotal, accSecur, accPension, inv, crypto, reTotal, reRentDebt,
     invGain, loan, insMo, total, net, cars, income, expense } = D;
 
+  // 전월 데이터 계산
+  let prevData = { accTotal: 0, accSecur: 0, accPension: 0, inv: 0, crypto: 0, reTotal: 0, cars: [] };
+  if (currentUser === 'all') {
+    const p1 = calcPrevAssetsForPrefix('u1_');
+    const p2 = calcPrevAssetsForPrefix('u2_');
+    prevData = {
+      accTotal: p1.accTotal + p2.accTotal,
+      accSecur: p1.accSecur + p2.accSecur,
+      accPension: p1.accPension + p2.accPension,
+      inv: p1.inv + p2.inv,
+      crypto: p1.crypto + p2.crypto,
+      reTotal: p1.reTotal + p2.reTotal,
+      cars: p1.cars
+    };
+  } else {
+    prevData = calcPrevAssetsForPrefix(currentUser + '_');
+  }
+
   // 순자산 카드
   document.getElementById('networthAmount').textContent = fmt(net);
   const changeEl = document.getElementById('networthChange');
@@ -570,12 +623,21 @@ function render() {
   // 자산 구성
   document.getElementById('compTotalAmount').textContent = fmt(total);
 
+  // 전월 대비 변동값 계산
+  const checkingChange = accTotal - prevData.accTotal;
+  const investmentChange = (inv + accSecur + accPension) - (prevData.inv + prevData.accSecur + prevData.accPension);
+  const realestateChange = reTotal - prevData.reTotal;
+  const carVal = cars.reduce((s, c) => s + (c.purchasePrice || 0), 0);
+  const prevCarVal = prevData.cars.reduce((s, c) => s + (c.purchasePrice || 0), 0);
+  const carChange = carVal - prevCarVal;
+  const cryptoChange = crypto - prevData.crypto;
+
   const categories = [
-    { key: 'checking', name: '입출금', color: '#4f8ef7', amount: accTotal, change: 0 },
-    { key: 'investment', name: '투자', color: '#10b981', amount: inv + accSecur + accPension, change: invGain },
-    { key: 'realestate', name: '부동산', color: '#f59e0b', amount: reTotal, change: 0 },
-    { key: 'car', name: '자동차', color: '#6366f1', amount: cars.reduce((s, c) => s + (c.purchasePrice || 0), 0), change: 0 },
-    { key: 'crypto', name: '가상화폐', color: '#f7931a', amount: crypto, change: 0 }
+    { key: 'checking', name: '입출금', color: '#4f8ef7', amount: accTotal, change: checkingChange },
+    { key: 'investment', name: '투자', color: '#10b981', amount: inv + accSecur + accPension, change: investmentChange },
+    { key: 'realestate', name: '부동산', color: '#f59e0b', amount: reTotal, change: realestateChange },
+    { key: 'car', name: '자동차', color: '#6366f1', amount: carVal, change: carChange },
+    { key: 'crypto', name: '가상화폐', color: '#f7931a', amount: crypto, change: cryptoChange }
   ].filter(c => visibleCategories[c.key] && c.amount > 0);
 
   const visibleTotal = categories.reduce((s, c) => s + c.amount, 0);
