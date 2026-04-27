@@ -336,12 +336,6 @@
     <span id="invMonthLabel" style="font-size:15px;font-weight:600;color:#fff">—</span>
     <span style="font-size:10px;color:#555">▼</span>
   </button>
-  <button class="month-trash-btn" onclick="openImportModal()" title="전월 데이터 불러오기">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M12 3V15M12 15L8 11M12 15L16 11" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M3 15C3 15 3 21 12 21C21 21 21 15 21 15" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-  </button>
 </div>
 
 <!-- 총 투자 요약 -->
@@ -418,23 +412,6 @@
       <button class="year-nav" id="invYearNext" onclick="changeYear(1)">›</button>
     </div>
     <div class="month-grid-inv" id="invMonthGrid"></div>
-  </div>
-</div>
-<!-- 불러오기 모달 -->
-<div class="trash-overlay" id="importOverlay" onclick="if(event.target===this)closeImportModal()">
-  <div class="trash-sheet">
-    <div class="trs-icon">
-      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 3V15M12 15L8 11M12 15L16 11" stroke="#888" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M3 15C3 15 3 21 12 21C21 21 21 15 21 15" stroke="#888" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    </div>
-    <div class="trs-title" id="importTitle">전월 수익금 불러오기</div>
-    <div class="trs-desc" id="importDesc"></div>
-    <div id="importButtons"></div>
-    <div class="trs-btns">
-      <button class="trs-cancel" onclick="closeImportModal()">취소</button>
-    </div>
   </div>
 </div>
 
@@ -630,24 +607,35 @@ function renderPage(){
   const totalGain = accounts.reduce((s,a)=>s+(a.gainAmt||0),0);
   const principal = total - totalGain;
   const totalPct  = principal>0 ? (totalGain/principal*100) : 0;
+  
+  // 전월대비 증감액/증감률 계산
+  const totalBalChange = accounts.reduce((s,a)=>s+(a.balChange||0),0);
+  const totalPrevBal = accounts.reduce((s,a)=>s+(a.prevBal||0),0);
 
   document.getElementById('totalAmount').textContent = fmt(total);
   const yieldEl = document.getElementById('totalYield');
-  if(totalGain!==0){
-    yieldEl.textContent = `${totalGain>=0?'+':''}${fmt(totalGain)} (${totalPct>=0?'+':''}${totalPct.toFixed(2)}%)`;
-    yieldEl.className = 'sc-yield '+(totalGain>=0?'pos':'neg');
+  if(totalBalChange !== 0){
+    const totalChangePct = totalPrevBal > 0 ? ((totalBalChange / totalPrevBal) * 100).toFixed(2) : null;
+    if(totalChangePct !== null){
+      yieldEl.textContent = `${totalBalChange>=0?'+':''}${totalChangePct}% (${totalBalChange>=0?'+':''}${fmt(Math.abs(totalBalChange))})`;
+    } else {
+      yieldEl.textContent = `${totalBalChange>=0?'+':''}${fmt(Math.abs(totalBalChange))}`;
+    }
+    yieldEl.className = 'sc-yield '+(totalBalChange>=0?'pos':'neg');
   } else {
-    yieldEl.textContent = '수익 정보 없음';
+    yieldEl.textContent = '전월과 동일';
     yieldEl.className = 'sc-yield neutral';
   }
 
   /* 카테고리별 집계 */
   const catTotals = {};
-  CATS.forEach(c=>{ catTotals[c.key]={balance:0,gainAmt:0,accounts:[]}; });
+  CATS.forEach(c=>{ catTotals[c.key]={balance:0,gainAmt:0,balChange:0,prevBal:0,accounts:[]}; });
   accounts.forEach(a=>{
     if(!catTotals[a.cat]) return;
     catTotals[a.cat].balance  += a.balance;
     catTotals[a.cat].gainAmt  += (a.gainAmt||0);
+    catTotals[a.cat].balChange += (a.balChange||0);
+    catTotals[a.cat].prevBal  += (a.prevBal||0);
     catTotals[a.cat].accounts.push(a);
   });
 
@@ -666,19 +654,21 @@ function renderPage(){
     if(d.balance===0) return '';
     const pct = total>0 ? (d.balance/total*100).toFixed(0) : 0;
     
-    // 수익률 계산 (원금이 있을 때만)
-    const principal = d.balance - d.gainAmt;
+    // 전월대비 증감액/증감률 계산
     let gainStr = '—';
-    if(d.gainAmt !== 0 && principal > 0){
-      const gainPct = (d.gainAmt / principal * 100).toFixed(2);
-      gainStr = `${d.gainAmt>=0?'+':''}${fmt(d.gainAmt)} (${d.gainAmt>=0?'+':''}${gainPct}%)`;
-    } else if(d.gainAmt !== 0){
-      gainStr = `${d.gainAmt>=0?'+':''}${fmt(d.gainAmt)}`;
+    let gainClass = 'neutral';
+    if(d.balChange !== undefined && d.balChange !== 0){
+      const changePct = d.prevBal > 0 ? ((d.balChange / d.prevBal) * 100).toFixed(2) : null;
+      if(changePct !== null){
+        gainStr = `${d.balChange>=0?'+':''}${changePct}% (${d.balChange>=0?'+':''}${fmt(Math.abs(d.balChange))})`;
+      } else {
+        gainStr = `${d.balChange>=0?'+':''}${fmt(Math.abs(d.balChange))}`;
+      }
+      gainClass = d.balChange>0?'pos':d.balChange<0?'neg':'neutral';
     } else if(c.key==='deposit'){
       gainStr = '원화 · 달러';
     }
     
-    const gainClass = d.gainAmt>0?'pos':d.gainAmt<0?'neg':'neutral';
     return `
       <div class="legend-item">
         <div class="legend-left">
@@ -708,11 +698,20 @@ function renderPage(){
     const list = catTotals[c.key].accounts;
     if(!list.length) return;
     const catTotal = catTotals[c.key].balance;
-    const catGain  = catTotals[c.key].gainAmt;
-    const gainClass = catGain>0?'pos':catGain<0?'neg':'neutral';
-    const gainStr = catGain!==0
-      ? `${catGain>=0?'+':''}${fmt(catGain)}`
-      : '';
+    const catBalChange = catTotals[c.key].balChange;
+    const catPrevBal = catTotals[c.key].prevBal;
+    
+    let gainStr = '';
+    let gainClass = 'neutral';
+    if(catBalChange !== 0){
+      const changePct = catPrevBal > 0 ? ((catBalChange / catPrevBal) * 100).toFixed(2) : null;
+      if(changePct !== null){
+        gainStr = `${catBalChange>=0?'+':''}${changePct}% (${catBalChange>=0?'+':''}${fmt(Math.abs(catBalChange))})`;
+      } else {
+        gainStr = `${catBalChange>=0?'+':''}${fmt(Math.abs(catBalChange))}`;
+      }
+      gainClass = catBalChange>0?'pos':catBalChange<0?'neg':'neutral';
+    }
 
     // 카테고리 헤더
     listHTML += `
@@ -732,16 +731,21 @@ function renderPage(){
     listHTML += list.map(a=>{
       const subText = a.bank||'';
       
-      // 수익률 계산 (투자 원금 기준)
-      const principal = a.principal || 0;
+      // 전월대비 증감액/증감률 계산
       let gainStr = '';
       let gainClass = 'neutral';
       
-      if(principal > 0 && a.balance > 0){
-        const gainAmt = a.balance - principal;
-        const gainPct = ((gainAmt / principal) * 100).toFixed(2);
-        gainStr = `${gainAmt>=0?'+':''}${gainPct}% (${gainAmt>=0?'+':''}${fmt(Math.abs(gainAmt))})`;
-        gainClass = gainAmt > 0 ? 'pos' : (gainAmt < 0 ? 'neg' : 'neutral');
+      if(a.balChange !== undefined && a.prevBal !== undefined){
+        const changeAmt = a.balChange;
+        if(changeAmt !== 0){
+          const changePct = a.prevBal > 0 ? ((changeAmt / a.prevBal) * 100).toFixed(2) : null;
+          if(changePct !== null){
+            gainStr = `${changeAmt>=0?'+':''}${changePct}% (${changeAmt>=0?'+':''}${fmt(Math.abs(changeAmt))})`;
+          } else {
+            gainStr = `${changeAmt>=0?'+':''}${fmt(Math.abs(changeAmt))}`;
+          }
+          gainClass = changeAmt > 0 ? 'pos' : (changeAmt < 0 ? 'neg' : 'neutral');
+        }
       }
       
       return `
@@ -1040,39 +1044,6 @@ function formatNumberInput(input){
 }
 
 renderPage();
-
-/* ══════════════════════
-   전월 데이터 불러오기
-══════════════════════ */
-function getPrevMonthKey(y, m){
-  if(m === 1) return `${y-1}-12`;
-  return `${y}-${String(m-1).padStart(2,'0')}`;
-}
-
-function openImportModal(){
-  const mk = invMonthKey(selY, selM);
-  const prevMk = getPrevMonthKey(selY, selM);
-  
-  const descEl = document.getElementById('importDesc');
-  const buttonsEl = document.getElementById('importButtons');
-  
-  // 안내 메시지
-  descEl.innerHTML = `투자 잔액 불러오기는<br>'계좌' 페이지에서 진행해주세요`;
-  buttonsEl.innerHTML = '';
-  
-  document.getElementById('importOverlay').classList.add('active');
-}
-
-function closeImportModal(){
-  document.getElementById('importOverlay').classList.remove('active');
-}
-
-function importPrevMonth(mode){
-  // 전월 불러오기는 account_page에서 처리하므로 여기서는 불필요
-  // 수익금은 자동 계산되므로 별도 처리 없음
-  closeImportModal();
-  renderPage();
-}
 
 /* ══════════════════════
    배당금 기능

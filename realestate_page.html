@@ -12,12 +12,7 @@
   .back-btn { background:none; border:none; color:#fff; font-size:22px; cursor:pointer; padding:4px 8px 4px 0; line-height:1; }
   .header-title { font-size:17px; font-weight:600; margin-left:4px; }
 
-  /* 월 선택 */
-  .month-label-btn { background:none; border:none; padding:4px 20px 14px; display:flex; align-items:center; gap:6px; cursor:pointer; width:100%; }
-  .month-label-btn .label-text { font-size:15px; font-weight:600; color:#fff; }
-  .month-label-btn .label-arrow { font-size:10px; color:#555; }
 
-  /* 총 요약 */
   .summary-card { margin:0 20px 20px; background:#242424; border-radius:16px; padding:20px; }
   .sc-label  { font-size:13px; color:#888; margin-bottom:6px; }
   .sc-amount { font-size:26px; font-weight:700; color:#fff; letter-spacing:-0.5px; }
@@ -82,24 +77,7 @@
   .nav-btn { width:100%; background:#2e2e2e; border:none; border-radius:12px; color:#fff; font-size:14px; font-weight:500; padding:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; }
   .nav-btn:active { background:#383838; }
 
-  /* 월 선택 시트 */
-  .sheet-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:300; align-items:flex-end; }
-  .sheet-overlay.active { display:flex; }
-  .sheet-inner { background:#242424; border-radius:24px 24px 0 0; width:100%; padding:20px 20px 40px; animation:slideUp 0.25s ease; }
-  @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
-  .sheet-handle { width:36px; height:4px; background:#444; border-radius:2px; margin:0 auto 20px; }
-  .sheet-title  { font-size:16px; font-weight:700; margin-bottom:20px; }
-  .year-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
-  .year-nav { background:#333; border:none; color:#fff; font-size:18px; width:36px; height:36px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; }
-  .year-nav:disabled { color:#444; cursor:default; }
-  .year-lbl { font-size:16px; font-weight:600; }
-  .month-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
-  .m-chip { background:#333; border:2px solid transparent; border-radius:10px; color:#aaa; font-size:14px; padding:11px 0; cursor:pointer; text-align:center; transition:all 0.15s; line-height:1.4; }
-  .m-chip.sel { border-color:#007aff; color:#007aff; background:rgba(0,122,255,0.1); font-weight:600; }
-  .m-chip.future { color:#333; pointer-events:none; }
-  .m-dot { font-size:8px; color:#555; margin-top:2px; }
 
-  /* 편집 모달 */
   .edit-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:200; align-items:flex-end; }
   .edit-overlay.active { display:flex; }
   .edit-sheet { background:#242424; border-radius:24px 24px 0 0; width:100%; max-height:92vh; overflow-y:auto; padding:20px 20px 40px; animation:slideUp 0.28s ease; transition:transform 0.2s ease; }
@@ -138,21 +116,7 @@
   .price-input:focus { border-color:#007aff; }
   .price-ok { background:#007aff; border:none; border-radius:10px; color:#fff; font-size:13px; font-weight:600; padding:10px 14px; cursor:pointer; }
   .price-cancel { background:#2e2e2e; border:none; border-radius:10px; color:#aaa; font-size:13px; padding:10px 14px; cursor:pointer; }
-  .btn-edit-price { background:#2e2e2e; border:none; border-radius:8px; color:#888; font-size:12px; padding:5px 10px; cursor:pointer; }
 
-  .month-trash-btn { background:none; border:none; color:#555; font-size:18px; cursor:pointer; padding:4px 8px; line-height:1; transition:color 0.15s; }
-  .month-trash-btn:active { color:#f87171; }
-  .trash-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:500; align-items:center; justify-content:center; padding:0 24px; }
-  .trash-overlay.active { display:flex; }
-  .trash-sheet { background:#1e1e1e; border-radius:20px; width:100%; max-width:340px; padding:28px 24px 20px; animation:popIn 0.2s ease; }
-  @keyframes popIn { from{transform:scale(0.92);opacity:0} to{transform:scale(1);opacity:1} }
-  .trs-icon  { font-size:34px; text-align:center; margin-bottom:12px; }
-  .trs-title { font-size:17px; font-weight:700; text-align:center; margin-bottom:8px; }
-  .trs-desc  { font-size:14px; color:#888; text-align:center; line-height:1.6; margin-bottom:20px; }
-  .trs-desc strong { color:#f87171; }
-  .trs-btns  { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-  .trs-cancel  { background:#2a2a2a; border:none; border-radius:12px; color:#aaa; font-size:15px; padding:14px; cursor:pointer; }
-  .trs-confirm { background:#f8717122; border:2px solid #f87171; border-radius:12px; color:#f87171; font-size:15px; font-weight:700; padding:14px; cursor:pointer; }
 </style>
 </head>
 <body>
@@ -162,14 +126,7 @@
   <span class="header-title">부동산</span>
 </div>
 
-<!-- 월 선택 -->
-<div style="display:flex;align-items:center;justify-content:space-between;padding:0 20px 14px">
-  <button style="background:none;border:none;display:flex;align-items:center;gap:6px;cursor:pointer" onclick="openMonthSheet()">
-    <span id="monthLabelText" style="font-size:15px;font-weight:600;color:#fff">—</span>
-    <span style="font-size:10px;color:#555">▼</span>
-  </button>
-  <button class="month-trash-btn" onclick="openMonthTrash()" title="이 달 시세 초기화">🗑️</button>
-</div>
+
 
 <!-- 총 요약 -->
 <div class="summary-card">
@@ -199,31 +156,8 @@
   <button class="nav-btn" onclick="openEditModal()">⚙️ 자산 편집하기</button>
 </div>
 
-<!-- 월 선택 시트 -->
-<div class="sheet-overlay" id="monthSheet" onclick="if(event.target===this)closeMonthSheet()">
-  <div class="sheet-inner">
-    <div class="sheet-handle"></div>
-    <div class="sheet-title">월 선택</div>
-    <div class="year-row">
-      <button class="year-nav" id="yearPrev" onclick="changeYear(-1)">‹</button>
-      <span class="year-lbl" id="sheetYearLbl"></span>
-      <button class="year-nav" id="yearNext" onclick="changeYear(1)">›</button>
-    </div>
-    <div class="month-grid" id="monthGrid"></div>
-  </div>
-</div>
-<!-- 월별 초기화 모달 -->
-<div class="trash-overlay" id="trashOverlay" onclick="if(event.target===this)closeTrashModal()">
-  <div class="trash-sheet">
-    <div class="trs-icon">🗑️</div>
-    <div class="trs-title" id="trsTitle">이 달 데이터 초기화</div>
-    <div class="trs-desc"  id="trsDesc">—</div>
-    <div class="trs-btns">
-      <button class="trs-cancel"  onclick="closeTrashModal()">취소</button>
-      <button class="trs-confirm" onclick="confirmTrash()">초기화</button>
-    </div>
-  </div>
-</div>
+
+
 
 <!-- 편집 모달 -->
 <div class="edit-overlay" id="editOverlay" onclick="if(event.target===this)closeEditModal()">
@@ -239,8 +173,6 @@ function getPrefix(){ return localStorage.getItem('af_active_prefix')||'u1_'; }
 function pk(key){ return getPrefix()+key; }
 
 const NOW=new Date(), CY=NOW.getFullYear(), CM=NOW.getMonth()+1;
-function monthKey(y,m){ return `${y}-${String(m).padStart(2,'0')}`; }
-let selY=CY, selM=CM, sheetY=CY;
 
 /* ══════════════════════════════════════
    데이터 구조
@@ -248,21 +180,20 @@ let selY=CY, selM=CM, sheetY=CY;
                                   status(pre/done), 
                                   salePrice, extraCosts:[{label,amount}],
                                   loanId, rentType(none/jeon/monthly/semi),
-                                  rentDeposit, rentMonthly, rentStart, rentEnd}]
-   pk('af_re_history')       : {"YYYY-MM": {id: 시세}}
+                                  rentDeposit, rentMonthly, rentStart, rentEnd,
+                                  currentMarketPrice, contractPeriod}]
 ══════════════════════════════════════ */
 
 const PROP_TYPES  = [{k:'apt',  l:'아파트'}, {k:'villa', l:'빌라·오피스텔'}, {k:'land', l:'토지·상가'}];
-const STATUS_TYPES= [{k:'pre',  l:'준공 전'}, {k:'done', l:'준공 완료'}];
+const STATUS_TYPES= [{k:'done', l:'준공 완료'}, {k:'pre',  l:'준공 전'}];
 const RENT_TYPES  = [{k:'none', l:'자가거주'}, {k:'jeon', l:'전세'}, {k:'monthly', l:'월세'}, {k:'semi', l:'반전세'}];
+const CONTRACT_PERIODS = [{k:'24', l:'2년'}, {k:'12', l:'1년'}, {k:'6', l:'6개월'}, {k:'3', l:'3개월'}];
 
 function loadRE()   { try{const s=localStorage.getItem(pk('af_realestate')); return s?JSON.parse(s):[];} catch{return [];} }
 function saveRE(d)  { localStorage.setItem(pk('af_realestate'),JSON.stringify(d)); }
-function loadHist() { try{const s=localStorage.getItem(pk('af_re_history')); return s?JSON.parse(s):{};} catch{return {};} }
-function saveHist(d){ localStorage.setItem(pk('af_re_history'),JSON.stringify(d)); }
 function loadLoans(){ try{const s=localStorage.getItem(pk('af_loans')); return s?JSON.parse(s):[];} catch{return [];} }
 
-let reList=loadRE(), reHist=loadHist();
+let reList=loadRE();
 
 /* ── 포맷 ── */
 function fmt(n){ return Math.round(Math.abs(n)).toLocaleString('ko-KR')+'원'; }
@@ -273,7 +204,7 @@ function fmtS(n){
   return sign+abs.toLocaleString('ko-KR');
 }
 
-function getMarket(id){ const mk=monthKey(selY,selM); return (reHist[mk]||{})[id]||0; }
+function getMarket(re){ return re.currentMarketPrice||0; }
 function getCost(re){ return (re.salePrice||0)+(re.extraCosts||[]).reduce((s,c)=>s+c.amount,0); }
 function ddayBadge(ds){
   if(!ds) return '';
@@ -291,13 +222,12 @@ function ddayBadge(ds){
 let editingPriceId = null;
 
 function renderPage(){
-  document.getElementById('monthLabelText').textContent=`${selM}월 시세 기준`;
   const loans = loadLoans();
 
   let totalMarket=0, totalCost=0, totalLoan=0, totalRentDeposit=0;
 
   reList.forEach(re=>{
-    const market = getMarket(re.id);
+    const market = getMarket(re);
     const cost   = getCost(re);
     const loan   = loans.find(l=>l.id===re.loanId);
     const loanBal= loan?loan.balance:0;
@@ -330,7 +260,7 @@ function renderPage(){
 }
 
 function reCardHTML(re, loans){
-  const market  = getMarket(re.id);
+  const market  = getMarket(re);
   const cost    = getCost(re);
   const profit  = market - cost;
   const profPct = cost>0?(profit/cost*100).toFixed(1):0;
@@ -354,7 +284,7 @@ function reCardHTML(re, loans){
   // 시세 입력 영역
   const priceSection = editingPriceId===re.id ? `
     <div class="price-input-row">
-      <input class="price-input" id="priceInput_${re.id}" type="number" inputmode="numeric" placeholder="${selM}월 시세 (원)" value="${market||''}">
+      <input class="price-input" id="priceInput_${re.id}" type="number" inputmode="numeric" placeholder="현재 시세 (원)" value="${market||''}">
       <button class="price-ok" onclick="savePrice(${re.id})">저장</button>
       <button class="price-cancel" onclick="cancelPrice()">취소</button>
     </div>` : `
@@ -447,29 +377,14 @@ function editPrice(id){ editingPriceId=id; renderPage(); setTimeout(()=>document
 function cancelPrice(){ editingPriceId=null; renderPage(); }
 function savePrice(id){
   const val=parseInt(document.getElementById('priceInput_'+id)?.value)||0;
-  const mk=monthKey(selY,selM);
-  if(!reHist[mk]) reHist[mk]={};
-  reHist[mk][id]=val;
-  saveHist(reHist);
+  const re = reList.find(r=>r.id===id);
+  if(re){
+    re.currentMarketPrice = val;
+    saveRE(reList);
+  }
   editingPriceId=null;
   renderPage();
 }
-
-/* ── 월 시트 ── */
-function openMonthSheet(){ sheetY=selY; renderSheetGrid(); document.getElementById('monthSheet').classList.add('active'); }
-function closeMonthSheet(){ document.getElementById('monthSheet').classList.remove('active'); }
-function changeYear(d){ sheetY=Math.min(CY,sheetY+d); renderSheetGrid(); }
-function renderSheetGrid(){
-  document.getElementById('sheetYearLbl').textContent=sheetY+'년';
-  document.getElementById('yearPrev').disabled=(sheetY<=CY-5);
-  document.getElementById('yearNext').disabled=(sheetY>=CY);
-  document.getElementById('monthGrid').innerHTML=Array.from({length:12},(_,i)=>{
-    const m=i+1, future=sheetY===CY&&m>CM, isSel=sheetY===selY&&m===selM;
-    const hasDot=reHist[monthKey(sheetY,m)]&&Object.values(reHist[monthKey(sheetY,m)]).some(v=>v>0);
-    return `<button class="m-chip ${isSel?'sel':''} ${future?'future':''}" onclick="pickMonth(${m})">${m}월<div class="m-dot">${hasDot?'●':''}</div></button>`;
-  }).join('');
-}
-function pickMonth(m){ selY=sheetY; selM=m; closeMonthSheet(); renderPage(); }
 
 /* ══════════════════════
    편집 모달
@@ -515,14 +430,14 @@ function showForm(id){
         ${PROP_TYPES.map(t=>`<button class="type-btn ${(p.type||'apt')===t.k?'active':''}" data-v="${t.k}" onclick="pickType(this,'typeGrid')">${t.l}</button>`).join('')}
       </div>
       <div class="f-row-2">
-        <div class="f-row"><div class="f-label">전용면적 (㎡)</div><input class="f-input" id="fArea" type="number" inputmode="decimal" placeholder="예) 84.9" value="${p.area||''}"></div>
-        <div class="f-row"><div class="f-label">동호수</div><input class="f-input" id="fDong" type="text" placeholder="예) 101동 1001호" value="${p.dong||''}"></div>
+        <div class="f-row"><div class="f-label">전용면적 (선택, ㎡)</div><input class="f-input" id="fArea" type="number" inputmode="decimal" placeholder="예) 84.9" value="${p.area||''}"></div>
+        <div class="f-row"><div class="f-label">동호수 (선택)</div><input class="f-input" id="fDong" type="text" placeholder="예) 101동 1001호" value="${p.dong||''}"></div>
       </div>
 
       <div class="fsec">준공 상태</div>
       <div class="f-row">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px" id="statusGrid">
-          ${STATUS_TYPES.map(t=>`<button class="type-btn ${(p.status||'pre')===t.k?'active':''}" data-v="${t.k}" onclick="pickType(this,'statusGrid')">${t.l}</button>`).join('')}
+          ${STATUS_TYPES.map(t=>`<button class="type-btn ${(p.status||'done')===t.k?'active':''}" data-v="${t.k}" onclick="pickStatus(this)">${t.l}</button>`).join('')}
         </div>
       </div>
 
@@ -530,13 +445,7 @@ function showForm(id){
       <div class="f-row"><div class="f-label">분양가 (원)</div>
         <input class="f-input" id="fSalePrice" type="number" inputmode="numeric" placeholder="0" value="${p.salePrice||''}">
       </div>
-      <div id="extraCostsWrap">
-        ${extras.map((c,i)=>`
-          <div class="f-row">
-            <div class="f-label">${c.label}</div>
-            <input class="f-input extra-cost" data-label="${c.label}" type="number" inputmode="numeric" placeholder="0" value="${c.amount||''}">
-          </div>`).join('')}
-      </div>
+      <div id="extraCostsWrap"></div>
 
       <div class="fsec">연결 대출</div>
       <div class="f-row"><div class="f-label">대출탭에서 연결</div>
@@ -558,15 +467,20 @@ function showForm(id){
         <div class="f-row" id="monthlyRow" style="${p.rentType==='jeon'?'display:none':''}">
           <div class="f-label">월세 (원)</div><input class="f-input" id="fRentMo" type="number" inputmode="numeric" placeholder="0" value="${p.rentMonthly||''}">
         </div>
-        <div class="f-row-2">
-          <div class="f-row"><div class="f-label">계약 시작일</div><input class="f-input" id="fRentStart" type="date" value="${p.rentStart||''}"></div>
-          <div class="f-row"><div class="f-label">계약 만기일</div><input class="f-input" id="fRentEnd" type="date" value="${p.rentEnd||''}"></div>
+        <div class="f-row"><div class="f-label">계약 시작일</div><input class="f-input" id="fRentStart" type="date" value="${p.rentStart||''}" onchange="updateEndDate()"></div>
+        <div class="f-row">
+          <div class="f-label">계약 기간</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px" id="periodGrid">
+            ${CONTRACT_PERIODS.map(cp=>`<button class="type-btn ${(p.contractPeriod||'24')===cp.k?'active':''}" data-v="${cp.k}" onclick="pickPeriod(this)">${cp.l}</button>`).join('')}
+          </div>
         </div>
+        <div class="f-row"><div class="f-label">계약 만기일</div><input class="f-input" id="fRentEnd" type="date" value="${p.rentEnd||''}"></div>
       </div>
 
       <button class="btn-submit" onclick="${isEdit?`updateRE(${id})`:'addRE()'}">${isEdit?'저장하기':'추가하기'}</button>
       <button class="btn-cancel" onclick="showEditMain()">취소</button>
     </div>`;
+  updateExtraCosts();
 }
 
 function pickType(btn, gridId){
@@ -574,6 +488,73 @@ function pickType(btn, gridId){
   // gridId 없이 부모에서 찾기
   btn.parentElement.querySelectorAll('.type-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
+}
+
+function pickStatus(btn){
+  btn.parentElement.querySelectorAll('.type-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  updateExtraCosts();
+}
+
+function updateExtraCosts(){
+  const status = document.querySelector('#statusGrid .type-btn.active')?.dataset.v||'done';
+  const wrap = document.getElementById('extraCostsWrap');
+  if(!wrap) return;
+  
+  // 현재 저장된 값 가져오기
+  const currentValues = {};
+  document.querySelectorAll('.extra-cost').forEach(el=>{
+    currentValues[el.dataset.label] = el.value;
+  });
+  
+  if(status === 'pre'){
+    // 준공 전: 확장비, 옵션비, 법무사·취등록세
+    wrap.innerHTML = `
+      <div class="f-row">
+        <div class="f-label">확장비 (원)</div>
+        <input class="f-input extra-cost" data-label="확장비" type="number" inputmode="numeric" placeholder="0" value="${currentValues['확장비']||''}">
+      </div>
+      <div class="f-row">
+        <div class="f-label">옵션비 (원)</div>
+        <input class="f-input extra-cost" data-label="옵션비" type="number" inputmode="numeric" placeholder="0" value="${currentValues['옵션비']||''}">
+      </div>
+      <div class="f-row">
+        <div class="f-label">법무사·취등록세 (원)</div>
+        <input class="f-input extra-cost" data-label="법무사·취등록세" type="number" inputmode="numeric" placeholder="0" value="${currentValues['법무사·취등록세']||''}">
+      </div>`;
+  } else {
+    // 준공 완료: 수리비
+    wrap.innerHTML = `
+      <div class="f-row">
+        <div class="f-label">수리비 (인테리어, 기타 수리 등)</div>
+        <input class="f-input extra-cost" data-label="수리비" type="number" inputmode="numeric" placeholder="0" value="${currentValues['수리비']||''}">
+      </div>
+      <div class="f-row">
+        <div class="f-label">법무사·취등록세 (원)</div>
+        <input class="f-input extra-cost" data-label="법무사·취등록세" type="number" inputmode="numeric" placeholder="0" value="${currentValues['법무사·취등록세']||''}">
+      </div>`;
+  }
+}
+
+function pickPeriod(btn){
+  btn.parentElement.querySelectorAll('.type-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  updateEndDate();
+}
+
+function updateEndDate(){
+  const startDate = document.getElementById('fRentStart')?.value;
+  const period = document.querySelector('#periodGrid .type-btn.active')?.dataset.v||'24';
+  const endInput = document.getElementById('fRentEnd');
+  
+  if(!startDate || !endInput) return;
+  
+  const start = new Date(startDate);
+  const months = parseInt(period);
+  const end = new Date(start);
+  end.setMonth(end.getMonth() + months);
+  
+  endInput.value = end.toISOString().split('T')[0];
 }
 
 function pickRentType(btn){
@@ -590,7 +571,7 @@ function readForm(){
   const type     = document.querySelector('#editContent .type-btn.active[data-v="apt"], #editContent .type-btn.active[data-v="villa"], #editContent .type-btn.active[data-v="land"]')?.dataset.v||'apt';
   const area     = parseFloat(document.getElementById('fArea').value)||0;
   const dong     = document.getElementById('fDong').value.trim();
-  const status   = document.querySelector('#statusGrid .type-btn.active')?.dataset.v||'pre';
+  const status   = document.querySelector('#statusGrid .type-btn.active')?.dataset.v||'done';
   const salePrice= parseInt(document.getElementById('fSalePrice').value)||0;
   const loanIdRaw= document.getElementById('fLoanId').value;
   const loanId   = loanIdRaw?parseInt(loanIdRaw)||loanIdRaw:null;
@@ -599,6 +580,7 @@ function readForm(){
   const rentMonthly = parseInt(document.getElementById('fRentMo')?.value)||0;
   const rentStart= document.getElementById('fRentStart')?.value||'';
   const rentEnd  = document.getElementById('fRentEnd')?.value||'';
+  const contractPeriod = document.querySelector('#periodGrid .type-btn.active')?.dataset.v||'24';
 
   const extraCosts=[];
   document.querySelectorAll('.extra-cost').forEach(el=>{
@@ -607,7 +589,7 @@ function readForm(){
   });
 
   if(!name){alert('단지명을 입력해주세요.');return null;}
-  return {name,type,area,dong,status,salePrice,extraCosts,loanId,rentType,rentDeposit,rentMonthly,rentStart,rentEnd};
+  return {name,type,area,dong,status,salePrice,extraCosts,loanId,rentType,rentDeposit,rentMonthly,rentStart,rentEnd,contractPeriod};
 }
 
 function addRE(){
@@ -623,26 +605,7 @@ function updateRE(id){
 }
 function deleteRE(id){
   reList=reList.filter(x=>Number(x.id)!==Number(id));
-  // 히스토리에서도 제거
-  Object.keys(reHist).forEach(mk=>{delete reHist[mk][id];});
-  saveRE(reList); saveHist(reHist); showEditMain(); renderPage();
-}
-
-
-let _trashCb = null;
-function openTrashModal(title, desc, cb){ document.getElementById('trsTitle').textContent=title; document.getElementById('trsDesc').innerHTML=desc; _trashCb=cb; document.getElementById('trashOverlay').classList.add('active'); }
-function closeTrashModal(){ document.getElementById('trashOverlay').classList.remove('active'); _trashCb=null; }
-function confirmTrash(){ if(_trashCb)_trashCb(); closeTrashModal(); }
-
-function openMonthTrash(){
-  const mk = monthKey(selY, selM);
-  const hasData = reHist[mk] && Object.values(reHist[mk]).some(v=>v>0);
-  if(!hasData){ alert(selM+'월에 입력된 시세가 없어요.'); return; }
-  openTrashModal(
-    selM+'월 시세 초기화',
-    `<strong>${selY}년 ${selM}월</strong>에 입력된<br>모든 부동산 시세가 삭제돼요.`,
-    ()=>{ delete reHist[monthKey(selY,selM)]; saveHist(reHist); renderPage(); }
-  );
+  saveRE(reList); showEditMain(); renderPage();
 }
 
 /* ── 스와이프로 모달 닫기 ── */
@@ -670,7 +633,7 @@ function openMonthTrash(){
     isDragging = false;
     sheet.style.transition = 'transform 0.2s ease';
     const diff = currentY - startY;
-    if(diff>100){ closeEdit(); }
+    if(diff>100){ closeEditModal(); }
     else{ sheet.style.transform = 'translateY(0)'; }
   }
 
