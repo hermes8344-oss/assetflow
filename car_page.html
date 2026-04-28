@@ -290,24 +290,35 @@ function pk(key){ return getPrefix()+key; }
    정비 항목 마스터
 ═══════════════════════════════════════ */
 const MAINT_ITEMS = [
-  {key:'engine_oil',   name:'엔진오일',           icon:'🛢️', color:'#f59e0b', kmCycle:10000,  monthCycle:12},
-  {key:'mission_oil',  name:'미션오일',            icon:'⚙️', color:'#8b5cf6', kmCycle:60000,  monthCycle:48},
+  {key:'engine_oil',   name:'엔진오일',           icon:'🛢️', color:'#f59e0b', kmCycle:10000,  monthCycle:12,  evExclude:true},
+  {key:'mission_oil',  name:'미션오일',            icon:'⚙️', color:'#8b5cf6', kmCycle:60000,  monthCycle:48,  evExclude:true},
   {key:'brake_oil',    name:'브레이크오일',         icon:'🔴', color:'#ef4444', kmCycle:40000,  monthCycle:24},
-  {key:'brake_pad',    name:'브레이크 패드·디스크', icon:'🔧', color:'#64748b', kmCycle:50000,  monthCycle:36},
+  {key:'brake_pad',    name:'브레이크 패드·디스크', icon:'🔧', color:'#64748b', kmCycle:80000,  monthCycle:48},
   {key:'wiper',        name:'와이퍼 블레이드',      icon:'🌧️', color:'#0ea5e9', kmCycle:20000,  monthCycle:12},
   {key:'air_filter',   name:'에어필터',             icon:'💨', color:'#22c55e', kmCycle:20000,  monthCycle:12},
   {key:'cabin_filter', name:'에어컨 필터',          icon:'❄️', color:'#06b6d4', kmCycle:15000,  monthCycle:12},
-  {key:'timing_belt',  name:'타이밍벨트',           icon:'🔩', color:'#f97316', kmCycle:100000, monthCycle:60},
+  {key:'timing_belt',  name:'타이밍벨트',           icon:'🔩', color:'#f97316', kmCycle:100000, monthCycle:60,  evExclude:true},
   {key:'coolant',      name:'냉각수',               icon:'🌊', color:'#3b82f6', kmCycle:40000,  monthCycle:24},
-  {key:'spark_plug',   name:'점화플러그',            icon:'⚡', color:'#eab308', kmCycle:30000,  monthCycle:24},
+  {key:'spark_plug',   name:'점화플러그',            icon:'⚡', color:'#eab308', kmCycle:30000,  monthCycle:24,  evExclude:true},
   {key:'tire',         name:'타이어 교체·로테이션',  icon:'🔄', color:'#6b7280', kmCycle:40000,  monthCycle:36},
-  {key:'fuel_filter',  name:'연료필터',             icon:'🔋', color:'#a3e635', kmCycle:60000,  monthCycle:36},
-  {key:'drive_belt',   name:'구동벨트',             icon:'🔗', color:'#fb923c', kmCycle:60000,  monthCycle:36},
-  {key:'damper',       name:'댐퍼폴리',             icon:'🛠️', color:'#94a3b8', kmCycle:100000, monthCycle:60},
-  {key:'diff_oil',     name:'디퍼오일',             icon:'🏎️', color:'#84cc16', kmCycle:60000,  monthCycle:36},
+  {key:'fuel_filter',  name:'연료필터',             icon:'🔋', color:'#a3e635', kmCycle:60000,  monthCycle:36,  evExclude:true},
+  {key:'drive_belt',   name:'구동벨트',             icon:'🔗', color:'#fb923c', kmCycle:60000,  monthCycle:36,  evExclude:true},
+  {key:'damper',       name:'댐퍼폴리',             icon:'🛠️', color:'#94a3b8', kmCycle:100000, monthCycle:60,  evExclude:true},
+  {key:'diff_oil',     name:'디퍼오일',             icon:'🏎️', color:'#84cc16', kmCycle:60000,  monthCycle:36,  evExclude:true},
+  // 전기차 전용
+  {key:'ev_battery',   name:'구동 배터리 점검',     icon:'🔋', color:'#00c9a7', kmCycle:30000,  monthCycle:12,  evOnly:true},
+  {key:'ev_motor',     name:'구동모터 점검',         icon:'⚡', color:'#6c63ff', kmCycle:60000,  monthCycle:24,  evOnly:true},
+  {key:'ev_bms',       name:'BMS 점검',             icon:'💻', color:'#f472b6', kmCycle:30000,  monthCycle:12,  evOnly:true},
+  {key:'ev_coolant',   name:'배터리 냉각시스템',    icon:'🧊', color:'#38bdf8', kmCycle:60000,  monthCycle:24,  evOnly:true},
 ];
 
 const FUEL_TYPES = ['가솔린','디젤','LPG','전기·하이브리드'];
+
+function isEV(car){ return (car?.fuel||'').includes('전기'); }
+function getFilteredMaintItems(car){
+  if(isEV(car)) return MAINT_ITEMS.filter(x => !x.evExclude);
+  return MAINT_ITEMS.filter(x => !x.evOnly);
+}
 
 /* ─── 스토리지 ─── */
 function loadCars(){
@@ -449,7 +460,7 @@ function renderMaintSummary(){
   } else {
     el.innerHTML=`
       <div class="cs-plate">${currentCar.plate}</div>
-      <div class="cs-info">${currentCar.maker} ${currentCar.model} · ${currentCar.year}년식</div>
+      <div class="cs-info">${currentCar.maker} ${currentCar.model} · ${currentCar.year}년식${isEV(currentCar)?` <span style="background:#00c9a722;color:#00c9a7;font-size:10px;font-weight:600;border-radius:20px;padding:2px 7px;border:1px solid #00c9a755;vertical-align:middle">⚡ EV 전용</span>`:''}</div>
       <div class="cs-mileage-row">
         <div><div class="cs-km">${fmtKm(km)}</div><div class="cs-km-label">현재 주행거리</div></div>
         <button class="btn-edit-km" onclick="editKm()">✏️ 수정</button>
@@ -468,7 +479,8 @@ function saveKm(){
 
 function renderMaintList(){
   const km=currentCar.mileage||0;
-  document.getElementById('maintListEl').innerHTML=MAINT_ITEMS.map(item=>{
+  const filteredItems = getFilteredMaintItems(currentCar);
+  document.getElementById('maintListEl').innerHTML=filteredItems.map(item=>{
     const data=maintData[item.key];
     const prog=getProgress(item.key,km);
     let progressHTML='',nextKmDisp='—',lastDisp='기록 없음',badge=`<span class="status-badge sb-none">기록없음</span>`;
@@ -570,13 +582,14 @@ function deleteRecord(idx){
    정비 기록 추가 모달
 ═══════════════════════════════════════ */
 function openRecordModal(itemKey){
-  const sel=itemKey||currentItemKey||MAINT_ITEMS[0].key;
+  const _fItems=getFilteredMaintItems(currentCar);
+  const sel=itemKey||currentItemKey||_fItems[0].key;
   document.getElementById('recordModalContent').innerHTML=`
     <div class="modal-title">정비 기록 추가</div>
     <div class="add-form">
       <div class="f-row"><div class="f-label">정비 항목</div>
         <select class="f-input" id="rItem" style="color:#fff;background:#2e2e2e">
-          ${MAINT_ITEMS.map(it=>`<option value="${it.key}" ${it.key===sel?'selected':''}>${it.name}</option>`).join('')}
+          ${_fItems.map(it=>`<option value="${it.key}" ${it.key===sel?'selected':''}>${it.name}</option>`).join('')}
         </select>
       </div>
       <div class="f-row"><div class="f-label">정비일</div><input class="f-input" id="rDate" type="date" value="${new Date().toISOString().slice(0,10)}"></div>
@@ -655,7 +668,10 @@ function showCarEditMain(){
   document.getElementById('carEditContent').innerHTML=`
     <div class="modal-title">차량 편집</div>
     <div class="edit-list">${listHTML}</div>
-    <button class="btn-add" onclick="showCarForm(null)">＋ 차량 추가하기</button>`;
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px">
+      <button class="btn-add" style="margin-top:0" onclick="showCarForm(null)">＋ 차량 추가하기</button>
+      <button onclick="closeCarEditModal()" style="background:#2e2e2e;border:none;border-radius:14px;color:#aaa;font-size:14px;font-weight:500;padding:16px;cursor:pointer">취소</button>
+    </div>`;
 }
 
 function showCarForm(id){

@@ -43,7 +43,7 @@
   .month-label-btn .label-arrow { font-size: 10px; color: #555; margin-top: 2px; }
 
   /* ── 카드 리스트 ── */
-  .card-list { padding: 0 20px; display: flex; flex-direction: column; }
+  .card-list { display: flex; flex-direction: column; }
   .card-item {
     display: flex; align-items: center;
     padding: 14px 0;
@@ -53,52 +53,51 @@
   .card-item:last-child { border-bottom: none; }
   .card-item:active { opacity: 0.7; }
 
-  /* 카드 아이콘 */
+  /* 카드 아이콘 - account_page acc-icon과 동일 구조 */
   .card-icon {
-    width: 48px; height: 32px; border-radius: 6px;
+    width: 40px; height: 40px; border-radius: 10px;
     margin-right: 14px; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
-    font-size: 11px; font-weight: 700; overflow: hidden;
+    font-size: 11px; font-weight: 700; overflow: hidden; color:#fff;
   }
-  .card-kb        { background: linear-gradient(135deg,#f5c518,#e6a800); color:#000; }
-  .card-toss-black{ background: linear-gradient(135deg,#333,#111); color:#fff; position:relative; overflow:hidden; }
-  .card-toss-check{ background: linear-gradient(135deg,#ff7043,#e64a19); color:#fff; }
-  .card-kfirst    { background: linear-gradient(135deg,#1a1a2e,#16213e); color:#ccc; border:1px solid #333; }
-  .card-hipoint   { background: linear-gradient(135deg,#4a1942,#2d1b3d); color:#e8c9e5; }
-  .card-generic   { background: #2e2e2e; color:#888; border:1px solid #3a3a3a; }
-
-  .card-toss-black::before {
-    content:''; position:absolute; inset:0;
-    background-image: repeating-conic-gradient(#555 0% 25%,#222 0% 50%);
-    background-size: 8px 8px; opacity:0.5;
-  }
-  .card-toss-black .card-label { position:relative; z-index:1; }
-  .card-label { font-size:10px; font-weight:700; letter-spacing:-0.3px; text-align:center; }
+  .card-icon.long { font-size: 9px; }
+  .card-icon.extra-long { font-size: 7.5px; }
+  .card-kb        { background: #f5c51822; color:#f5c518; }
+  .card-toss-black{ background: #33333322; color:#fff; }
+  .card-toss-check{ background: #ff704322; color:#ff7043; }
+  .card-kfirst    { background: #1a1a2e22; color:#ccc; }
+  .card-hipoint   { background: #4a194222; color:#e8c9e5; }
+  .card-generic   { background: #88888822; color:#888; }
+  .card-label { font-size:inherit; font-weight:700; letter-spacing:-0.3px; text-align:center; line-height:1.2; }
 
   .card-info { flex:1; min-width:0; }
   .card-name {
-    font-size:15px; font-weight:500; color:#eee;
+    font-size:17px; font-weight:700; color:#fff; letter-spacing:-0.3px;
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:2px;
   }
-  .card-sub { font-size:12px; color:#666; }
+  .card-sub { font-size:12px; color:#888; }
 
   .card-amount { text-align:right; flex-shrink:0; margin-left:8px; }
   .card-amount .amount { font-size:15px; font-weight:600; color:#fff; white-space:nowrap; }
   .card-amount .amount.zero { color:#444; }
+  .card-input-btn { flex-shrink:0; margin-left:12px; background:#2e2e2e; border:1px solid #3a3a3a; border-radius:8px; color:#aaa; font-size:13px; font-weight:500; padding:6px 14px; pointer-events:none; white-space:nowrap; }
 
   /* 데이터 없음 */
   .empty-month { text-align:center; padding:48px 0 32px; color:#444; }
   .empty-icon  { font-size:36px; margin-bottom:12px; }
   .empty-text  { font-size:14px; line-height:1.6; }
 
-  /* 합계 */
-  .total-row {
-    display:flex; justify-content:space-between; align-items:center;
-    padding:14px 20px; margin-top:4px;
-    border-top:1px solid #2a2a2a;
-  }
-  .total-row .t-label { font-size:14px; color:#888; }
-  .total-row .t-value { font-size:17px; font-weight:700; color:#fff; }
+  /* 합계 카드 */
+  .total-card { margin:0 20px 20px; background:#242424; border-radius:16px; padding:20px; }
+  .tac-label  { font-size:13px; color:#888; margin-bottom:6px; }
+  .tac-amount { font-size:26px; font-weight:700; color:#fff; letter-spacing:-0.5px; white-space:nowrap; }
+  .tac-sub    { font-size:13px; color:#666; margin-top:4px; }
+
+  /* 카테고리 섹션 - account_page와 동일 */
+  .section-header { display:flex; align-items:center; justify-content:space-between; padding:20px 20px 8px; }
+  .section-title { font-size:13px; color:#888; font-weight:500; }
+  .section-total-inline { font-size:26px; font-weight:700; color:#fff; letter-spacing:-0.5px; }
+  .account-list { padding:0 20px; }
 
   /* ── 하단 버튼 ── */
   .bottom-nav {
@@ -243,12 +242,14 @@
   </button>
 </div>
 
-<div class="card-list" id="cardList"></div>
-
-<div class="total-row">
-  <span class="t-label" id="totalLabel">총 지출</span>
-  <span class="t-value" id="totalValue">—</span>
+<!-- 총 지출 카드 -->
+<div class="total-card">
+  <div class="tac-label" id="totalLabel">이번 달 총 지출</div>
+  <div class="tac-amount" id="totalValue">—</div>
+  <div class="tac-sub" id="totalSub">—</div>
 </div>
+
+<div class="card-list" id="cardList"></div>
 
 <div class="bottom-nav">
   <button class="nav-btn" onclick="openEditModal()">⚙️ 자산 편집하기</button>
@@ -275,9 +276,10 @@
     <div class="trs-icon">🗑️</div>
     <div class="trs-title" id="trsTitle">이 달 데이터 초기화</div>
     <div class="trs-desc"  id="trsDesc">—</div>
+    <button id="trsHideBtn" onclick="confirmHide()" style="display:none;width:100%;margin-bottom:8px;background:#2e2e2ebb;border:2px solid #555;border-radius:12px;color:#fff;font-size:15px;font-weight:600;padding:14px;cursor:pointer">이번 달만 숨기기</button>
     <div class="trs-btns">
       <button class="trs-cancel"  onclick="closeTrashModal()">취소</button>
-      <button class="trs-confirm" onclick="confirmTrash()">초기화</button>
+      <button class="trs-confirm" onclick="confirmTrash()">완전 삭제</button>
     </div>
   </div>
 </div>
@@ -354,32 +356,93 @@ function loadMeta()   { try{const s=localStorage.getItem(pk('af_cards_meta'));  
 function saveMeta(d)  { localStorage.setItem(pk('af_cards_meta'),JSON.stringify(d)); }
 function loadSpend()  { try{const s=localStorage.getItem(pk('af_cards_spend')); return s?JSON.parse(s):DEFAULT_SPEND;} catch{return DEFAULT_SPEND;} }
 function saveSpend(d) { localStorage.setItem(pk('af_cards_spend'),JSON.stringify(d)); }
+function loadHidden() { try{const s=localStorage.getItem(pk('af_cards_hidden')); return s?JSON.parse(s):{};} catch{return {};} }
+function saveHidden(d){ localStorage.setItem(pk('af_cards_hidden'),JSON.stringify(d)); }
 
-let meta=loadMeta(), spend=loadSpend();
+let meta=loadMeta(), spend=loadSpend(), hidden=loadHidden();
 let selY=CUR_YEAR, selM=CUR_MONTH, sheetY=CUR_YEAR;
 
 function renderPage(){
   const isCur=(selY===CUR_YEAR&&selM===CUR_MONTH);
   document.getElementById('monthLabelText').textContent=`${selM}월에 쓴 돈`;
-  document.getElementById('totalLabel').textContent=isCur?'이번 달 총 지출':`${selM}월 총 지출`;
+  document.getElementById('totalLabel').textContent=isCur?'이번 달 총 지출':`${selY}년 ${selM}월 총 지출`;
   const ms=spend[monthKey(selY,selM)]||{};
-  
-  // 해당 월에 데이터가 있는 카드들 (0원 포함)
-  const cardsWithData = meta.filter(c => ms[c.id] !== undefined);
-  const rows = cardsWithData.map(c=>({...c,amount:ms[c.id]||0})).sort((a,b)=>b.amount-a.amount);
-  
+  const hiddenIds = hidden[monthKey(selY,selM)] || [];
+
+  // 해당 월에 데이터가 있는 카드들 (숨긴 항목 제외)
+  const cardsWithData = meta.filter(c => ms[c.id] !== undefined && !hiddenIds.includes(c.id));
+  const rows = cardsWithData.map(c=>({...c,amount:ms[c.id]||0}));
+
+  const total = rows.reduce((s,c)=>s+c.amount,0);
+  document.getElementById('totalValue').textContent=fmt(total);
+  document.getElementById('totalSub').textContent=`총 ${rows.length}개 카드`;
+
   const el=document.getElementById('cardList');
   if(!rows.length){
     el.innerHTML=`<div class="empty-month"><div class="empty-icon">💳</div><div class="empty-text">${selY}년 ${selM}월 카드 데이터가 없어요<br><span style="font-size:12px;color:#555">자산 편집하기에서 지출을 입력해보세요</span></div></div>`;
     document.getElementById('totalValue').textContent='0원'; return;
   }
-  el.innerHTML=rows.map(c=>`
-    <div class="card-item" onclick="quickEdit(${c.id})">
-      <div class="card-icon ${c.color}"><span class="card-label">${c.label.replace(/\n/g,'<br>')}</span></div>
-      <div class="card-info"><div class="card-name">${c.name}</div><div class="card-sub">${c.type}</div></div>
-      <div class="card-amount"><div class="amount">${fmt(c.amount)}</div></div>
-    </div>`).join('');
-  document.getElementById('totalValue').textContent=fmt(rows.reduce((s,c)=>s+c.amount,0));
+
+  // 카드 종류 순서
+  const CARD_TYPES = ['체크카드','신용카드','선불카드','법인카드'];
+  let html = '';
+  CARD_TYPES.forEach(type=>{
+    const group = rows.filter(c=>c.type===type).sort((a,b)=>b.amount-a.amount);
+    if(!group.length) return;
+    const sub = group.reduce((s,c)=>s+c.amount,0);
+    html += `
+      <div class="section-header">
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <span class="section-title">${type}</span>
+          <span class="section-total-inline">${fmt(sub)}</span>
+        </div>
+      </div>
+      <div class="account-list">
+        ${group.map(c=>{
+            const {label, sizeClass, bg, text} = getCardIcon(c);
+            return `
+          <div class="card-item" onclick="quickEdit(${c.id})">
+            <div class="card-icon card-generic ${sizeClass}" style="background:${bg};color:${text}">${label}</div>
+            <div class="card-info"><div class="card-name">${fmt(c.amount)}</div><div class="card-sub">${c.name}</div></div>
+            <div class="card-input-btn">입력</div>
+          </div>`;
+          }).join('')}
+      </div>`; 
+  });
+  el.innerHTML=html;
+}
+function getCardIcon(c){
+  const company = c.company || c.name || '';
+  let label;
+  if(company.startsWith('IBK')) label = 'IBK';
+  else if(company.startsWith('카카오')) label = '카카오';
+  else label = company.slice(0,2);
+  const sizeClass = label.length >= 3 ? 'extra-long' : '';
+
+  const BRAND_COLORS = {
+    '삼성카드':      { bg:'#0057a8', text:'#fff' },
+    '현대카드':      { bg:'#000000', text:'#fff' },
+    '신한카드':      { bg:'#0046a0', text:'#fff' },
+    'KB국민카드':    { bg:'#f5c518', text:'#000' },
+    '우리카드':      { bg:'#007b40', text:'#fff' },
+    '하나카드':      { bg:'#008549', text:'#fff' },
+    '롯데카드':      { bg:'#ed1c24', text:'#fff' },
+    'BC카드':        { bg:'#e4002b', text:'#fff' },
+    'NH농협카드':    { bg:'#008434', text:'#fff' },
+    '씨티카드':      { bg:'#003da5', text:'#fff' },
+    'IBK기업은행카드':{ bg:'#005bac', text:'#fff' },
+    '카카오뱅크':    { bg:'#fee500', text:'#000' },
+    '토스뱅크':      { bg:'#0064ff', text:'#fff' },
+    '케이뱅크':      { bg:'#7c3aed', text:'#fff' },
+    'SC제일은행':    { bg:'#1428a0', text:'#fff' },
+  };
+
+  const matched = Object.keys(BRAND_COLORS).find(k => company.startsWith(k) || k.startsWith(company.slice(0,2)));
+  const brand = BRAND_COLORS[company] || (matched ? BRAND_COLORS[matched] : null);
+  const bg   = brand ? brand.bg+'33' : '#88888822';
+  const text = brand ? brand.text === '#fff' ? '#ccc' : brand.text : '#888';
+
+  return {label, sizeClass, bg, text};
 }
 function fmt(n){ return n.toLocaleString('ko-KR')+'원'; }
 
@@ -455,11 +518,13 @@ function renderSheetGrid(){
     return `<button class="m-chip ${isSel?'sel':''} ${future?'future':''}" onclick="pickMonth(${m})">${m}월<div class="m-dot">${hasDot?'●':''}</div></button>`;
   }).join('');
 }
-function pickMonth(m){ selY=sheetY; selM=m; closeMonthSheet(); 
-let _trashCb = null;
-function openTrashModal(title, desc, cb){ document.getElementById('trsTitle').textContent=title; document.getElementById('trsDesc').innerHTML=desc; _trashCb=cb; document.getElementById('trashOverlay').classList.add('active'); }
-function closeTrashModal(){ document.getElementById('trashOverlay').classList.remove('active'); _trashCb=null; }
+function pickMonth(m){ selY=sheetY; selM=m; closeMonthSheet(); renderPage(); }
+
+let _trashCb = null, _hideCb = null;
+function openTrashModal(title, desc, cb, hideCb){ document.getElementById('trsTitle').textContent=title; document.getElementById('trsDesc').innerHTML=desc; _trashCb=cb; _hideCb=hideCb||null; const hideBtn=document.getElementById('trsHideBtn'); if(hideBtn) hideBtn.style.display=_hideCb?'block':'none'; document.getElementById('trashOverlay').classList.add('active'); }
+function closeTrashModal(){ document.getElementById('trashOverlay').classList.remove('active'); _trashCb=null; _hideCb=null; }
 function confirmTrash(){ if(_trashCb)_trashCb(); closeTrashModal(); }
+function confirmHide(){ if(_hideCb)_hideCb(); closeTrashModal(); }
 
 function openMonthTrash(){
   const mk = monthKey(selY, selM);
@@ -471,7 +536,6 @@ function openMonthTrash(){
     ()=>{ delete spend[monthKey(selY,selM)]; saveSpend(spend); renderPage(); }
   );
 }
-renderPage(); }
 
 function openEditModal(){ 
   showEditMain(); 
@@ -501,19 +565,46 @@ function closeEditModal(){
   window.scrollTo(0, parseInt(scrollY || '0') * -1);
 }
 function showEditMain(){
+  const mk = monthKey(selY, selM);
+  const hiddenIds = hidden[mk] || [];
+  const hiddenCards = meta.filter(c => hiddenIds.includes(c.id));
+  let hiddenHtml = '';
+  if(hiddenCards.length){
+    hiddenHtml = `
+      <div style="font-size:12px;color:#555;padding:16px 0 8px;border-top:1px solid #2a2a2a;margin-top:8px">${selM}월 숨긴 항목 (${hiddenCards.length}개)</div>
+      ${hiddenCards.map(c=>{
+        const {label, sizeClass, bg, text} = getCardIcon(c);
+        return `
+        <div class="edit-item" style="opacity:0.6">
+          <div class="card-icon card-generic ${sizeClass}" style="margin-right:0;background:${bg};color:${text}">${label}</div>
+          <div class="ei-info"><div class="ei-name">${c.name}</div><div class="ei-sub">${c.type}</div></div>
+          <div class="ei-actions">
+            <button class="btn-ea" onclick="restoreCard(${c.id})">복원</button>
+          </div>
+        </div>`;
+      }).join('')}`;
+  }
+
   document.getElementById('editContent').innerHTML=`
     <div class="modal-title">카드 편집</div>
     <div class="edit-list" id="editList"></div>
-    <button class="btn-add-card" onclick="showAddForm()">＋ 카드 추가하기</button>`;
-  document.getElementById('editList').innerHTML=meta.map(c=>`
+    ${hiddenHtml}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px">
+      <button class="btn-add-card" style="margin-top:0" onclick="showAddForm()">＋ 카드 추가하기</button>
+      <button onclick="closeEditModal()" style="background:#2e2e2e;border:none;border-radius:14px;color:#aaa;font-size:14px;font-weight:500;padding:16px;cursor:pointer">취소</button>
+    </div>`;
+  document.getElementById('editList').innerHTML=meta.map(c=>{
+    const {label, sizeClass, bg, text} = getCardIcon(c);
+    return `
     <div class="edit-item">
-      <div class="card-icon ${c.color}"><span class="card-label">${c.label.replace(/\n/g,'<br>')}</span></div>
+      <div class="card-icon card-generic ${sizeClass}" style="margin-right:0;background:${bg};color:${text}">${label}</div>
       <div class="ei-info"><div class="ei-name">${c.name}</div><div class="ei-sub">${c.type}</div></div>
       <div class="ei-actions">
         <button class="btn-ea" onclick="showEditForm(${c.id})">수정</button>
         <button class="btn-ea del" onclick="deleteCard(${c.id})">삭제</button>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 function showAddForm(){
   document.getElementById('editContent').innerHTML=`
@@ -630,10 +721,33 @@ function updateCardNoAmount(id){
   showEditMain(); 
   renderPage();
 }
-function deleteCard(id){
-  meta=meta.filter(x=>Number(x.id)!==Number(id)); saveMeta(meta);
-  Object.keys(spend).forEach(k=>{delete spend[k][id];}); saveSpend(spend);
+function restoreCard(id){
+  const mk = monthKey(selY, selM);
+  if(hidden[mk]) hidden[mk] = hidden[mk].filter(x=>x!==id);
+  saveHidden(hidden);
   showEditMain(); renderPage();
+}
+
+function deleteCard(id){
+  const c = meta.find(x=>x.id===id);
+  if(!c) return;
+  openTrashModal(
+    `"${c.name}" 삭제`,
+    `<strong style="color:#fff">${selY}년 ${selM}월만 숨기기</strong><br>다른 달 데이터는 유지돼요.<br><br>또는 <strong style="color:#f87171">모든 월 완전 삭제</strong>를 선택하세요.`,
+    ()=>{ // 완전 삭제
+      meta=meta.filter(x=>Number(x.id)!==Number(id)); saveMeta(meta);
+      Object.keys(spend).forEach(k=>{delete spend[k][id];}); saveSpend(spend);
+      Object.keys(hidden).forEach(mk=>{ hidden[mk]=hidden[mk].filter(x=>x!==id); }); saveHidden(hidden);
+      showEditMain(); renderPage();
+    },
+    ()=>{ // 이번달 숨기기
+      const mk = monthKey(selY, selM);
+      if(!hidden[mk]) hidden[mk]=[];
+      if(!hidden[mk].includes(id)) hidden[mk].push(id);
+      saveHidden(hidden);
+      showEditMain(); renderPage();
+    }
+  );
 }
 
 /* ── 카드사 선택 ── */

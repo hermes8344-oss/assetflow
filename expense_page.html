@@ -277,7 +277,10 @@ function showEditMain(){
   document.getElementById('editContent').innerHTML=`
     <div class="modal-title">고정 지출 편집</div>
     <div class="edit-list">${listHTML}</div>
-    <button class="btn-add" onclick="showForm(null)">＋ 지출 추가하기</button>`;
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px">
+      <button class="btn-add" style="margin-top:0" onclick="showForm(null)">＋ 지출 추가하기</button>
+      <button onclick="closeEditModal()" style="background:#2e2e2e;border:none;border-radius:14px;color:#aaa;font-size:14px;font-weight:500;padding:16px;cursor:pointer">취소</button>
+    </div>`;
 }
 
 function showForm(id){

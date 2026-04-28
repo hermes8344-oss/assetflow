@@ -39,9 +39,10 @@
   .cat-select-btn.active { border-color:#007aff; color:#007aff; background:rgba(0,122,255,0.08); }
 
   /* 섹션 */
-  .section-header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px 10px; }
+  .section-header { display:flex; align-items:center; justify-content:space-between; padding:20px 20px 8px; }
   .section-title { font-size:13px; color:#888; font-weight:500; }
   .section-total { font-size:13px; color:#888; }
+  .section-total-inline { font-size:26px; font-weight:700; color:#fff; letter-spacing:-0.5px; }
 
   /* 계좌 아이템 */
   .account-list { padding:0 20px; }
@@ -66,10 +67,11 @@
   .ic-savings   { background:#2563eb22; }
   .ic-crypto    { background:#f7931a22; }
   .acc-info { flex:1; min-width:0; }
-  .acc-name { font-size:15px; font-weight:500; color:#eee; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:2px; }
-  .acc-sub  { font-size:12px; color:#666; }
+  .acc-name { font-size:15px; font-weight:600; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:2px; letter-spacing:-0.2px; }
+  .acc-sub  { font-size:12px; color:#888; }
   .acc-amount-wrap { text-align:right; flex-shrink:0; margin-left:8px; }
   .acc-amount { font-size:15px; font-weight:600; color:#fff; white-space:nowrap; }
+  .acc-input-btn { flex-shrink:0; margin-left:12px; background:#2e2e2e; border:1px solid #3a3a3a; border-radius:8px; color:#aaa; font-size:13px; font-weight:500; padding:6px 14px; pointer-events:none; white-space:nowrap; }
   .empty-section { text-align:center; padding:40px 0; color:#444; font-size:14px; }
 
   /* 하단 */
@@ -167,18 +169,6 @@
   <div class="tac-sub"   id="totalAssetSub">—</div>
 </div>
 
-<!-- 카테고리 탭 -->
-<div class="cat-tabs">
-  <button class="cat-tab active" data-cat="all" onclick="selectCat(this)">
-    전체 <span class="arrow-icon">▼</span>
-  </button>
-  <button class="cat-tab" data-cat="checking" onclick="selectCat(this)">입출금</button>
-  <button class="cat-tab" data-cat="savings" onclick="selectCat(this)">저축</button>
-  <button class="cat-tab" data-cat="securities" onclick="selectCat(this)">증권</button>
-  <button class="cat-tab" data-cat="pension" onclick="selectCat(this)">연금</button>
-  <button class="cat-tab" data-cat="crypto" onclick="selectCat(this)">가상화폐</button>
-</div>
-
 <!-- 계좌 목록 -->
 <div id="accountSections"></div>
 
@@ -206,9 +196,10 @@
     <div class="trs-icon">🗑️</div>
     <div class="trs-title" id="trsTitle">이 달 데이터 초기화</div>
     <div class="trs-desc"  id="trsDesc">—</div>
+    <button id="trsHideBtn" onclick="confirmHide()" style="display:none;width:100%;margin-bottom:8px;background:#2e2e2ebb;border:2px solid #555;border-radius:12px;color:#fff;font-size:15px;font-weight:600;padding:14px;cursor:pointer">이번 달만 숨기기</button>
     <div class="trs-btns">
       <button class="trs-cancel"  onclick="closeTrashModal()">취소</button>
-      <button class="trs-confirm" onclick="confirmTrash()">초기화</button>
+      <button class="trs-confirm" onclick="confirmTrash()">완전 삭제</button>
     </div>
   </div>
 </div>
@@ -341,6 +332,11 @@ function loadCashflow(){
 }
 function saveCashflow(d){ localStorage.setItem(pk('af_accounts_cashflow'),JSON.stringify(d)); }
 
+function loadHidden(){
+  try{const s=localStorage.getItem(pk('af_accounts_hidden')); return s?JSON.parse(s):{};} catch{return {};}
+}
+function saveHidden(d){ localStorage.setItem(pk('af_accounts_hidden'),JSON.stringify(d)); }
+
 // 기존 balance 값 → 현재 달 히스토리로 자동 이전
 function migrateOldBalance(){
   const raw = localStorage.getItem(pk('af_accounts'));
@@ -357,7 +353,7 @@ function migrateOldBalance(){
   localStorage.setItem(pk('af_accounts'), JSON.stringify(clean));
 }
 
-let accounts = [], history = {}, cashflow = {}, activeCat = 'all';
+let accounts = [], history = {}, cashflow = {}, hidden = {}, activeCat = 'all';
 let selY = CUR_YEAR, selM = CUR_MONTH, sheetY = CUR_YEAR;
 
 function init(){
@@ -365,6 +361,7 @@ function init(){
   accounts = loadAccounts();
   history  = loadHistory();
   cashflow = loadCashflow();
+  hidden   = loadHidden();
   // 기본 계좌가 없으면 DEFAULT 저장
   if(!localStorage.getItem(pk('af_accounts'))){
     saveAccounts(DEFAULT_ACCOUNTS);
@@ -400,15 +397,19 @@ function renderPage(){
   let html = '';
 
   catKeys.forEach(cat=>{
-    const list = accounts.filter(a=>a.cat===cat);
+    const mk = monthKey(selY, selM);
+    const hiddenIds = hidden[mk] || [];
+    const list = accounts.filter(a=>a.cat===cat && !hiddenIds.includes(a.id));
     if(!list.length) return;
     const sub = list.reduce((s,a)=>s+getBalance(a.id),0);
     totalBalance += sub;
     totalCount   += list.length;
     html += `
       <div class="section-header">
-        <span class="section-title">${CATS[cat].label}</span>
-        <span class="section-total">${fmt(sub)}</span>
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <span class="section-title">${CATS[cat].label}</span>
+          <span class="section-total-inline">${fmt(sub)}</span>
+        </div>
       </div>
       <div class="account-list">
         ${list.map(a=>{
@@ -437,13 +438,11 @@ function renderPage(){
             <div class="account-item" onclick="quickEdit(${a.id})">
               <div class="acc-icon ${sizeClass}" style="background:${color}22;color:${color}">${initial}</div>
               <div class="acc-info">
-                <div class="acc-name">${a.name}</div>
-                <div class="acc-sub">${a.bank}</div>
-              </div>
-              <div class="acc-amount-wrap">
-                <div class="acc-amount">${fmt(bal)}</div>
+                <div class="acc-name">${fmt(bal)}</div>
+                <div class="acc-sub">${a.name}</div>
                 ${gainHtml}
               </div>
+              <div class="acc-input-btn">입력</div>
             </div>`;
         }).join('')}
       </div>`;
@@ -602,10 +601,41 @@ function showEditMain(){
     }).join('');
   });
 
+  const mk = monthKey(selY, selM);
+  const hiddenIds = hidden[mk] || [];
+  const hiddenAccounts = accounts.filter(a => hiddenIds.includes(a.id));
+  let hiddenHtml = '';
+  if(hiddenAccounts.length){
+    hiddenHtml = `
+      <div style="font-size:12px;color:#555;padding:16px 0 8px;border-top:1px solid #2a2a2a;margin-top:8px">${selM}월 숨긴 항목 (${hiddenAccounts.length}개)</div>
+      ${hiddenAccounts.map(a=>{
+        const initial = a.initial || a.icon || a.bank.substring(0,2);
+        const color = a.color||'#888888';
+        const initialLen = initial.length;
+        let sizeClass = '';
+        if(initialLen>=4) sizeClass='extra-long';
+        else if(initialLen===3) sizeClass='long';
+        return `
+        <div class="edit-item" style="opacity:0.6">
+          <div class="acc-icon ${sizeClass}" style="width:36px;height:36px;margin-right:0;background:${color}22;color:${color}">${initial}</div>
+          <div class="ei-info">
+            <div class="ei-name">${a.name}</div>
+            <div class="ei-sub">${a.bank}</div>
+          </div>
+          <div class="ei-actions">
+            <button class="btn-ea" onclick="restoreAccount(${a.id})">복원</button>
+          </div>
+        </div>`;
+      }).join('')}`;
+  }
+
   document.getElementById('editContent').innerHTML = `
     <div class="modal-title">계좌 편집 · ${selM}월</div>
-    <div class="edit-list">${listHtml||'<div style="color:#555;font-size:13px">등록된 계좌가 없어요</div>'}</div>
-    <button class="btn-add-acc" onclick="showAddForm()">＋ 계좌 추가하기</button>`;
+    <div class="edit-list">${listHtml||'<div style="color:#555;font-size:13px">등록된 계좌가 없어요</div>'}${hiddenHtml}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px">
+      <button class="btn-add-acc" style="margin-top:0" onclick="showAddForm()">＋ 계좌 추가하기</button>
+      <button onclick="closeEditModal()" style="background:#2e2e2e;border:none;border-radius:14px;color:#aaa;font-size:14px;font-weight:500;padding:16px;cursor:pointer">취소</button>
+    </div>`;
 }
 
 /* 월별 잔고 입력 폼 */
@@ -965,11 +995,34 @@ function updateAccount(id){
   saveAccounts(accounts); showEditMain(); renderPage();
 }
 
+function restoreAccount(id){
+  const mk = monthKey(selY, selM);
+  if(hidden[mk]) hidden[mk] = hidden[mk].filter(x=>x!==id);
+  saveHidden(hidden);
+  showEditMain(); renderPage();
+}
+
 function deleteAccount(id){
-  accounts=accounts.filter(x=>Number(x.id)!==Number(id));
-  // 히스토리에서도 제거
-  Object.keys(history).forEach(mk=>{ delete history[mk][id]; });
-  saveAccounts(accounts); saveHistory(history); showEditMain(); renderPage();
+  const a = accounts.find(x=>x.id===id);
+  if(!a) return;
+  openTrashModal(
+    `"${a.name}" 삭제`,
+    `<strong style="color:#fff">${selY}년 ${selM}월만 숨기기</strong><br>다른 달 데이터는 유지돼요.<br><br>또는 <strong style="color:#f87171">모든 월 완전 삭제</strong>를 선택하세요.`,
+    ()=>{ // 완전 삭제
+      accounts=accounts.filter(x=>Number(x.id)!==Number(id));
+      Object.keys(history).forEach(mk=>{ delete history[mk][id]; });
+      Object.keys(hidden).forEach(mk=>{ hidden[mk]=hidden[mk].filter(x=>x!==id); });
+      saveAccounts(accounts); saveHistory(history); saveHidden(hidden);
+      showEditMain(); renderPage();
+    },
+    ()=>{ // 이번달 숨기기
+      const mk = monthKey(selY, selM);
+      if(!hidden[mk]) hidden[mk]=[];
+      if(!hidden[mk].includes(id)) hidden[mk].push(id);
+      saveHidden(hidden);
+      showEditMain(); renderPage();
+    }
+  );
 }
 
 
@@ -1045,10 +1098,19 @@ function getPrevMonthKey(y, m){
 
 
 /* ── 월별 초기화 ── */
-let _trashCb = null;
-function openTrashModal(title, desc, cb){ document.getElementById('trsTitle').textContent=title; document.getElementById('trsDesc').innerHTML=desc; _trashCb=cb; document.getElementById('trashOverlay').classList.add('active'); }
-function closeTrashModal(){ document.getElementById('trashOverlay').classList.remove('active'); _trashCb=null; }
+let _trashCb = null, _hideCb = null;
+function openTrashModal(title, desc, cb, hideCb){
+  document.getElementById('trsTitle').textContent=title;
+  document.getElementById('trsDesc').innerHTML=desc;
+  _trashCb=cb; _hideCb=hideCb||null;
+  // 숨기기 버튼 표시 여부
+  const hideBtn = document.getElementById('trsHideBtn');
+  if(hideBtn) hideBtn.style.display = _hideCb ? 'block' : 'none';
+  document.getElementById('trashOverlay').classList.add('active');
+}
+function closeTrashModal(){ document.getElementById('trashOverlay').classList.remove('active'); _trashCb=null; _hideCb=null; }
 function confirmTrash(){ if(_trashCb)_trashCb(); closeTrashModal(); }
+function confirmHide(){ if(_hideCb)_hideCb(); closeTrashModal(); }
 
 function openMonthTrash(){
   const mk = monthKey(selY, selM);

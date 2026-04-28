@@ -145,9 +145,63 @@
   .rs-cancel { background:#333; color:#fff; }
   .rs-confirm { background:#f87171; color:#fff; }
   .rs-step2 { display:none; }
+
+  /* ── 온보딩 ── */
+  .ob-overlay { position:fixed; inset:0; background:#000; z-index:9000; display:none; flex-direction:column; }
+  .ob-overlay.active { display:flex; }
+  .ob-header { display:flex; align-items:center; justify-content:space-between; padding:20px 20px 0; }
+  .ob-skip { background:none; border:none; color:#555; font-size:14px; cursor:pointer; }
+  .ob-steps { display:flex; gap:6px; padding:0 20px; margin-top:16px; }
+  .ob-step-dot { flex:1; height:3px; border-radius:2px; background:#2a2a2a; transition:background 0.3s; }
+  .ob-step-dot.active { background:#007aff; }
+  .ob-step-dot.done { background:#34d399; }
+  .ob-body { flex:1; display:flex; flex-direction:column; padding:32px 24px 24px; overflow-y:auto; }
+  .ob-emoji { font-size:52px; margin-bottom:20px; }
+  .ob-title { font-size:24px; font-weight:700; margin-bottom:10px; line-height:1.3; }
+  .ob-desc { font-size:15px; color:#888; line-height:1.6; margin-bottom:32px; }
+  .ob-user-count { display:flex; gap:12px; margin-bottom:32px; }
+  .ob-uc-btn { flex:1; background:#1a1a1a; border:2px solid #2a2a2a; border-radius:16px; padding:20px 12px; text-align:center; cursor:pointer; transition:all 0.15s; }
+  .ob-uc-btn.active { border-color:#007aff; background:rgba(0,122,255,0.08); }
+  .ob-uc-icon { font-size:32px; margin-bottom:8px; }
+  .ob-uc-label { font-size:14px; font-weight:600; color:#fff; }
+  .ob-uc-sub { font-size:12px; color:#666; margin-top:4px; }
+  .ob-form { display:flex; flex-direction:column; gap:14px; margin-bottom:24px; }
+  .ob-label { font-size:13px; color:#888; margin-bottom:4px; }
+  .ob-input { width:100%; background:#1a1a1a; border:1px solid #2a2a2a; border-radius:12px; color:#fff; font-size:16px; padding:14px; outline:none; }
+  .ob-input:focus { border-color:#007aff; }
+  .ob-user-tab { display:flex; gap:8px; margin-bottom:20px; }
+  .ob-tab-btn { flex:1; background:#1a1a1a; border:2px solid transparent; border-radius:12px; color:#666; font-size:14px; font-weight:500; padding:10px; cursor:pointer; }
+  .ob-tab-btn.active { border-color:#007aff; color:#007aff; }
+  .ob-bottom { padding:0 24px 40px; display:flex; gap:10px; }
+  .ob-next-btn { flex:1; background:#007aff; border:none; border-radius:14px; color:#fff; font-size:16px; font-weight:600; padding:16px; cursor:pointer; }
+  .ob-next-btn:active { opacity:0.85; }
+  .ob-prev-btn { background:#1a1a1a; border:1px solid #2a2a2a; border-radius:14px; color:#aaa; font-size:16px; font-weight:500; padding:16px 20px; cursor:pointer; white-space:nowrap; }
+  .ob-prev-btn:active { opacity:0.7; }
+  .ob-checklist { display:flex; flex-direction:column; gap:12px; margin-bottom:24px; }
+  .ob-check-item { display:flex; align-items:center; gap:14px; background:#1a1a1a; border-radius:14px; padding:16px; }
+  .ob-check-icon { font-size:24px; width:40px; text-align:center; }
+  .ob-check-info { flex:1; }
+  .ob-check-title { font-size:14px; font-weight:600; margin-bottom:2px; }
+  .ob-check-sub { font-size:12px; color:#666; }
+  .ob-check-status { font-size:18px; }
 </style>
 </head>
 <body>
+
+
+<!-- 온보딩 오버레이 -->
+<div class="ob-overlay" id="obOverlay">
+  <div class="ob-header">
+    <div style="font-size:15px;font-weight:700;color:#fff">AssetFlow</div>
+    <button class="ob-skip" onclick="skipOnboarding()">건너뛰기</button>
+  </div>
+  <div class="ob-steps" id="obSteps"></div>
+  <div class="ob-body" id="obBody"></div>
+  <div class="ob-bottom">
+    <button class="ob-prev-btn" id="obPrevBtn" onclick="obPrev()" style="display:none">이전</button>
+    <button class="ob-next-btn" id="obNextBtn" onclick="obNext()">다음</button>
+  </div>
+</div>
 
 <!-- 헤더 -->
 <div class="header">
@@ -160,6 +214,7 @@
   </div>
   <div class="header-right">
     <button class="header-icon-btn" onclick="openNameModal()">✏️</button>
+    <button class="header-icon-btn" onclick="startOnboarding()">⚙️</button>
     <button class="header-icon-btn" onclick="openResetModal()">🗑️</button>
   </div>
 </div>
@@ -332,11 +387,11 @@
     <div class="ns-form">
       <div>
         <div class="ns-label">사용자1 이름</div>
-        <input class="ns-input" id="nsInput1" type="text" placeholder="예) 동현" maxlength="6">
+        <input class="ns-input" id="nsInput1" type="text" placeholder="예) 사용자1" maxlength="6">
       </div>
       <div>
         <div class="ns-label">사용자2 이름</div>
-        <input class="ns-input" id="nsInput2" type="text" placeholder="예) 배우자" maxlength="6">
+        <input class="ns-input" id="nsInput2" type="text" placeholder="예) 사용자2" maxlength="6">
       </div>
     </div>
     <div class="ns-btn-row">
@@ -680,20 +735,23 @@ function render() {
 }
 
 function switchUser(user) {
+  const count = parseInt(localStorage.getItem('af_user_count')||'2');
+  // 싱글모드에서 u2/all 접근 차단
+  if(count === 1 && user !== 'u1') user = 'u1';
   currentUser = user;
   localStorage.setItem('af_current_user', user);
-  
+
   // 버튼 활성화
   document.getElementById('btnU1').classList.toggle('active', user === 'u1');
   document.getElementById('btnU2').classList.toggle('active', user === 'u2');
   document.getElementById('btnAll').classList.toggle('active', user === 'all');
-  
+
   // 이름 업데이트
   const n1 = localStorage.getItem('af_name_u1') || '사용자1';
   const n2 = localStorage.getItem('af_name_u2') || '사용자2';
   document.getElementById('btnU1').textContent = n1;
   document.getElementById('btnU2').textContent = n2;
-  
+
   render();
 }
 
@@ -784,6 +842,272 @@ function executeReset() {
 /* ════════ 초기화 ════════ */
 loadVisibleCategories();
 switchUser(currentUser);
+
+/* ════════ 온보딩 ════════ */
+const OB_STEPS = ['users','names','accounts','income','card','expense','done'];
+// 사용자 수에 따라 steps 변동
+let obUserCount = 1;
+let obStep = 0;
+let obCurrentNamingUser = 'u1'; // 이름설정 단계에서 현재 탭
+
+function getTotalSteps(){ return OB_STEPS.length; }
+
+function startOnboarding(){
+  obStep = 0;
+  document.getElementById('obOverlay').classList.add('active');
+  renderObStep();
+}
+
+function obPrev(){
+  if(obStep <= 0) return;
+  obStep--;
+  renderObStep();
+}
+
+function skipOnboarding(){
+  document.getElementById('obOverlay').classList.remove('active');
+  localStorage.setItem('af_onboarding_done','1');
+  const count = parseInt(localStorage.getItem('af_user_count')||'2');
+  applyUserCount(count);
+  switchUser(currentUser);
+}
+
+function obNext(){
+  const step = OB_STEPS[obStep];
+
+  // 사용자 수 선택 단계
+  if(step === 'users'){
+    obStep++;
+    renderObStep();
+    return;
+  }
+
+  // 이름 설정 단계
+  if(step === 'names'){
+    const n1 = document.getElementById('obName1')?.value.trim() || '사용자1';
+    localStorage.setItem('af_name_u1', n1);
+    if(obUserCount === 2){
+      const n2 = document.getElementById('obName2')?.value.trim() || '사용자2';
+      localStorage.setItem('af_name_u2', n2);
+    }
+    obStep++;
+    renderObStep();
+    switchUser(currentUser);
+    return;
+  }
+
+  // 나머지 단계
+  obStep++;
+  if(obStep >= OB_STEPS.length){
+    skipOnboarding();
+    return;
+  }
+  renderObStep();
+}
+
+function obGoPage(page){
+  localStorage.setItem('af_active_prefix', (currentUser === 'all' ? 'u1_' : currentUser + '_'));
+  skipOnboarding();
+  location.href = page;
+}
+
+function setObUserCount(n){
+  obUserCount = n;
+  localStorage.setItem('af_user_count', String(n));
+  applyUserCount(n);
+  document.querySelectorAll('.ob-uc-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('obUC' + n).classList.add('active');
+}
+
+function applyUserCount(n){
+  const u2 = document.getElementById('btnU2');
+  const all = document.getElementById('btnAll');
+  if(n === 1){
+    u2.style.display = 'none';
+    all.style.display = 'none';
+    // 싱글이면 강제로 u1으로
+    if(currentUser !== 'u1'){
+      currentUser = 'u1';
+      localStorage.setItem('af_current_user','u1');
+    }
+  } else {
+    u2.style.display = '';
+    all.style.display = '';
+  }
+}
+
+function renderObStepDots(){
+  const total = OB_STEPS.length;
+  document.getElementById('obSteps').innerHTML = OB_STEPS.map((_, i) => {
+    let cls = '';
+    if(i < obStep) cls = 'done';
+    else if(i === obStep) cls = 'active';
+    return `<div class="ob-step-dot ${cls}"></div>`;
+  }).join('');
+}
+
+function renderObStep(){
+  renderObStepDots();
+  const step = OB_STEPS[obStep];
+  const body = document.getElementById('obBody');
+  const nextBtn = document.getElementById('obNextBtn');
+  const prevBtn = document.getElementById('obPrevBtn');
+
+  nextBtn.textContent = (obStep >= OB_STEPS.length - 1) ? '시작하기 🎉' : '다음';
+  prevBtn.style.display = obStep > 0 ? '' : 'none';
+
+  if(step === 'users'){
+    body.innerHTML = `
+      <div class="ob-emoji">👋</div>
+      <div class="ob-title">AssetFlow에<br>오신 걸 환영해요!</div>
+      <div class="ob-desc">먼저 몇 명이 함께 사용할지 알려주세요</div>
+      <div class="ob-user-count">
+        <div class="ob-uc-btn active" id="obUC1" onclick="setObUserCount(1)">
+          <div class="ob-uc-icon">🙋</div>
+          <div class="ob-uc-label">나 혼자</div>
+          <div class="ob-uc-sub">싱글 모드</div>
+        </div>
+        <div class="ob-uc-btn" id="obUC2" onclick="setObUserCount(2)">
+          <div class="ob-uc-icon">👫</div>
+          <div class="ob-uc-label">2명 함께</div>
+          <div class="ob-uc-sub">커플·부부 모드</div>
+        </div>
+      </div>`;
+    return;
+  }
+
+  if(step === 'names'){
+    const u2field = obUserCount === 2 ? `
+      <div>
+        <div class="ob-label">사용자2 이름</div>
+        <input class="ob-input" id="obName2" type="text" placeholder="예) 배우자" maxlength="6" value="${localStorage.getItem('af_name_u2')||''}">
+      </div>` : '';
+    body.innerHTML = `
+      <div class="ob-emoji">✏️</div>
+      <div class="ob-title">이름을 설정해요</div>
+      <div class="ob-desc">상단 탭에 표시될 이름이에요</div>
+      <div class="ob-form">
+        <div>
+          <div class="ob-label">사용자1 이름</div>
+          <input class="ob-input" id="obName1" type="text" placeholder="예) 나" maxlength="6" value="${localStorage.getItem('af_name_u1')||''}">
+        </div>
+        ${u2field}
+      </div>`;
+    return;
+  }
+
+  if(step === 'accounts'){
+    body.innerHTML = `
+      <div class="ob-emoji">🏦</div>
+      <div class="ob-title">계좌를 등록해요</div>
+      <div class="ob-desc">보유 계좌를 추가하면<br>자산 현황이 대시보드에 표시돼요</div>
+      <div class="ob-checklist">
+        <div class="ob-check-item" onclick="obGoPage('account_page.html')" style="cursor:pointer;border:1px solid #2a2a2a">
+          <div class="ob-check-icon">📝</div>
+          <div class="ob-check-info">
+            <div class="ob-check-title">계좌 추가하러 가기</div>
+            <div class="ob-check-sub">입출금·저축·증권·연금 계좌</div>
+          </div>
+          <div class="ob-check-status" style="color:#007aff">→</div>
+        </div>
+      </div>
+      <div style="font-size:13px;color:#555;text-align:center">나중에 추가하려면 아래 [다음]을 누르세요</div>`;
+    return;
+  }
+
+  if(step === 'income'){
+    body.innerHTML = `
+      <div class="ob-emoji">💰</div>
+      <div class="ob-title">수입을 등록해요</div>
+      <div class="ob-desc">월급·사업수입 등을 등록하면<br>이번 달 저축 가능액을 계산해줘요</div>
+      <div class="ob-checklist">
+        <div class="ob-check-item" onclick="obGoPage('income_page.html')" style="cursor:pointer;border:1px solid #2a2a2a">
+          <div class="ob-check-icon">💳</div>
+          <div class="ob-check-info">
+            <div class="ob-check-title">수입 항목 추가하러 가기</div>
+            <div class="ob-check-sub">급여·사업수입·금융수입 등</div>
+          </div>
+          <div class="ob-check-status" style="color:#007aff">→</div>
+        </div>
+      </div>
+      <div style="font-size:13px;color:#555;text-align:center">나중에 추가하려면 아래 [다음]을 누르세요</div>`;
+    return;
+  }
+
+  if(step === 'card'){
+    body.innerHTML = `
+      <div class="ob-emoji">💳</div>
+      <div class="ob-title">카드 지출을 등록해요</div>
+      <div class="ob-desc">매달 카드 지출을 입력하면<br>월별 소비 패턴을 파악할 수 있어요</div>
+      <div class="ob-checklist">
+        <div class="ob-check-item" onclick="obGoPage('card_page.html')" style="cursor:pointer;border:1px solid #2a2a2a">
+          <div class="ob-check-icon">🗂️</div>
+          <div class="ob-check-info">
+            <div class="ob-check-title">카드 추가하러 가기</div>
+            <div class="ob-check-sub">신용·체크카드 등록 후 월별 지출 입력</div>
+          </div>
+          <div class="ob-check-status" style="color:#007aff">→</div>
+        </div>
+      </div>
+      <div style="font-size:13px;color:#555;text-align:center">나중에 추가하려면 아래 [다음]을 누르세요</div>`;
+    return;
+  }
+
+  if(step === 'expense'){
+    body.innerHTML = `
+      <div class="ob-emoji">📋</div>
+      <div class="ob-title">고정지출을 등록해요</div>
+      <div class="ob-desc">구독·보험·관리비 등 매달 나가는<br>고정 지출을 등록해두세요</div>
+      <div class="ob-checklist">
+        <div class="ob-check-item" onclick="obGoPage('expense_page.html')" style="cursor:pointer;border:1px solid #2a2a2a">
+          <div class="ob-check-icon">🔄</div>
+          <div class="ob-check-info">
+            <div class="ob-check-title">고정지출 추가하러 가기</div>
+            <div class="ob-check-sub">월정액·연간 비정기 지출</div>
+          </div>
+          <div class="ob-check-status" style="color:#007aff">→</div>
+        </div>
+      </div>
+      <div style="font-size:13px;color:#555;text-align:center">나중에 추가하려면 아래 [다음]을 누르세요</div>`;
+    return;
+  }
+
+  if(step === 'done'){
+    body.innerHTML = `
+      <div class="ob-emoji">🎉</div>
+      <div class="ob-title">준비 완료!</div>
+      <div class="ob-desc">이제 AssetFlow를 시작할 수 있어요.<br>나머지 항목(투자·대출·부동산·자동차)은<br>대시보드에서 언제든 추가할 수 있어요.</div>
+      <div class="ob-checklist">
+        <div class="ob-check-item">
+          <div class="ob-check-icon">💡</div>
+          <div class="ob-check-info">
+            <div class="ob-check-title">매달 잔고 업데이트</div>
+            <div class="ob-check-sub">계좌 페이지에서 이번 달 잔고를 입력하면<br>전월 대비 증감이 자동으로 계산돼요</div>
+          </div>
+        </div>
+        <div class="ob-check-item">
+          <div class="ob-check-icon">⚙️</div>
+          <div class="ob-check-info">
+            <div class="ob-check-title">온보딩 다시 보기</div>
+            <div class="ob-check-sub">상단 ⚙️ 버튼으로 언제든 다시 볼 수 있어요</div>
+          </div>
+        </div>
+      </div>`;
+    nextBtn.textContent = '대시보드 시작하기 🎉';
+    return;
+  }
+}
+
+// 최초 실행 감지
+window.addEventListener('load', () => {
+  const done = localStorage.getItem('af_onboarding_done');
+  const savedCount = parseInt(localStorage.getItem('af_user_count')||'2');
+  applyUserCount(savedCount);
+  if(!done){
+    setTimeout(() => startOnboarding(), 300);
+  }
+});
+
 </script>
 
 </body>

@@ -15,7 +15,6 @@
     padding-bottom: 100px;
   }
 
-  /* ── 헤더 ── */
   .header {
     display: flex; align-items: center;
     padding: 16px 20px;
@@ -24,8 +23,14 @@
   }
   .back-btn { background:none; border:none; color:#fff; font-size:22px; cursor:pointer; padding:4px 8px 4px 0; line-height:1; }
   .header-title { font-size:17px; font-weight:600; margin-left:4px; }
+  .header-right { margin-left:auto; display:flex; gap:8px; }
+  .sort-btn {
+    background:#2e2e2e; border:none; border-radius:8px;
+    color:#aaa; font-size:12px; padding:6px 10px; cursor:pointer;
+  }
+  .sort-btn.active { background:#007aff22; color:#007aff; border:1px solid #007aff44; }
 
-  /* ── 총 대출 요약 ── */
+  /* 총 대출 요약 */
   .summary-card {
     margin: 4px 20px 20px;
     background: #242424; border-radius: 16px; padding: 20px;
@@ -33,15 +38,25 @@
   .sc-label  { font-size:13px; color:#888; margin-bottom:6px; }
   .sc-amount { font-size:26px; font-weight:700; color:#f87171; letter-spacing:-0.5px; }
   .sc-sub    { font-size:13px; color:#666; margin-top:4px; }
+  .sc-monthly { font-size:13px; color:#fb923c; margin-top:6px; font-weight:600; }
 
-  /* ── 대출 카드 ── */
+  /* 대출 카드 */
   .loan-list { padding: 0 20px; display:flex; flex-direction:column; gap:12px; }
-
   .loan-card {
     background: #242424; border-radius:16px; padding:18px;
-    cursor: pointer; transition: opacity 0.15s;
+    cursor: pointer; transition: opacity 0.15s; position:relative;
   }
   .loan-card:active { opacity:0.8; }
+
+  /* 만기 임박 배지 */
+  .expiry-badge {
+    position:absolute; top:14px; right:14px;
+    background:#f8717122; color:#f87171;
+    font-size:10px; font-weight:700; border-radius:6px;
+    padding:3px 7px; border:1px solid #f8717144;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
 
   .lc-top { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
   .lc-bank-icon {
@@ -61,18 +76,15 @@
     align-self:center;
   }
 
-  /* 정보 그리드 */
   .lc-info-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
   .lc-info-label { font-size:11px; color:#666; margin-bottom:3px; }
   .lc-info-value { font-size:13px; font-weight:500; color:#ccc; }
 
-  /* 프로그레스 */
   .lc-progress-wrap { margin-top:14px; }
   .lc-progress-top  { display:flex; justify-content:space-between; font-size:11px; color:#666; margin-bottom:6px; }
   .lc-progress-bar  { height:4px; background:#333; border-radius:2px; overflow:hidden; }
   .lc-progress-fill { height:100%; background:linear-gradient(90deg,#f87171,#fb923c); border-radius:2px; }
 
-  /* 이자 나가는 날 */
   .lc-interest-day {
     display:inline-flex; align-items:center; gap:6px;
     background:#2e2e2e; border-radius:8px; padding:7px 12px; margin-top:12px; font-size:13px;
@@ -81,7 +93,18 @@
   .day-label { color:#888; }
   .day-value { color:#fff; font-weight:600; }
 
-  /* ── 월 납부 계산 결과 박스 ── */
+  /* 알림 칩 */
+  .info-chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+  .info-chip {
+    display:inline-flex; align-items:center; gap:5px;
+    background:#2e2e2e; border-radius:8px; padding:6px 10px; font-size:12px; color:#aaa;
+  }
+  .info-chip.warn { background:#f8717115; color:#f87171; border:1px solid #f8717130; }
+  .info-chip.blue { background:#007aff15; color:#7db8ff; border:1px solid #007aff30; }
+  .info-chip.green { background:#4ade8015; color:#4ade80; border:1px solid #4ade8030; }
+  .info-chip.orange { background:#fb923c15; color:#fb923c; border:1px solid #fb923c30; }
+
+  /* 월 납부 계산 결과 박스 */
   .calc-box {
     margin-top:14px; background:#1e1e1e; border-radius:12px; padding:14px 16px;
     border:1px solid #2e2e2e;
@@ -89,8 +112,7 @@
   .calc-box-title { font-size:11px; color:#666; margin-bottom:10px; font-weight:600; letter-spacing:0.3px; }
   .calc-row {
     display:flex; justify-content:space-between; align-items:center;
-    padding: 5px 0;
-    border-bottom:1px solid #2a2a2a;
+    padding: 5px 0; border-bottom:1px solid #2a2a2a;
   }
   .calc-row:last-child { border-bottom:none; }
   .calc-row-label { font-size:13px; color:#888; }
@@ -98,16 +120,13 @@
   .calc-row-value.highlight { color:#fb923c; font-size:14px; }
   .calc-row-value.red  { color:#f87171; }
   .calc-row-value.green{ color:#4ade80; }
-
-  /* 체증식 안내 */
   .calc-notice { font-size:11px; color:#555; margin-top:8px; line-height:1.5; }
 
-  /* 빈 화면 */
   .empty-state { text-align:center; padding:60px 0 32px; color:#444; }
   .empty-icon  { font-size:40px; margin-bottom:12px; }
   .empty-text  { font-size:14px; line-height:1.6; }
 
-  /* ── 하단 버튼 ── */
+  /* 하단 버튼 */
   .bottom-nav {
     position:fixed; bottom:0; left:0; right:0;
     background:rgba(26,26,26,0.97); backdrop-filter:blur(10px);
@@ -120,7 +139,7 @@
   }
   .nav-btn:active { background:#383838; }
 
-  /* ── 편집 모달 ── */
+  /* 편집 모달 */
   .edit-overlay {
     display:none; position:fixed; inset:0;
     background:rgba(0,0,0,0.75); z-index:200; align-items:flex-end;
@@ -156,7 +175,6 @@
     cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;
   }
 
-  /* 폼 */
   .add-form { display:flex; flex-direction:column; gap:14px; }
   .f-label  { font-size:13px; color:#888; margin-bottom:4px; }
   .f-input  {
@@ -166,14 +184,15 @@
     -webkit-appearance:none;
   }
   .f-input:focus { border-color:#007aff; }
+  .f-input:read-only { color:#888; background:#252525; cursor:default; }
   .f-row   { display:flex; flex-direction:column; gap:4px; }
   .f-row-2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
 
-  /* 선택 그리드 */
+  .sel-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
   .sel-grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
   .sel-grid-4 { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:8px; }
-  .sel-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
   .sel-grid-5 { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; }
+  .sel-grid-6 { display:grid; grid-template-columns:repeat(6,1fr); gap:6px; }
   .type-btn {
     background:#2e2e2e; border:2px solid transparent;
     border-radius:10px; color:#aaa; font-size:13px;
@@ -181,7 +200,6 @@
   }
   .type-btn.active { border-color:#007aff; color:#007aff; background:rgba(0,122,255,0.08); }
 
-  /* 실시간 계산 미리보기 (폼 내) */
   .calc-preview {
     background:#1e1e1e; border:1px solid #2e2e2e; border-radius:12px; padding:14px;
   }
@@ -209,10 +227,8 @@
     color:#aaa; font-size:15px; padding:14px; cursor:pointer; margin-top:6px;
   }
 
-  /* 방식 설명 툴팁 */
-  .method-desc {
-    font-size:12px; color:#555; padding:6px 0 0; line-height:1.5;
-  }
+  .method-desc { font-size:12px; color:#555; padding:6px 0 0; line-height:1.5; }
+  .field-note  { font-size:11px; color:#555; margin-top:4px; line-height:1.5; }
 </style>
 </head>
 <body>
@@ -220,18 +236,25 @@
 <div class="header">
   <button class="back-btn" onclick="location.href='asset_manager_mobile.html'">‹</button>
   <span class="header-title">대출</span>
+  <div class="header-right">
+    <button class="sort-btn active" id="sortBtn0" onclick="setSort('expiry')">만기순</button>
+    <button class="sort-btn" id="sortBtn1" onclick="setSort('rate')">금리순</button>
+    <button class="sort-btn" id="sortBtn2" onclick="setSort('balance')">잔액순</button>
+  </div>
 </div>
 
 <div class="summary-card">
   <div class="sc-label">총 대출 잔액</div>
   <div class="sc-amount" id="totalBalance">—</div>
-  <div class="sc-sub"   id="totalSub">—</div>
+  <div class="sc-monthly" id="totalMonthly">—</div>
+  <div class="sc-sub" id="totalSub">—</div>
 </div>
 
 <div class="loan-list" id="loanList"></div>
 
-<div class="bottom-nav">
+<div class="bottom-nav" style="display:flex;gap:10px;">
   <button class="nav-btn" onclick="openEditModal()">⚙️ 자산 편집하기</button>
+  <button class="nav-btn" onclick="location.href='asset_manager_mobile.html'" style="background:#2e2e2e;color:#aaa;">취소</button>
 </div>
 
 <div class="edit-overlay" id="editOverlay" onclick="if(event.target===this)closeEditModal()">
@@ -243,138 +266,100 @@
 
 <script>
 
-/* ── 사용자 prefix 시스템 ── */
-function getPrefix(){
-  return localStorage.getItem('af_active_prefix')||'u1_';
-}
+function getPrefix(){ return localStorage.getItem('af_active_prefix')||'u1_'; }
 function pk(key){ return getPrefix()+key; }
-/* ══════════════════════════════════════
-   데이터 구조
-   pk('af_loans'): [{
-     id, name, bank, bankIcon, loanType,
-     principal,      // 대출 원금 (주담대 필수)
-     balance,        // 현재 잔액
-     rate,           // 연 금리
-     rateType,       // 금리유형: 'fixed'|'variable'|'mixed'
-     fixedYears,     // 혼합형일 때 고정 기간
-     repayMethod,    // 상환방식
-     repayYears,     // 상환기간: 10|20|30|40
-     gracePeriod,    // 거치기간 (개월)
-     startDate, endDate, interestDay,
-     monthlyOverride // {"YYYY-MM": 실제납부액} 중도상환 반영
-   }]
-══════════════════════════════════════ */
-const LOAN_TYPES   = ['주택담보','전세자금','신용대출','마이너스통장','기타'];
+
+const LOAN_TYPES    = ['주택담보','전세자금','신용대출','마이너스','기타'];
 const REPAY_METHODS = [
-  { key:'equal_payment', label:'원리금\n균등', desc:'매달 동일한 금액을 납부해요. 초기 이자 부담이 크고 후반엔 원금 상환 비중이 높아져요.' },
-  { key:'equal_principal', label:'원금\n균등',  desc:'매달 원금을 균등하게 상환하고 이자는 줄어들어요. 초기 납부액이 크지만 총 이자가 적어요.' },
-  { key:'increasing',  label:'체증식',           desc:'초기 납부액이 낮고 매년 일정 비율로 증가해요. 소득이 늘어날 예정인 경우 적합해요.' },
+  { key:'equal_payment',   label:'원리금균등', desc:'매달 동일한 금액을 납부해요. 초기 이자 부담이 크고 후반엔 원금 상환 비중이 높아져요.' },
+  { key:'equal_principal', label:'원금균등',   desc:'매달 원금을 균등하게 상환하고 이자는 줄어들어요. 초기 납부액이 크지만 총 이자가 적어요.' },
+  { key:'increasing',      label:'체증식',     desc:'초기 납부액이 낮고 매년 일정 비율로 증가해요. 소득이 늘어날 예정인 경우 적합해요.' },
+  { key:'bullet',          label:'만기일시',   desc:'기간 중에는 이자만 내고 만기에 원금을 일시 상환해요. 마이너스통장, 전세자금 등에 많이 쓰여요.' },
 ];
 const RATE_TYPES = [
-  { key:'fixed', label:'고정금리' },
+  { key:'fixed',    label:'고정금리' },
   { key:'variable', label:'변동금리' },
-  { key:'mixed', label:'혼합형' }
+  { key:'mixed',    label:'혼합형'   },
 ];
-const REPAY_YEARS = [10, 20, 30, 40];
+const REPAY_YEARS = [1, 5, 10, 20, 30, 40];
+
 const BANK_ICONS = {
   '신한은행':'💙','KB국민':'⭐','우리은행':'💚','하나은행':'🟢',
   'NH농협':'🌾','IBK기업':'🏛','토스뱅크':'🔵','카카오뱅크':'💛',
   'SC제일':'🔷','씨티은행':'🏦','우체국':'📮','기타':'🏦'
 };
 
-const DEFAULT_LOANS = [];
+// 거치기간 불필요 유형
+function hasGracePeriod(loanType){ return !['신용대출','마이너스'].includes(loanType); }
+// 마이너스통장 여부
+function isMinus(loanType){ return loanType === '마이너스'; }
+// 만기일시 적용 여부
+function isBullet(method){ return method === 'bullet'; }
 
-function loadLoans(){ try{const s=localStorage.getItem(pk('af_loans')); return s?JSON.parse(s):DEFAULT_LOANS;} catch{return DEFAULT_LOANS;} }
+const DEFAULT_LOANS = [];
+function loadLoans(){ try{ const s=localStorage.getItem(pk('af_loans')); return s?JSON.parse(s):DEFAULT_LOANS; } catch{ return DEFAULT_LOANS; } }
 function saveLoans(d){ localStorage.setItem(pk('af_loans'),JSON.stringify(d)); }
 
 let loans = loadLoans();
+let sortMode = 'expiry'; // expiry | rate | balance
 
 /* ══════════════════════════════════════
    계산 엔진
 ══════════════════════════════════════ */
-
-/**
- * 원리금균등상환 (Annuity)
- * 매달 납부액 = P * r(1+r)^n / ((1+r)^n - 1)
- */
 function calcEqualPayment(principal, annualRate, totalMonths){
   const r = annualRate / 100 / 12;
-  if(r === 0) return { monthly:principal/totalMonths, totalInterest:0, totalPayment:principal };
+  if(r===0) return { monthly:principal/totalMonths, totalInterest:0, totalPayment:principal };
   const monthly = principal * r * Math.pow(1+r, totalMonths) / (Math.pow(1+r, totalMonths) - 1);
   const totalPayment = monthly * totalMonths;
   return { monthly, totalInterest: totalPayment - principal, totalPayment };
 }
 
-/**
- * 원금균등상환
- * 매달 원금: P/n
- * 매달 이자: (P - 상환원금누계) * r
- * 첫달 / 마지막달 따로 계산
- */
 function calcEqualPrincipal(principal, annualRate, totalMonths){
   const r = annualRate / 100 / 12;
   const monthlyPrincipal = principal / totalMonths;
-  const firstMonthly  = monthlyPrincipal + principal * r;
-  const lastMonthly   = monthlyPrincipal + monthlyPrincipal * r; // 마지막달
+  const firstMonthly = monthlyPrincipal + principal * r;
+  const lastMonthly  = monthlyPrincipal + monthlyPrincipal * r;
   let totalInterest = 0;
-  for(let i=0; i<totalMonths; i++){
-    totalInterest += (principal - monthlyPrincipal * i) * r;
-  }
+  for(let i=0; i<totalMonths; i++) totalInterest += (principal - monthlyPrincipal * i) * r;
   return { firstMonthly, lastMonthly, monthlyPrincipal, totalInterest, totalPayment: principal + totalInterest };
 }
 
-/**
- * 체증식상환
- * 초기 월 납부액 = (P * r) / (1 - (1+r)^(-n)) 에서 출발하는 변형
- * 실무: 초기 1년은 이자만 납부, 이후 매년 일정 금액씩 원금 추가
- * 여기서는 표준 체증식: 첫해 납부액 = 원리금균등의 약 60%, 매년 일정 금액 증가
- */
 function calcIncreasing(principal, annualRate, totalMonths){
   const r = annualRate / 100 / 12;
   const years = Math.ceil(totalMonths / 12);
-  // 시뮬레이션: 초기 납부액 X, 매년 증가액 d 를 구해서 잔액이 0이 되도록 역산
-  // 단순화: 원리금균등 기준으로 첫해를 65% 수준으로 시작, 매년 (1-0.65)/years 씩 증가
   const equalPayment = calcEqualPayment(principal, annualRate, totalMonths).monthly;
   const startRatio = 0.65;
   const firstMonthly = equalPayment * startRatio;
   const annualIncrease = (equalPayment - firstMonthly) / (years - 1) || 0;
-
-  // 실제 총 이자 시뮬레이션
-  let remaining = principal;
-  let totalInterest = 0;
-  let totalPayment  = 0;
+  let remaining = principal, totalInterest = 0, totalPayment = 0;
   for(let m=0; m<totalMonths; m++){
     const year = Math.floor(m/12);
     const monthlyPayment = firstMonthly + annualIncrease * year;
     const interest = remaining * r;
     const principalPart = monthlyPayment - interest;
-    totalInterest += interest;
-    totalPayment  += monthlyPayment;
-    remaining     -= principalPart;
+    totalInterest += interest; totalPayment += monthlyPayment; remaining -= principalPart;
     if(remaining < 0) remaining = 0;
   }
-
-  const lastYear = years - 1;
-  const lastMonthly = firstMonthly + annualIncrease * lastYear;
+  const lastMonthly = firstMonthly + annualIncrease * (years-1);
   return { firstMonthly, lastMonthly, annualIncrease, totalInterest, totalPayment };
 }
 
-/** 현재 시점 기준 경과 개월 */
+// 만기일시: 매달 이자만 납부
+function calcBullet(principal, annualRate, totalMonths){
+  const monthlyInterest = principal * (annualRate / 100 / 12);
+  return { monthlyInterest, totalInterest: monthlyInterest * totalMonths, totalPayment: principal + monthlyInterest * totalMonths };
+}
+
 function elapsedMonths(startDate){
   if(!startDate) return 0;
-  const now   = new Date();
-  const start = new Date(startDate);
+  const now = new Date(), start = new Date(startDate);
   return Math.max(0, (now.getFullYear()-start.getFullYear())*12 + now.getMonth()-start.getMonth());
 }
-
-/** 전체 개월 수 */
 function totalMonthsBetween(startDate, endDate){
   if(!startDate||!endDate) return 0;
-  const s = new Date(startDate), e = new Date(endDate);
+  const s=new Date(startDate), e=new Date(endDate);
   return Math.max(1, (e.getFullYear()-s.getFullYear())*12 + e.getMonth()-s.getMonth());
 }
-
-/** 남은 개월 → 표시 문자열 */
 function remainStr(months){
   if(months<=0) return '만기 도래';
   const y=Math.floor(months/12), m=months%12;
@@ -382,13 +367,51 @@ function remainStr(months){
   if(y>0)      return `${y}년 남음`;
   return `${m}개월 남음`;
 }
-
 function fmtWon(n){ return Math.round(n).toLocaleString('ko-KR')+'원'; }
 function fmtWonShort(n){
   n=Math.round(n);
-  if(n>=100000000){ const u=Math.floor(n/100000000); const r=n%100000000; return r>0?`${u}억 ${r.toLocaleString('ko-KR')}원`:`${u}억원`; }
-  if(n>=10000){ const u=Math.floor(n/10000); const r=n%10000; return r>0?`${u}만 ${r.toLocaleString('ko-KR')}원`:`${u}만원`; }
+  if(n>=100000000){ const u=Math.floor(n/100000000),r=n%100000000; return r>0?`${u}억 ${r.toLocaleString('ko-KR')}원`:`${u}억원`; }
+  if(n>=10000){ const u=Math.floor(n/10000),r=n%10000; return r>0?`${u}만 ${r.toLocaleString('ko-KR')}원`:`${u}만원`; }
   return n.toLocaleString('ko-KR')+'원';
+}
+
+/* 월 납부액 계산 (카드 + 합계용) */
+function getMonthlyPayment(l){
+  const totM = totalMonthsBetween(l.startDate, l.endDate);
+  const elapsed = elapsedMonths(l.startDate);
+  const remain = Math.max(1, totM - elapsed);
+  if(!l.balance||!l.rate) return 0;
+  if(l.repayMethod==='bullet') return calcBullet(l.balance, l.rate, remain).monthlyInterest;
+  if(l.repayMethod==='equal_principal') return calcEqualPrincipal(l.balance, l.rate, remain).firstMonthly;
+  if(l.repayMethod==='increasing') return calcIncreasing(l.balance, l.rate, remain).firstMonthly;
+  return calcEqualPayment(l.balance, l.rate, remain).monthly;
+}
+
+/* 만기 임박 (3개월) */
+function isExpiryNear(l){
+  if(!l.endDate) return false;
+  const end = new Date(l.endDate), now = new Date();
+  const diffM = (end.getFullYear()-now.getFullYear())*12 + end.getMonth()-now.getMonth();
+  return diffM >= 0 && diffM <= 3;
+}
+
+/* 정렬 */
+function setSort(mode){
+  sortMode = mode;
+  ['expiry','rate','balance'].forEach((m,i)=>{
+    document.getElementById('sortBtn'+i)?.classList.toggle('active', m===mode);
+  });
+  renderPage();
+}
+function getSortedLoans(){
+  const arr = [...loans];
+  if(sortMode==='rate')    return arr.sort((a,b)=>b.rate-a.rate);
+  if(sortMode==='balance') return arr.sort((a,b)=>b.balance-a.balance);
+  // expiry: 만기 빠른 순 (없으면 뒤로)
+  return arr.sort((a,b)=>{
+    if(!a.endDate) return 1; if(!b.endDate) return -1;
+    return new Date(a.endDate)-new Date(b.endDate);
+  });
 }
 
 /* ══════════════════════
@@ -396,7 +419,9 @@ function fmtWonShort(n){
 ══════════════════════ */
 function renderPage(){
   const total = loans.reduce((s,l)=>s+l.balance,0);
+  const totalM = loans.reduce((s,l)=>s+getMonthlyPayment(l),0);
   document.getElementById('totalBalance').textContent = fmtWon(total);
+  document.getElementById('totalMonthly').textContent = totalM > 0 ? `월 납부 합계 ${fmtWon(totalM)}` : '';
   document.getElementById('totalSub').textContent = '총 '+loans.length+'건의 대출';
 
   const el = document.getElementById('loanList');
@@ -404,79 +429,116 @@ function renderPage(){
     el.innerHTML=`<div class="empty-state"><div class="empty-icon">🏠</div><div class="empty-text">등록된 대출이 없어요<br><span style="font-size:12px;color:#555">자산 편집하기에서 추가해보세요</span></div></div>`;
     return;
   }
-
-  el.innerHTML = loans.map(l => loanCardHTML(l)).join('');
+  el.innerHTML = getSortedLoans().map(l=>loanCardHTML(l)).join('');
 }
 
 function loanCardHTML(l){
-  const totM   = totalMonthsBetween(l.startDate, l.endDate);
+  const totM    = totalMonthsBetween(l.startDate, l.endDate);
   const elapsed = elapsedMonths(l.startDate);
   const remain  = Math.max(0, totM - elapsed);
   const pct     = totM > 0 ? Math.min(100,(elapsed/totM)*100) : 0;
   const startDisp = l.startDate||'—';
   const endDisp   = l.endDate  ||'—';
   const totY = Math.floor(totM/12);
-
   const method = REPAY_METHODS.find(m=>m.key===l.repayMethod)||REPAY_METHODS[0];
   const methodLabel = method.label.replace('\n','');
+  const nearExpiry = isExpiryNear(l);
 
-  // 주담대 추가 정보
-  let judamboInfo = '';
-  if(l.loanType === '주택담보' && l.principal){
-    const rateTypeLabel = RATE_TYPES.find(rt=>rt.key===l.rateType)?.label||'고정금리';
-    const repaidPrincipal = l.principal - l.balance;
-    const repaidPct = l.principal > 0 ? ((repaidPrincipal / l.principal) * 100).toFixed(1) : 0;
-    
-    judamboInfo = `
+  // 공통 상세 정보 (모든 유형)
+  const rateTypeLabel = RATE_TYPES.find(rt=>rt.key===l.rateType)?.label||'고정금리';
+  let detailInfo = '';
+  if(l.principal){
+    const repaidPrincipal = Math.max(0, l.principal - l.balance);
+    const repaidPct = l.principal > 0 ? ((repaidPrincipal/l.principal)*100).toFixed(1) : 0;
+    detailInfo = `
       <div class="lc-info-grid" style="margin-top:12px;padding-top:12px;border-top:1px solid #2a2a2a">
         <div><div class="lc-info-label">대출 원금</div><div class="lc-info-value">${fmtWonShort(l.principal)}</div></div>
         <div><div class="lc-info-label">상환 원금</div><div class="lc-info-value" style="color:#4ade80">${fmtWonShort(repaidPrincipal)} (${repaidPct}%)</div></div>
         <div><div class="lc-info-label">금리 유형</div><div class="lc-info-value">${rateTypeLabel}${l.rateType==='mixed'?` ${l.fixedYears}년`:''}</div></div>
-        <div><div class="lc-info-label">상환 기간</div><div class="lc-info-value">${l.repayYears}년${l.gracePeriod>0?` (거치 ${l.gracePeriod}개월)`:''}</div></div>
+        <div><div class="lc-info-label">상환 기간</div><div class="lc-info-value">${l.repayYears?l.repayYears+'년':'—'}${l.gracePeriod>0?` (거치 ${l.gracePeriod}개월)`:''}</div></div>
       </div>`;
   }
 
+  // 마이너스통장 한도
+  let minusInfo = '';
+  if(l.loanType==='마이너스' && l.limitAmount){
+    const usedPct = l.limitAmount>0 ? ((l.balance/l.limitAmount)*100).toFixed(1) : 0;
+    minusInfo = `
+      <div class="lc-info-grid" style="margin-top:12px;padding-top:12px;border-top:1px solid #2a2a2a">
+        <div><div class="lc-info-label">한도 금액</div><div class="lc-info-value">${fmtWonShort(l.limitAmount)}</div></div>
+        <div><div class="lc-info-label">사용 비율</div><div class="lc-info-value" style="color:#fb923c">${usedPct}%</div></div>
+      </div>`;
+  }
+
+  // 알림 칩
+  let chips = '';
+  if(l.prepaymentFreeDate){
+    const fpd = new Date(l.prepaymentFreeDate), now = new Date();
+    const diffM = (fpd.getFullYear()-now.getFullYear())*12 + fpd.getMonth()-now.getMonth();
+    if(diffM>=0 && diffM<=3)
+      chips += `<div class="info-chip green">🎉 중도상환 수수료 면제 ${diffM===0?'이번달':'${diffM}개월 후'}</div>`;
+    else if(diffM<0)
+      chips += `<div class="info-chip green">✅ 중도상환 수수료 면제됨</div>`;
+    else
+      chips += `<div class="info-chip blue">📅 중도상환 면제일 ${l.prepaymentFreeDate}</div>`;
+  }
+  if(l.rateType==='variable' && l.nextRateChangeDate){
+    const nrd = new Date(l.nextRateChangeDate), now = new Date();
+    const diffM2 = (nrd.getFullYear()-now.getFullYear())*12 + nrd.getMonth()-now.getMonth();
+    if(diffM2<=3 && diffM2>=0)
+      chips += `<div class="info-chip warn">⚠️ 금리 변동 ${diffM2===0?'이번달':'약 '+diffM2+'개월 후'}</div>`;
+    else
+      chips += `<div class="info-chip orange">📈 다음 금리 변동 ${l.nextRateChangeDate}</div>`;
+  }
+
+  const chipsHTML = chips ? `<div class="info-chips">${chips}</div>` : '';
+
   // 상환 계산
   let calcHTML = '';
-  if(totM > 0 && l.balance > 0 && l.rate > 0){
-    if(l.repayMethod === 'equal_payment'){
-      const res = calcEqualPayment(l.balance, l.rate, remain||totM);
-      calcHTML = `
-        <div class="calc-box">
-          <div class="calc-box-title">💰 월 납부 계산 (원리금균등 · 잔여 ${remainStr(remain)})</div>
-          <div class="calc-row"><span class="calc-row-label">매달 납부액</span><span class="calc-row-value highlight">${fmtWon(res.monthly)}</span></div>
-          <div class="calc-row"><span class="calc-row-label">이 중 이자</span><span class="calc-row-value red">${fmtWon(res.monthly - l.balance/((remain||totM)))}</span></div>
-          <div class="calc-row"><span class="calc-row-label">남은 총 이자</span><span class="calc-row-value red">${fmtWon(res.totalInterest)}</span></div>
-          <div class="calc-row"><span class="calc-row-label">남은 총 상환액</span><span class="calc-row-value">${fmtWon(res.totalPayment)}</span></div>
-        </div>`;
-    } else if(l.repayMethod === 'equal_principal'){
-      const res = calcEqualPrincipal(l.balance, l.rate, remain||totM);
-      calcHTML = `
-        <div class="calc-box">
-          <div class="calc-box-title">💰 월 납부 계산 (원금균등 · 잔여 ${remainStr(remain)})</div>
-          <div class="calc-row"><span class="calc-row-label">이번 달 납부액</span><span class="calc-row-value highlight">${fmtWon(res.firstMonthly)}</span></div>
-          <div class="calc-row"><span class="calc-row-label">매달 원금 상환</span><span class="calc-row-value">${fmtWon(res.monthlyPrincipal)}</span></div>
-          <div class="calc-row"><span class="calc-row-label">마지막 달 납부액</span><span class="calc-row-value green">${fmtWon(res.lastMonthly)}</span></div>
-          <div class="calc-row"><span class="calc-row-label">남은 총 이자</span><span class="calc-row-value red">${fmtWon(res.totalInterest)}</span></div>
-          <div class="calc-row"><span class="calc-row-label">남은 총 상환액</span><span class="calc-row-value">${fmtWon(res.totalPayment)}</span></div>
-        </div>`;
-    } else if(l.repayMethod === 'increasing'){
-      const res = calcIncreasing(l.balance, l.rate, remain||totM);
-      calcHTML = `
-        <div class="calc-box">
-          <div class="calc-box-title">💰 월 납부 계산 (체증식 · 잔여 ${remainStr(remain)})</div>
-          <div class="calc-row"><span class="calc-row-label">현재 월 납부액</span><span class="calc-row-value highlight">${fmtWon(res.firstMonthly)}</span></div>
-          <div class="calc-row"><span class="calc-row-label">매년 증가액</span><span class="calc-row-value">${fmtWon(res.annualIncrease)}</span></div>
-          <div class="calc-row"><span class="calc-row-label">최종 월 납부액</span><span class="calc-row-value red">${fmtWon(res.lastMonthly)}</span></div>
-          <div class="calc-row"><span class="calc-row-label">남은 총 이자</span><span class="calc-row-value red">${fmtWon(res.totalInterest)}</span></div>
-          <div class="calc-row"><span class="calc-row-label">남은 총 상환액</span><span class="calc-row-value">${fmtWon(res.totalPayment)}</span></div>
-          <div class="calc-notice">※ 체증식은 실제 은행 조건에 따라 달라질 수 있어요</div>
-        </div>`;
+  if(totM>0 && l.balance>0 && l.rate>0){
+    const rm = remain||totM;
+    if(l.repayMethod==='equal_payment'){
+      const res = calcEqualPayment(l.balance, l.rate, rm);
+      calcHTML = `<div class="calc-box">
+        <div class="calc-box-title">💰 월 납부 계산 (원리금균등 · 잔여 ${remainStr(remain)})</div>
+        <div class="calc-row"><span class="calc-row-label">매달 납부액</span><span class="calc-row-value highlight">${fmtWon(res.monthly)}</span></div>
+        <div class="calc-row"><span class="calc-row-label">남은 총 이자</span><span class="calc-row-value red">${fmtWon(res.totalInterest)}</span></div>
+        <div class="calc-row"><span class="calc-row-label">남은 총 상환액</span><span class="calc-row-value">${fmtWon(res.totalPayment)}</span></div>
+      </div>`;
+    } else if(l.repayMethod==='equal_principal'){
+      const res = calcEqualPrincipal(l.balance, l.rate, rm);
+      calcHTML = `<div class="calc-box">
+        <div class="calc-box-title">💰 월 납부 계산 (원금균등 · 잔여 ${remainStr(remain)})</div>
+        <div class="calc-row"><span class="calc-row-label">이번 달 납부액</span><span class="calc-row-value highlight">${fmtWon(res.firstMonthly)}</span></div>
+        <div class="calc-row"><span class="calc-row-label">매달 원금 상환</span><span class="calc-row-value">${fmtWon(res.monthlyPrincipal)}</span></div>
+        <div class="calc-row"><span class="calc-row-label">마지막 달 납부액</span><span class="calc-row-value green">${fmtWon(res.lastMonthly)}</span></div>
+        <div class="calc-row"><span class="calc-row-label">남은 총 이자</span><span class="calc-row-value red">${fmtWon(res.totalInterest)}</span></div>
+      </div>`;
+    } else if(l.repayMethod==='increasing'){
+      const res = calcIncreasing(l.balance, l.rate, rm);
+      calcHTML = `<div class="calc-box">
+        <div class="calc-box-title">💰 월 납부 계산 (체증식 · 잔여 ${remainStr(remain)})</div>
+        <div class="calc-row"><span class="calc-row-label">현재 월 납부액</span><span class="calc-row-value highlight">${fmtWon(res.firstMonthly)}</span></div>
+        <div class="calc-row"><span class="calc-row-label">매년 증가액</span><span class="calc-row-value">${fmtWon(res.annualIncrease)}</span></div>
+        <div class="calc-row"><span class="calc-row-label">최종 월 납부액</span><span class="calc-row-value red">${fmtWon(res.lastMonthly)}</span></div>
+        <div class="calc-row"><span class="calc-row-label">남은 총 이자</span><span class="calc-row-value red">${fmtWon(res.totalInterest)}</span></div>
+        <div class="calc-notice">※ 체증식은 실제 은행 조건에 따라 달라질 수 있어요</div>
+      </div>`;
+    } else if(l.repayMethod==='bullet'){
+      const res = calcBullet(l.balance, l.rate, rm);
+      calcHTML = `<div class="calc-box">
+        <div class="calc-box-title">💰 월 납부 계산 (만기일시 · 잔여 ${remainStr(remain)})</div>
+        <div class="calc-row"><span class="calc-row-label">매달 이자</span><span class="calc-row-value highlight">${fmtWon(res.monthlyInterest)}</span></div>
+        <div class="calc-row"><span class="calc-row-label">만기 시 원금 상환</span><span class="calc-row-value red">${fmtWon(l.balance)}</span></div>
+        <div class="calc-row"><span class="calc-row-label">남은 총 이자</span><span class="calc-row-value red">${fmtWon(res.totalInterest)}</span></div>
+        <div class="calc-row"><span class="calc-row-label">총 납부 예정액</span><span class="calc-row-value">${fmtWon(res.totalPayment)}</span></div>
+      </div>`;
     }
   }
 
   return `
   <div class="loan-card">
+    ${nearExpiry ? `<div class="expiry-badge">⚠️ 만기 임박</div>` : ''}
     <div class="lc-top">
       <div class="lc-bank-icon" style="background:${bankBg(l.bank)}">${l.bankIcon||'🏦'}</div>
       <div class="lc-bank-info">
@@ -484,22 +546,20 @@ function loanCardHTML(l){
         <div class="lc-loan-name">${l.name}</div>
       </div>
     </div>
-
     <div class="lc-main">
       <span class="lc-balance">${fmtWon(l.balance)}</span>
       <span class="lc-rate">${l.rate}%</span>
       <span class="lc-method-badge">${methodLabel}</span>
     </div>
-
     <div class="lc-info-grid">
       <div><div class="lc-info-label">대출 시작일</div><div class="lc-info-value">${startDisp}</div></div>
       <div><div class="lc-info-label">만기일</div><div class="lc-info-value">${endDisp}</div></div>
       <div><div class="lc-info-label">대출 기간</div><div class="lc-info-value">${totY>0?totY+'년':totM+'개월'}</div></div>
       <div><div class="lc-info-label">연 금리</div><div class="lc-info-value">${l.rate}%</div></div>
     </div>
-
-    ${judamboInfo}
-
+    ${detailInfo}
+    ${minusInfo}
+    ${chipsHTML}
     <div class="lc-progress-wrap">
       <div class="lc-progress-top">
         <span>${startDisp.slice(0,7)} 시작</span>
@@ -510,14 +570,12 @@ function loanCardHTML(l){
         <div class="lc-progress-fill" style="width:${pct.toFixed(1)}%"></div>
       </div>
     </div>
-
     ${l.interestDay ? `
     <div class="lc-interest-day">
       <div class="lc-interest-dot"></div>
       <span class="day-label">이자 나가는 날</span>
       <span class="day-value">매월 ${l.interestDay}일</span>
     </div>` : ''}
-
     ${calcHTML}
   </div>`;
 }
@@ -550,66 +608,35 @@ function showEditMain(){
           </div>
         </div>`).join('') : '<div style="color:#555;font-size:13px;padding:8px 0">등록된 대출이 없어요</div>'
     }</div>
-    <button class="btn-add" onclick="showForm(null)">＋ 대출 추가하기</button>`;
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px">
+      <button class="btn-add" style="margin-top:0" onclick="showForm(null)">＋ 대출 추가하기</button>
+      <button onclick="closeEditModal()" style="background:#2e2e2e;border:none;border-radius:14px;color:#aaa;font-size:14px;font-weight:500;padding:16px;cursor:pointer">취소</button>
+    </div>`;
 }
 
 /* ── 공용 폼 ── */
 function showForm(id){
   const p = id ? loans.find(x=>x.id===id) : {};
   const isEdit = !!id;
-  const isJudambo = (p.loanType||LOAN_TYPES[0]) === '주택담보';
+  const loanType   = p.loanType || LOAN_TYPES[0];
+  const repayMethod = p.repayMethod || 'equal_payment';
+  const rateType   = p.rateType || 'fixed';
+  const repayYears = p.repayYears || 30;
+
+  const showGrace  = hasGracePeriod(loanType) && !isBullet(repayMethod);
+  const showMinus  = isMinus(loanType);
+  const showBulletNote = isBullet(repayMethod);
 
   document.getElementById('editContent').innerHTML=`
     <div class="modal-title">${isEdit?'대출 수정':'대출 추가'}</div>
     <div class="add-form">
 
-      <div class="form-section-label">기본 정보</div>
-
+      <!-- ★ 필수 입력 -->
       <div class="f-row">
         <div class="f-label">대출 종류</div>
         <div class="sel-grid-5" id="loanTypeGrid">
-          ${LOAN_TYPES.map(t=>`<button class="type-btn ${(p.loanType||LOAN_TYPES[0])===t?'active':''}" data-v="${t}" onclick="pickLoanType(this)">${t}</button>`).join('')}
+          ${LOAN_TYPES.map(t=>`<button class="type-btn ${loanType===t?'active':''}" data-v="${t}" onclick="pickLoanType(this)">${t}</button>`).join('')}
         </div>
-      </div>
-
-      <!-- 주담대 전용 필드 -->
-      <div id="judamboFields" style="${isJudambo?'':'display:none'}">
-        <div class="f-row">
-          <div class="f-label">대출 원금 (원) <span style="color:#888;font-size:11px">· 최초 대출 금액</span></div>
-          <input class="f-input" id="fPrincipal" type="number" inputmode="numeric" placeholder="예) 300000000" value="${p.principal||''}" oninput="updateCalcPreview()">
-        </div>
-
-        <div class="f-row">
-          <div class="f-label">금리 유형</div>
-          <div class="sel-grid-3" id="rateTypeGrid">
-            ${RATE_TYPES.map(rt=>`<button class="type-btn ${(p.rateType||'fixed')===rt.key?'active':''}" data-v="${rt.key}" onclick="pickRateType(this)">${rt.label}</button>`).join('')}
-          </div>
-        </div>
-
-        <div id="mixedYearsRow" class="f-row" style="${(p.rateType||'fixed')==='mixed'?'':'display:none'}">
-          <div class="f-label">고정 기간 (년)</div>
-          <input class="f-input" id="fFixedYears" type="number" inputmode="numeric" placeholder="예) 5" value="${p.fixedYears||''}">
-        </div>
-
-        <div class="f-row">
-          <div class="f-label">상환 기간</div>
-          <div class="sel-grid-4" id="repayYearsGrid">
-            ${REPAY_YEARS.map(y=>`<button class="type-btn ${(p.repayYears||30)===y?'active':''}" data-v="${y}" onclick="pickBtn(this,'repayYearsGrid')">${y}년</button>`).join('')}
-          </div>
-        </div>
-
-        <div class="f-row">
-          <div class="f-label">거치 기간 (개월) <span style="color:#888;font-size:11px">· 원금 상환 유예</span></div>
-          <input class="f-input" id="fGracePeriod" type="number" inputmode="numeric" placeholder="0" value="${p.gracePeriod||0}" oninput="updateCalcPreview()">
-        </div>
-      </div>
-
-      <div class="f-row">
-        <div class="f-label">상환 방식</div>
-        <div class="sel-grid-3" id="repayGrid">
-          ${REPAY_METHODS.map(m=>`<button class="type-btn ${(p.repayMethod||'equal_payment')===m.key?'active':''}" data-v="${m.key}" onclick="pickRepay(this)" style="white-space:pre-line;font-size:12px;">${m.label}</button>`).join('')}
-        </div>
-        <div class="method-desc" id="methodDesc">${REPAY_METHODS.find(m=>m.key===(p.repayMethod||'equal_payment')).desc}</div>
       </div>
 
       <div class="f-row">
@@ -622,11 +649,17 @@ function showForm(id){
         <input class="f-input" id="fBank" type="text" placeholder="예) 신한은행" value="${p.bank||''}" oninput="updateCalcPreview()">
       </div>
 
-      <div class="form-section-label">금액 · 금리</div>
-
       <div class="f-row">
         <div class="f-label">대출 잔액 (원) <span style="color:#888;font-size:11px">· 현재 남은 금액</span></div>
         <input class="f-input" id="fBalance" type="number" inputmode="numeric" placeholder="0" value="${p.balance||''}" oninput="updateCalcPreview()">
+      </div>
+
+      <!-- 마이너스통장 한도 -->
+      <div id="minusFields" style="${showMinus?'':'display:none'}">
+        <div class="f-row">
+          <div class="f-label">한도 금액 (원)</div>
+          <input class="f-input" id="fLimit" type="number" inputmode="numeric" placeholder="예) 50000000" value="${p.limitAmount||''}" oninput="updateCalcPreview()">
+        </div>
       </div>
 
       <div class="f-row">
@@ -634,38 +667,108 @@ function showForm(id){
         <input class="f-input" id="fRate" type="number" inputmode="decimal" placeholder="예) 4.04" step="0.01" value="${p.rate||''}" oninput="updateCalcPreview()">
       </div>
 
-      <div class="form-section-label">일정</div>
+      <div class="f-row">
+        <div class="f-label">상환 방식</div>
+        <div class="sel-grid-4" id="repayGrid">
+          ${REPAY_METHODS.map(m=>`<button class="type-btn ${repayMethod===m.key?'active':''}" data-v="${m.key}" onclick="pickRepay(this)" style="white-space:nowrap;font-size:11px;padding:10px 2px;">${m.label}</button>`).join('')}
+        </div>
+        <div class="method-desc" id="methodDesc">${REPAY_METHODS.find(m=>m.key===repayMethod)?.desc||''}</div>
+      </div>
+
+      <!-- 만기일시 선택 시 기간 숨김 -->
+      <div id="repayPeriodFields" style="${showBulletNote?'display:none':''}">
+        <div class="f-row">
+          <div class="f-label">상환 기간</div>
+          <div class="sel-grid-6" id="repayYearsGrid">
+            ${REPAY_YEARS.map(y=>`<button class="type-btn ${repayYears===y?'active':''}" data-v="${y}" onclick="pickRepayYears(this)">${y}년</button>`).join('')}
+          </div>
+        </div>
+      </div>
 
       <div class="f-row-2">
         <div class="f-row">
           <div class="f-label">대출 시작일</div>
-          <input class="f-input" id="fStart" type="date" value="${p.startDate||''}" onchange="updateCalcPreview()">
+          <input class="f-input" id="fStart" type="date" value="${p.startDate||''}" onchange="autoCalcEndDate(); updateCalcPreview()">
         </div>
         <div class="f-row">
-          <div class="f-label">만기일</div>
+          <div class="f-label">대출 만기일 <span style="color:#007aff;font-size:10px">자동계산</span></div>
           <input class="f-input" id="fEnd" type="date" value="${p.endDate||''}" onchange="updateCalcPreview()">
         </div>
       </div>
 
-      <div class="f-row">
-        <div class="f-label">이자 나가는 날 (1~31일)</div>
-        <input class="f-input" id="fIntDay" type="number" inputmode="numeric" placeholder="예) 30" min="1" max="31" value="${p.interestDay||''}">
-      </div>
-
       <div class="form-section-label">계산 미리보기</div>
       <div class="calc-preview" id="calcPreview">
-        <div class="cp-title">금액·금리·기간을 입력하면 자동으로 계산돼요</div>
+        <div class="cp-title" style="color:#555">금액·금리·기간을 입력하면 자동으로 계산돼요</div>
       </div>
 
-      <button class="btn-submit" onclick="${isEdit?`updateLoan(${id})`:'addLoan()'}">
-        ${isEdit?'저장하기':'추가하기'}
+      <!-- ★ 추가 정보 토글 -->
+      <button type="button" onclick="toggleExtraFields()" id="extraToggleBtn"
+        style="background:#2a2a2a;border:1px solid #333;border-radius:12px;color:#888;font-size:13px;padding:12px;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:6px;margin-top:4px;">
+        <span id="extraToggleIcon">＋</span> 추가 정보 입력하기 <span style="font-size:11px;color:#555">(금리유형·거치·면제일 등)</span>
       </button>
-      <button class="btn-cancel" onclick="showEditMain()">취소</button>
+
+      <div id="extraFields" style="display:none;margin-top:4px;">
+        <div class="add-form">
+
+          <div class="form-section-label" style="border-top:none;margin-top:0">원금 · 상세</div>
+
+          <div class="f-row">
+            <div class="f-label">대출 원금 (원) <span style="color:#888;font-size:11px">· 최초 대출 금액</span></div>
+            <input class="f-input" id="fPrincipal" type="number" inputmode="numeric" placeholder="예) 300000000" value="${p.principal||''}" oninput="updateCalcPreview()">
+          </div>
+
+          <div class="f-row">
+            <div class="f-label">금리 유형</div>
+            <div class="sel-grid-3" id="rateTypeGrid">
+              ${RATE_TYPES.map(rt=>`<button class="type-btn ${rateType===rt.key?'active':''}" data-v="${rt.key}" onclick="pickRateType(this)">${rt.label}</button>`).join('')}
+            </div>
+          </div>
+
+          <div id="mixedYearsRow" class="f-row" style="${rateType==='mixed'?'':'display:none'}">
+            <div class="f-label">고정 기간 (년)</div>
+            <input class="f-input" id="fFixedYears" type="number" inputmode="numeric" placeholder="예) 5" value="${p.fixedYears||''}">
+          </div>
+
+          <div id="nextRateRow" class="f-row" style="${rateType==='variable'?'':'display:none'}">
+            <div class="f-label">다음 금리 변동일</div>
+            <input class="f-input" id="fNextRateDate" type="date" value="${p.nextRateChangeDate||''}">
+            <div class="field-note">📈 변동일 3개월 전부터 알림 배지가 표시돼요</div>
+          </div>
+
+          <!-- 거치기간: 신용대출·마이너스통장·만기일시 제외 -->
+          <div id="graceRow" class="f-row" style="${showGrace?'':'display:none'}">
+            <div class="f-label">거치 기간 (개월) <span style="color:#888;font-size:11px">· 원금 상환 유예</span></div>
+            <input class="f-input" id="fGracePeriod" type="number" inputmode="numeric" placeholder="0" value="${p.gracePeriod||0}" oninput="updateCalcPreview()">
+          </div>
+
+          <div class="form-section-label">일정 · 알림</div>
+
+          <div class="f-row">
+            <div class="f-label">이자 나가는 날 (1~31일)</div>
+            <input class="f-input" id="fIntDay" type="number" inputmode="numeric" placeholder="예) 30" min="1" max="31" value="${p.interestDay||''}">
+          </div>
+
+          <div class="f-row">
+            <div class="f-label">중도상환 수수료 면제일</div>
+            <input class="f-input" id="fPrepayFree" type="date" value="${p.prepaymentFreeDate||''}">
+            <div class="field-note">🎉 면제일 3개월 전부터 알림 배지가 표시돼요</div>
+          </div>
+
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px">
+        <button class="btn-submit" style="margin-top:0" onclick="${isEdit?`updateLoan(${id})`:'addLoan()'}">
+          ${isEdit?'저장하기':'추가하기'}
+        </button>
+        <button class="btn-cancel" style="margin-top:0" onclick="showEditMain()">취소</button>
+      </div>
     </div>`;
 
   updateCalcPreview();
 }
 
+/* ── 폼 이벤트 핸들러 ── */
 function pickBtn(btn, gridId){
   document.querySelectorAll(`#${gridId} .type-btn`).forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
@@ -673,22 +776,79 @@ function pickBtn(btn, gridId){
 
 function pickLoanType(btn){
   pickBtn(btn, 'loanTypeGrid');
-  const isJudambo = btn.dataset.v === '주택담보';
-  document.getElementById('judamboFields').style.display = isJudambo ? 'block' : 'none';
+  const lt = btn.dataset.v;
+  const method = document.querySelector('#repayGrid .type-btn.active')?.dataset.v || 'equal_payment';
+  // 마이너스통장
+  const minusEl = document.getElementById('minusFields');
+  if(minusEl) minusEl.style.display = isMinus(lt) ? 'block' : 'none';
+  // 거치기간
+  const graceEl = document.getElementById('graceRow');
+  if(graceEl) graceEl.style.display = (hasGracePeriod(lt) && !isBullet(method)) ? 'block' : 'none';
+  updateCalcPreview();
 }
 
 function pickRateType(btn){
   pickBtn(btn, 'rateTypeGrid');
-  const isMixed = btn.dataset.v === 'mixed';
-  document.getElementById('mixedYearsRow').style.display = isMixed ? 'block' : 'none';
+  const rt = btn.dataset.v;
+  const mixedEl = document.getElementById('mixedYearsRow');
+  if(mixedEl) mixedEl.style.display = rt==='mixed' ? 'block' : 'none';
+  const nextRateEl = document.getElementById('nextRateRow');
+  if(nextRateEl) nextRateEl.style.display = rt==='variable' ? 'block' : 'none';
 }
 
 function pickRepay(btn){
   pickBtn(btn, 'repayGrid');
   const key = btn.dataset.v;
   const m = REPAY_METHODS.find(x=>x.key===key);
-  document.getElementById('methodDesc').textContent = m?.desc||'';
+  const descEl = document.getElementById('methodDesc');
+  if(descEl) descEl.textContent = m?.desc||'';
+
+  // 만기일시: 상환기간·거치기간 숨김
+  const periodEl = document.getElementById('repayPeriodFields');
+  if(periodEl) periodEl.style.display = isBullet(key) ? 'none' : 'block';
+
+  // 거치기간 가시성
+  const lt = document.querySelector('#loanTypeGrid .type-btn.active')?.dataset.v || LOAN_TYPES[0];
+  const graceEl = document.getElementById('graceRow');
+  if(graceEl) graceEl.style.display = (hasGracePeriod(lt) && !isBullet(key)) ? 'block' : 'none';
+
   updateCalcPreview();
+}
+
+function toggleExtraFields(){
+  const el = document.getElementById('extraFields');
+  const icon = document.getElementById('extraToggleIcon');
+  const btn = document.getElementById('extraToggleBtn');
+  const isOpen = el.style.display !== 'none';
+  el.style.display = isOpen ? 'none' : 'block';
+  icon.textContent = isOpen ? '＋' : '－';
+  btn.style.color = isOpen ? '#888' : '#007aff';
+  btn.style.borderColor = isOpen ? '#333' : '#007aff44';
+  btn.style.background = isOpen ? '#2a2a2a' : '#007aff11';
+}
+
+function pickRepayYears(btn){
+  pickBtn(btn, 'repayYearsGrid');
+  autoCalcEndDate();
+  updateCalcPreview();
+  // 수정 모드이거나 추가 정보가 이미 입력된 경우 자동 펼침
+  if(isEdit && (p.principal||p.rateType!=='fixed'||p.gracePeriod||p.interestDay||p.prepaymentFreeDate||p.nextRateChangeDate)){
+    toggleExtraFields();
+  }
+}
+
+/* 만기일 자동계산 */
+function autoCalcEndDate(){
+  const startVal = document.getElementById('fStart')?.value;
+  const yearsBtn = document.querySelector('#repayYearsGrid .type-btn.active');
+  if(!startVal || !yearsBtn) return;
+  const years = parseInt(yearsBtn.dataset.v)||0;
+  if(!years) return;
+  const start = new Date(startVal);
+  start.setFullYear(start.getFullYear() + years);
+  const endStr = start.toISOString().slice(0,10);
+  const endEl = document.getElementById('fEnd');
+  if(endEl){ endEl.value = endStr; updateCalcPreview(); }
 }
 
 /* 실시간 계산 미리보기 */
@@ -709,8 +869,8 @@ function updateCalcPreview(){
   const totM = totalMonthsBetween(startVal, endVal);
   const elapsed = elapsedMonths(startVal);
   const remain = Math.max(1, totM - elapsed);
-
   let rows = '';
+
   if(method==='equal_payment'){
     const res = calcEqualPayment(balance, rate, remain);
     rows = `
@@ -726,7 +886,7 @@ function updateCalcPreview(){
       <div class="cp-row"><span class="cp-label">마지막 달 납부액</span><span class="cp-value">${fmtWon(res.lastMonthly)}</span></div>
       <div class="cp-row"><span class="cp-label">총 이자 부담</span><span class="cp-value red">${fmtWon(res.totalInterest)}</span></div>
       <div class="cp-row"><span class="cp-label">잔여 기간</span><span class="cp-value">${remainStr(remain)}</span></div>`;
-  } else {
+  } else if(method==='increasing'){
     const res = calcIncreasing(balance, rate, remain);
     rows = `
       <div class="cp-row"><span class="cp-label">현재 월 납부액</span><span class="cp-value orange">${fmtWon(res.firstMonthly)}</span></div>
@@ -734,12 +894,57 @@ function updateCalcPreview(){
       <div class="cp-row"><span class="cp-label">최종 월 납부액</span><span class="cp-value red">${fmtWon(res.lastMonthly)}</span></div>
       <div class="cp-row"><span class="cp-label">총 이자 부담</span><span class="cp-value red">${fmtWon(res.totalInterest)}</span></div>
       <div class="cp-row"><span class="cp-label">잔여 기간</span><span class="cp-value">${remainStr(remain)}</span></div>`;
+  } else if(method==='bullet'){
+    const res = calcBullet(balance, rate, remain);
+    rows = `
+      <div class="cp-row"><span class="cp-label">매달 이자</span><span class="cp-value orange">${fmtWon(res.monthlyInterest)}</span></div>
+      <div class="cp-row"><span class="cp-label">만기 일시 상환</span><span class="cp-value red">${fmtWon(balance)}</span></div>
+      <div class="cp-row"><span class="cp-label">총 이자 부담</span><span class="cp-value red">${fmtWon(res.totalInterest)}</span></div>
+      <div class="cp-row"><span class="cp-label">잔여 기간</span><span class="cp-value">${remainStr(remain)}</span></div>`;
   }
 
   preview.innerHTML = `<div class="cp-title">📊 예상 납부 계획</div>${rows}`;
 }
 
-/* CRUD */
+/* ── CRUD ── */
+function readForm(){
+  const name    = document.getElementById('fName').value.trim();
+  const bank    = document.getElementById('fBank').value.trim();
+  const balance = parseInt(document.getElementById('fBalance').value)||0;
+  const rate    = parseFloat(document.getElementById('fRate').value)||0;
+  const start   = document.getElementById('fStart').value;
+  const end     = document.getElementById('fEnd').value;
+  const intDay  = parseInt(document.getElementById('fIntDay').value)||0;
+  const principal = parseInt(document.getElementById('fPrincipal')?.value)||0;
+  const loanType  = document.querySelector('#loanTypeGrid .type-btn.active')?.dataset.v||LOAN_TYPES[0];
+  const repayMethod = document.querySelector('#repayGrid .type-btn.active')?.dataset.v||'equal_payment';
+  const rateType  = document.querySelector('#rateTypeGrid .type-btn.active')?.dataset.v||'fixed';
+  const fixedYears = parseInt(document.getElementById('fFixedYears')?.value)||0;
+  const repayYears = parseInt(document.querySelector('#repayYearsGrid .type-btn.active')?.dataset.v)||0;
+  const gracePeriod = parseInt(document.getElementById('fGracePeriod')?.value)||0;
+  const limitAmount = parseInt(document.getElementById('fLimit')?.value)||0;
+  const nextRateChangeDate = document.getElementById('fNextRateDate')?.value||'';
+  const prepaymentFreeDate = document.getElementById('fPrepayFree')?.value||'';
+  const bankIcon  = BANK_ICONS[bank]||'🏦';
+
+  if(!name)   { alert('대출명을 입력해주세요.');  return null; }
+  if(!bank)   { alert('은행을 입력해주세요.');    return null; }
+  if(!balance){ alert('대출 잔액을 입력해주세요.'); return null; }
+  if(!rate)   { alert('금리를 입력해주세요.');    return null; }
+
+  return {
+    name, bank, bankIcon, balance, rate,
+    startDate: start, endDate: end, interestDay: intDay,
+    loanType, repayMethod, rateType, fixedYears,
+    repayYears: isBullet(repayMethod) ? 0 : repayYears,
+    gracePeriod: (hasGracePeriod(loanType) && !isBullet(repayMethod)) ? gracePeriod : 0,
+    principal,
+    limitAmount: isMinus(loanType) ? limitAmount : 0,
+    nextRateChangeDate: rateType==='variable' ? nextRateChangeDate : '',
+    prepaymentFreeDate,
+  };
+}
+
 function addLoan(){
   const loan=readForm(); if(!loan) return;
   loan.id=Date.now(); loans.push(loan);
@@ -756,7 +961,6 @@ function deleteLoan(id){
   saveLoans(loans); showEditMain(); renderPage();
 }
 
-
 /* ── 스와이프로 모달 닫기 ── */
 (function(){
   let startY=0, currentY=0, isDragging=false;
@@ -764,72 +968,16 @@ function deleteLoan(id){
   const sheet   = overlay?.querySelector('.edit-sheet');
   const handle  = overlay?.querySelector('.modal-handle');
   if(!handle||!sheet||!overlay) return;
-
-  function onStart(e){
-    const touch = e.touches?e.touches[0]:e;
-    startY = touch.clientY; currentY = startY; isDragging = true;
-    sheet.style.transition = 'none';
-  }
-  function onMove(e){
-    if(!isDragging) return;
-    const touch = e.touches?e.touches[0]:e;
-    currentY = touch.clientY;
-    const diff = currentY - startY;
-    if(diff>0) sheet.style.transform = `translateY(${diff}px)`;
-  }
-  function onEnd(){
-    if(!isDragging) return;
-    isDragging = false;
-    sheet.style.transition = 'transform 0.2s ease';
-    const diff = currentY - startY;
-    if(diff>100){ closeEdit(); }
-    else{ sheet.style.transform = 'translateY(0)'; }
-  }
-
-  handle.addEventListener('touchstart', onStart, {passive:true});
-  handle.addEventListener('touchmove',  onMove,  {passive:true});
-  handle.addEventListener('touchend',   onEnd,   {passive:true});
-  handle.addEventListener('mousedown',  onStart);
-  document.addEventListener('mousemove', e=>{ if(isDragging) onMove(e); });
-  document.addEventListener('mouseup',   onEnd);
+  function onStart(e){ const t=e.touches?e.touches[0]:e; startY=t.clientY; currentY=startY; isDragging=true; sheet.style.transition='none'; }
+  function onMove(e){ if(!isDragging)return; const t=e.touches?e.touches[0]:e; currentY=t.clientY; const d=currentY-startY; if(d>0)sheet.style.transform=`translateY(${d}px)`; }
+  function onEnd(){ if(!isDragging)return; isDragging=false; sheet.style.transition='transform 0.2s ease'; const d=currentY-startY; if(d>100)closeEditModal(); else sheet.style.transform='translateY(0)'; }
+  handle.addEventListener('touchstart',onStart,{passive:true});
+  handle.addEventListener('touchmove', onMove, {passive:true});
+  handle.addEventListener('touchend',  onEnd,  {passive:true});
+  handle.addEventListener('mousedown', onStart);
+  document.addEventListener('mousemove',e=>{ if(isDragging)onMove(e); });
+  document.addEventListener('mouseup',  onEnd);
 })();
-function readForm(){
-  const name    = document.getElementById('fName').value.trim();
-  const bank    = document.getElementById('fBank').value.trim();
-  const balance = parseInt(document.getElementById('fBalance').value)||0;
-  const rate    = parseFloat(document.getElementById('fRate').value)||0;
-  const start   = document.getElementById('fStart').value;
-  const end     = document.getElementById('fEnd').value;
-  const intDay  = parseInt(document.getElementById('fIntDay').value)||0;
-  const loanType  = document.querySelector('#loanTypeGrid .type-btn.active')?.dataset.v||LOAN_TYPES[0];
-  const repayMethod = document.querySelector('#repayGrid .type-btn.active')?.dataset.v||'equal_payment';
-  const bankIcon  = BANK_ICONS[bank]||'🏦';
-
-  if(!name)   { alert('대출명을 입력해주세요.');  return null; }
-  if(!bank)   { alert('은행을 입력해주세요.');    return null; }
-  if(!balance){ alert('대출 잔액을 입력해주세요.'); return null; }
-  if(!rate)   { alert('금리를 입력해주세요.');    return null; }
-
-  const result = { name, bank, bankIcon, balance, rate, startDate:start, endDate:end, interestDay:intDay, loanType, repayMethod };
-
-  // 주택담보대출 추가 필드
-  if(loanType === '주택담보'){
-    const principal   = parseInt(document.getElementById('fPrincipal')?.value)||0;
-    const rateType    = document.querySelector('#rateTypeGrid .type-btn.active')?.dataset.v||'fixed';
-    const fixedYears  = parseInt(document.getElementById('fFixedYears')?.value)||0;
-    const repayYears  = parseInt(document.querySelector('#repayYearsGrid .type-btn.active')?.dataset.v)||30;
-    const gracePeriod = parseInt(document.getElementById('fGracePeriod')?.value)||0;
-    
-    result.principal   = principal;
-    result.rateType    = rateType;
-    result.fixedYears  = fixedYears;
-    result.repayYears  = repayYears;
-    result.gracePeriod = gracePeriod;
-    result.monthlyOverride = {}; // 향후 중도상환 기능용
-  }
-
-  return result;
-}
 
 renderPage();
 </script>
