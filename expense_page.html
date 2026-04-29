@@ -6,7 +6,7 @@
 <title>지출 - AssetFlow</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  body { background:#1a1a1a; color:#fff; font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Noto Sans KR',sans-serif; min-height:100vh; padding-bottom:100px; }
+  body { background:#1a1a1a; color:#fff; font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Noto Sans KR',sans-serif; min-height:100vh; padding-bottom:200px; }
   .header { display:flex; align-items:center; padding:16px 20px; position:sticky; top:0; background:#1a1a1a; z-index:100; }
   .back-btn { background:none; border:none; color:#fff; font-size:22px; cursor:pointer; padding:4px 8px 4px 0; line-height:1; }
   .header-title { font-size:17px; font-weight:600; margin-left:4px; }
@@ -19,14 +19,14 @@
   /* 총액 카드 */
   .total-card { margin:0 20px 20px; background:#242424; border-radius:16px; padding:18px 20px; }
   .tc-label  { font-size:13px; color:#888; margin-bottom:6px; }
-  .tc-amount { font-size:26px; font-weight:700; color:#f87171; letter-spacing:-0.5px; }
+  .tc-amount { font-size:26px; font-weight:700; color:#f87171; letter-spacing:-0.3px; font-family:-apple-system, ui-rounded, 'Apple SD Gothic Neo', sans-serif;}
   .tc-sub    { font-size:13px; color:#666; margin-top:4px; }
 
   /* 환산 안내 카드 */
   .convert-card { margin:0 20px 20px; background:#242424; border-radius:14px; padding:14px 16px; display:flex; justify-content:space-between; align-items:center; }
   .cc-left { font-size:13px; color:#888; }
   .cc-right { text-align:right; }
-  .cc-amount { font-size:15px; font-weight:600; color:#fb923c; }
+  .cc-amount { font-size:15px; font-weight:600; color:#fb923c; font-family:-apple-system, ui-rounded, 'Apple SD Gothic Neo', sans-serif;}
   .cc-note   { font-size:11px; color:#555; margin-top:2px; }
 
   /* 섹션 헤더 */
@@ -43,7 +43,7 @@
   .ei-name  { font-size:15px; font-weight:500; color:#eee; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .ei-sub   { font-size:12px; color:#666; margin-top:2px; }
   .ei-right { text-align:right; flex-shrink:0; margin-left:8px; }
-  .ei-amount{ font-size:15px; font-weight:600; color:#fff; }
+  .ei-amount{ font-size:15px; font-weight:600; color:#fff; font-family:-apple-system, ui-rounded, 'Apple SD Gothic Neo', sans-serif;}
   .ei-freq  { font-size:11px; color:#666; margin-top:2px; }
 
   /* 빈 화면 */
@@ -52,18 +52,18 @@
   .empty-text  { font-size:14px; line-height:1.6; }
 
   /* 하단 */
-  .bottom-nav { position:fixed; bottom:0; left:0; right:0; background:rgba(26,26,26,0.97); backdrop-filter:blur(10px); padding:12px 20px 28px; }
+  .bottom-nav { position:fixed; bottom:70px; left:0; right:0; background:rgba(26,26,26,0.97); backdrop-filter:blur(10px); padding:12px 20px 28px; }
   .nav-btn { width:100%; background:#2e2e2e; border:none; border-radius:12px; color:#fff; font-size:14px; font-weight:500; padding:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; }
 
   /* 편집 모달 */
-  .edit-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:200; align-items:flex-end; }
-  .edit-overlay.active { display:flex; }
-  .edit-sheet { background:#242424; border-radius:24px 24px 0 0; width:100%; max-height:92vh; overflow-y:auto; padding:20px 20px 40px; animation:slideUp 0.28s ease; transition:transform 0.2s ease; }
+  .fs-overlay-legacy { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:400; align-items:flex-end; }
+  .fs-overlay-legacy.active { display:flex; }
+  .fs-body-legacy { background:#2e2e2e; border-radius:24px 24px 0 0; width:100%; max-height:92vh; overflow-y:auto; padding:20px 20px 86px; animation:slideUp 0.28s ease; transition:transform 0.2s ease; }
   @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
   .modal-handle { width:36px; height:4px; background:#444; border-radius:2px; margin:0 auto 20px; cursor:grab; }
   .modal-handle:active { cursor:grabbing; }
-  .modal-title  { font-size:18px; font-weight:700; margin-bottom:24px; }
-  .edit-list { display:flex; flex-direction:column; gap:10px; }
+    .modal-title { font-size:17px; font-weight:700; margin-bottom:20px; color:#fff; }
+    .edit-list { display:flex; flex-direction:column; gap:10px; margin-bottom:4px; }
   .edit-item { background:#2e2e2e; border-radius:14px; padding:14px 16px; display:flex; align-items:center; gap:12px; }
   .el-icon { width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
   .el-info { flex:1; min-width:0; }
@@ -89,12 +89,172 @@
   .fsec:first-child { border-top:none; margin-top:0; }
   .btn-submit { margin-top:8px; width:100%; background:#f87171; border:none; border-radius:14px; color:#fff; font-size:15px; font-weight:700; padding:16px; cursor:pointer; }
   .btn-cancel { width:100%; background:#333; border:none; border-radius:14px; color:#aaa; font-size:15px; padding:14px; cursor:pointer; margin-top:6px; }
+
+  /* ── 풀스크린 편집 ── */
+  .fs-overlay {
+    display: none; position: fixed; inset: 0; z-index: 300;
+    background: #1a1a1a;
+    transform: translateY(100%);
+    transition: transform 0.38s cubic-bezier(0.32,0.72,0,1);
+    overflow-y: auto; overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  .fs-overlay.active {
+    display: block;
+    transform: translateY(0);
+  }
+  .fs-header {
+    display: flex; align-items: center; justify-content: center;
+    padding: 16px 20px 12px;
+    position: sticky; top: 0; background: #1a1a1a; z-index: 10;
+    border-bottom: 0.5px solid #2a2a2a;
+  }
+  .fs-title {
+    font-size: 15px; font-weight: 600; color: #fff;
+    font-family: -apple-system, sans-serif;
+    flex: 1; text-align: center;
+  }
+  .fs-body { padding: 20px 20px 100px; }
+  /* 추가/저장 버튼 */
+  .btn-add, .btn-add-acc, .btn-add-card, .btn-submit {
+    background: #f87171 !important; color: #fff !important;
+    border: none; border-radius: 14px;
+    font-size: 15px; font-weight: 600; padding: 16px;
+    cursor: pointer; width: 100%; margin-top: 8px;
+    font-family: -apple-system, sans-serif;
+  }
+  .btn-add:active, .btn-add-acc:active, .btn-add-card:active, .btn-submit:active {
+    opacity: 0.85;
+  }
+  /* 취소 버튼 */
+  .btn-cancel, .btn-cancel-half {
+    background: #2e2e2e !important; color: #888 !important;
+    border: none; border-radius: 14px;
+    font-size: 15px; padding: 14px;
+    cursor: pointer; width: 100%; margin-top: 6px;
+    font-family: -apple-system, sans-serif;
+  }
+
+
+  /* ── 바텀탭 ── */
+  .bottom-tab-bar {
+    position:fixed; bottom:0; left:0; right:0;
+    background:rgba(20,20,20,0.97);
+    border-top:1px solid #2a2a2a;
+    display:flex; padding:10px 0 28px;
+    z-index:200;
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+  }
+  .tab-item {
+    flex:1; display:flex; flex-direction:column;
+    align-items:center; gap:3px;
+    cursor:pointer; padding:4px 0;
+    background:none; border:none; color:inherit;
+  }
+  .tab-item-label { font-size:10px; color:#555; font-weight:500; letter-spacing:-0.2px; }
+  .tab-item.active .tab-item-label { color:#fff; }
+  .tab-item-dot { width:4px; height:4px; border-radius:50%; background:transparent; margin-bottom:1px; }
+  .tab-item.active .tab-item-dot { background:#fff; }
+
+  .more-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:2000; display:none; align-items:flex-end; }
+  .more-overlay.active { display:flex; }
+  .more-sheet { background:#1a1a1a; border-radius:20px 20px 0 0; width:100%; padding:20px 20px 36px; }
+  .more-handle { width:40px; height:4px; background:#333; border-radius:2px; margin:0 auto 18px; }
+  .more-sec-title { font-size:11px; color:#555; font-weight:600; letter-spacing:0.05em; padding:0 2px 10px; }
+  .more-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:16px; }
+  .more-grid-item {
+    background:#242424; border-radius:10px;
+    padding:12px 6px; text-align:center;
+    font-size:13px; font-weight:500; color:#ddd;
+    cursor:pointer; border:none;
+    font-family:-apple-system,'Apple SD Gothic Neo',sans-serif;
+  }
+  .more-grid-item:active { background:#2e2e2e; color:#fff; }
+
+
+  /* ── 바텀탭 ── */
+  .bottom-tab-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: rgba(15,15,15,0.98);
+    border-top: 1px solid #222;
+    display: flex; padding: 10px 0 28px;
+    z-index: 1500;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  .tab-item {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; gap: 3px;
+    cursor: pointer; padding: 4px 0;
+    background: none; border: none; color: inherit;
+  }
+  .tab-item-label { font-size: 10px; color: #555; font-weight: 500; letter-spacing: -0.2px; }
+  .tab-item.active .tab-item-label { color: #fff; }
+  .tab-item-dot { width: 4px; height: 4px; border-radius: 50%; background: transparent; margin-bottom: 1px; }
+  .tab-item.active .tab-item-dot { background: #fff; }
+  .more-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:2000; display:none; align-items:flex-end; }
+  .more-overlay.active { display:flex; }
+  .more-sheet { background:#1a1a1a; border-radius:20px 20px 0 0; width:100%; padding:20px 20px 36px; }
+  .more-handle { width:40px; height:4px; background:#333; border-radius:2px; margin:0 auto 18px; }
+  .more-sec-title { font-size:11px; color:#555; font-weight:600; letter-spacing:0.05em; padding:0 2px 10px; }
+  .more-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:16px; }
+  .more-grid-item {
+    background:#242424; border-radius:10px;
+    padding:12px 6px; text-align:center;
+    font-size:13px; font-weight:500; color:#ddd;
+    cursor:pointer; border:none;
+    font-family:-apple-system,'Apple SD Gothic Neo',sans-serif;
+  }
+  .more-grid-item:active { background:#2e2e2e; color:#fff; }
+
+
+  /* ── 토스트 알림 ── */
+  .toast-msg {
+    position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(10px);
+    background: rgba(50,50,50,0.97); color: #fff;
+    font-size: 13px; font-weight: 500;
+    padding: 11px 20px; border-radius: 20px;
+    white-space: nowrap; z-index: 9999;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.2s, transform 0.2s;
+    font-family: -apple-system, sans-serif;
+  }
+  .toast-msg.show {
+    opacity: 1; transform: translateX(-50%) translateY(0);
+  }
+  /* ── 인라인 확인 (confirm 대체) ── */
+  .confirm-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    z-index: 9000; display: none; align-items: center; justify-content: center; padding: 0 40px;
+  }
+  .confirm-overlay.active { display: flex; }
+  .confirm-box {
+    background: #242424; border-radius: 16px; padding: 24px 20px 16px; width: 100%; max-width: 300px;
+  }
+  .confirm-msg { font-size: 15px; color: #fff; text-align: center; margin-bottom: 20px; line-height: 1.5; font-family: -apple-system, sans-serif; }
+  .confirm-btns { display: flex; gap: 8px; }
+  .confirm-cancel { flex: 1; background: #333; border: none; border-radius: 10px; color: #888; font-size: 15px; padding: 12px; cursor: pointer; font-family: -apple-system, sans-serif; }
+  .confirm-ok { flex: 1; background: #f87171; border: none; border-radius: 10px; color: #fff; font-size: 15px; font-weight: 600; padding: 12px; cursor: pointer; font-family: -apple-system, sans-serif; }
+
+
+  /* ── 사용자 뱃지 ── */
+  .user-badge {
+    font-size: 11px; font-weight: 500;
+    padding: 3px 8px; border-radius: 10px;
+    background: rgba(77,163,255,0.15);
+    color: #4da3ff; margin-left: 6px;
+    display: none;
+  }
+  .user-badge.show { display: inline-block; }
+
 </style>
 </head>
 <body>
 <div class="header">
-  <button class="back-btn" onclick="location.href='asset_manager_mobile.html'">‹</button>
-  <span class="header-title">고정 지출</span>
+  <button class="back-btn" onclick="history.back()">‹</button>
+  <span class="header-title">고정 지출</span><span class="user-badge" id="userBadge"></span>
 </div>
 
 <div class="main-tabs">
@@ -121,17 +281,41 @@
 <div id="mainContent"></div>
 
 <div class="bottom-nav">
-  <button class="nav-btn" onclick="openEditModal()">⚙️ 자산 편집하기</button>
+  <button class="nav-btn" onclick="openEditModal()">지출 편집하기</button>
 </div>
 
-<div class="edit-overlay" id="editOverlay" onclick="if(event.target===this)closeEditModal()">
-  <div class="edit-sheet">
-    <div class="modal-handle"></div>
-    <div id="editContent"></div>
+<div class="fs-overlay" id="fsOverlay" >
+  <div class="fs-body">
+    <div class="fs-header">
+    <div class="fs-title">지출 편집</div>
+    
+  </div>
+  <div id="editContent"></div>
   </div>
 </div>
 
 <script>
+
+/* ── 토스트 & 확인 다이얼로그 ── */
+function showToast(msg, duration=2000){
+  const el = document.getElementById('toastMsg');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(()=> el.classList.remove('show'), duration);
+}
+let confirmResolve = null;
+function showConfirm(msg){
+  return new Promise(resolve => {
+    document.getElementById('confirmMsg').textContent = msg;
+    document.getElementById('confirmOverlay').classList.add('active');
+    confirmResolve = (result) => {
+      document.getElementById('confirmOverlay').classList.remove('active');
+      resolve(result);
+    };
+  });
+}
+
 
 /* ── 사용자 prefix 시스템 ── */
 function getPrefix(){
@@ -250,8 +434,8 @@ function renderPage(){
 }
 
 /* ─── 편집 모달 ─── */
-function openEditModal(){ showEditMain(); document.getElementById('editOverlay').classList.add('active'); }
-function closeEditModal(){ document.getElementById('editOverlay').classList.remove('active'); }
+function openEditModal(){ showEditMain(); document.getElementById('fsOverlay').classList.add('active'); }
+function closeEditModal(){ document.getElementById('fsOverlay').classList.remove('active'); }
 
 function showEditMain(){
   const monthly=items.filter(x=>x.type==='monthly');
@@ -273,9 +457,8 @@ function showEditMain(){
   let listHTML='';
   if(monthly.length){ listHTML+=`<div class="edit-cat-label">매월 고정</div>${monthly.map(itemRow).join('')}`; }
   if(annual.length)  { listHTML+=`<div class="edit-cat-label">연간 비정기</div>${annual.map(itemRow).join('')}`; }
-  if(!listHTML) listHTML='<div style="color:#555;font-size:13px;padding:8px 0">등록된 지출이 없어요</div>';
+  if(!listHTML) listHTML='<div style="color:#555;font-size:13px;text-align:center;padding:40px 0">등록된 지출이 없어요</div>';
   document.getElementById('editContent').innerHTML=`
-    <div class="modal-title">고정 지출 편집</div>
     <div class="edit-list">${listHTML}</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px">
       <button class="btn-add" style="margin-top:0" onclick="showForm(null)">＋ 지출 추가하기</button>
@@ -332,19 +515,19 @@ function readForm(){
   const type=document.querySelector('#typeGrid .type-btn.active')?.dataset.v||'monthly';
   const cat=document.querySelector('#catGrid .type-btn.active')?.dataset.v||'etc_m';
   const freq=document.querySelector('#freqGrid .type-btn.active')?.dataset.v||'monthly';
-  if(!name){alert('항목명을 입력해주세요.');return null;}
-  if(!amount){alert('금액을 입력해주세요.');return null;}
+  if(!name){showToast('항목명을 입력해주세요.');return null;}
+  if(!amount){showToast('금액을 입력해주세요.');return null;}
   return {name,amount,type,cat,freq};
 }
-function addItem(){ const d=readForm(); if(!d)return; d.id=Date.now(); items.push(d); saveItems(items); showEditMain(); renderPage(); }
-function updateItem(id){ const d=readForm(); if(!d)return; const i=items.findIndex(x=>Number(x.id)===Number(id)); if(i!==-1)items[i]={...items[i],...d}; saveItems(items); showEditMain(); renderPage(); }
-function deleteItem(id){ items=items.filter(x=>Number(x.id)!==Number(id)); saveItems(items); showEditMain(); renderPage(); }
+function addItem(){ const d=readForm(); if(!d)return; d.id=Date.now(); items.push(d); saveItems(items); showEditMain(); renderPage(); showToast('저장됐어요'); }
+function updateItem(id){ const d=readForm(); if(!d)return; const i=items.findIndex(x=>Number(x.id)===Number(id)); if(i!==-1)items[i]={...items[i],...d}; saveItems(items); showEditMain(); renderPage(); showToast('저장됐어요'); }
+async function deleteItem(id){ items=items.filter(x=>Number(x.id)!==Number(id)); saveItems(items); showEditMain(); renderPage(); showToast('저장됐어요'); }
 
 /* ── 스와이프로 모달 닫기 ── */
 (function(){
   let startY=0, currentY=0, isDragging=false;
-  const overlay = document.getElementById('editOverlay');
-  const sheet   = overlay?.querySelector('.edit-sheet');
+  const overlay = document.getElementById('fsOverlay');
+  const sheet   = overlay?.querySelector('.fs-body-legacy');
   const handle  = overlay?.querySelector('.modal-handle');
   if(!handle||!sheet||!overlay) return;
 
@@ -378,6 +561,135 @@ function deleteItem(id){ items=items.filter(x=>Number(x.id)!==Number(id)); saveI
 })();
 
 renderPage();
+
+/* ── 사용자 뱃지 ── */
+(function(){
+  const prefix = localStorage.getItem('af_active_prefix') || 'u1_';
+  const u1name = localStorage.getItem('af_u1_name') || '나';
+  const u2name = localStorage.getItem('af_u2_name') || '상대방';
+  const badge = document.getElementById('userBadge');
+  if(!badge) return;
+  if(prefix === 'u1_'){ badge.textContent = u1name; badge.classList.add('show'); }
+  else if(prefix === 'u2_'){ badge.textContent = u2name; badge.classList.add('show'); }
+})();
+
+</script>
+
+<!-- 바텀탭 -->
+<div class="bottom-tab-bar">
+  <button class="tab-item " onclick="location.href='asset_manager_mobile.html'">
+    <div class="tab-item-dot"></div>
+    <div class="tab-item-label">홈</div>
+  </button>
+  <button class="tab-item " onclick="location.href='account_page.html'">
+    <div class="tab-item-dot"></div>
+    <div class="tab-item-label">계좌</div>
+  </button>
+  <button class="tab-item " onclick="location.href='investment_page.html'">
+    <div class="tab-item-dot"></div>
+    <div class="tab-item-label">투자</div>
+  </button>
+  <button class="tab-item " onclick="location.href='trend_page.html'">
+    <div class="tab-item-dot"></div>
+    <div class="tab-item-label">추이</div>
+  </button>
+  <button class="tab-item active" onclick="openMoreSheet()">
+    <div class="tab-item-dot"></div>
+    <div class="tab-item-label">더보기</div>
+  </button>
+</div>
+
+<!-- 더보기 시트 -->
+<div class="more-overlay" id="moreOverlay" onclick="if(event.target===this)closeMoreSheet()">
+  <div class="more-sheet">
+    <div class="more-handle"></div>
+    <div class="more-sec-title">관리 항목</div>
+    <div class="more-grid">
+      <button class="more-grid-item" onclick="location.href='loan_page.html'">대출</button>
+      <button class="more-grid-item" onclick="location.href='realestate_page.html'">부동산</button>
+      <button class="more-grid-item" onclick="location.href='car_page.html'">자동차</button>
+      <button class="more-grid-item" onclick="location.href='card_page.html'">카드</button>
+    </div>
+    <div class="more-sec-title">설정·분석</div>
+    <div class="more-grid">
+      <button class="more-grid-item" onclick="location.href='income_page.html'">수입</button>
+      <button class="more-grid-item" onclick="location.href='expense_page.html'">고정지출</button>
+      <button class="more-grid-item" onclick="location.href='goal_page.html';closeMoreSheet()">목표관리</button>
+    </div>
+  </div>
+</div>
+<script>
+function openMoreSheet(){ document.getElementById('moreOverlay').classList.add('active'); }
+function closeMoreSheet(){ document.getElementById('moreOverlay').classList.remove('active'); }
+</script>
+
+<div class="bottom-tab-bar">
+  <button class="tab-item " onclick="location.href='asset_manager_mobile.html'">
+    <div class="tab-item-dot"></div>
+    <div class="tab-item-label">홈</div>
+  </button>
+  <button class="tab-item " onclick="location.href='account_page.html'">
+    <div class="tab-item-dot"></div>
+    <div class="tab-item-label">계좌</div>
+  </button>
+  <button class="tab-item " onclick="location.href='investment_page.html'">
+    <div class="tab-item-dot"></div>
+    <div class="tab-item-label">투자</div>
+  </button>
+  <button class="tab-item " onclick="location.href='trend_page.html'">
+    <div class="tab-item-dot"></div>
+    <div class="tab-item-label">추이</div>
+  </button>
+  <button class="tab-item active" onclick="openMoreSheet()">
+    <div class="tab-item-dot"></div>
+    <div class="tab-item-label">더보기</div>
+  </button>
+</div>
+<div class="more-overlay" id="moreOverlay" onclick="if(event.target===this)closeMoreSheet()">
+  <div class="more-sheet">
+    <div class="more-handle"></div>
+    <div class="more-sec-title">관리 항목</div>
+    <div class="more-grid">
+      <button class="more-grid-item" onclick="location.href='loan_page.html'">대출</button>
+      <button class="more-grid-item" onclick="location.href='realestate_page.html'">부동산</button>
+      <button class="more-grid-item" onclick="location.href='car_page.html'">자동차</button>
+      <button class="more-grid-item" onclick="location.href='card_page.html'">카드</button>
+    </div>
+    <div class="more-sec-title">설정·분석</div>
+    <div class="more-grid">
+      <button class="more-grid-item" onclick="location.href='income_page.html'">수입</button>
+      <button class="more-grid-item" onclick="location.href='expense_page.html'">고정지출</button>
+      <button class="more-grid-item" onclick="location.href='goal_page.html';closeMoreSheet()">목표관리</button>
+    </div>
+  </div>
+</div>
+<script>
+function openMoreSheet(){ document.getElementById('moreOverlay').classList.add('active'); }
+function closeMoreSheet(){ document.getElementById('moreOverlay').classList.remove('active'); }
+</script>
+
+<!-- 토스트 -->
+<div class="toast-msg" id="toastMsg"></div>
+<!-- 확인 다이얼로그 -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <div class="confirm-msg" id="confirmMsg"></div>
+    <div class="confirm-btns">
+      <button class="confirm-cancel" onclick="confirmResolve(false)">취소</button>
+      <button class="confirm-ok" onclick="confirmResolve(true)">삭제</button>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  const prefix = localStorage.getItem('af_active_prefix')||'u1_';
+  const u1name = localStorage.getItem('af_name_u1')||'사용자1';
+  const u2name = localStorage.getItem('af_name_u2')||'사용자2';
+  const badge = document.getElementById('userBadge');
+  if(!badge) return;
+  if(prefix==='u1_'){ badge.textContent=u1name; badge.classList.add('show'); }
+  else if(prefix==='u2_'){ badge.textContent=u2name; badge.classList.add('show'); }
+})();
 </script>
 </body>
 </html>

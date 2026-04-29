@@ -7,7 +7,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  body { background:#1a1a1a; color:#fff; font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Noto Sans KR',sans-serif; min-height:100vh; padding-bottom:40px; }
+  body { background:#1a1a1a; color:#fff; font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Noto Sans KR',sans-serif; min-height:100vh; padding-bottom:180px; }
   .header { display:flex; align-items:center; padding:16px 20px; position:sticky; top:0; background:#1a1a1a; z-index:100; }
   .back-btn { background:none; border:none; color:#fff; font-size:22px; cursor:pointer; padding:4px 8px 4px 0; line-height:1; }
   .header-title { font-size:17px; font-weight:600; margin-left:4px; }
@@ -62,6 +62,55 @@
   .eh-icon { font-size:20px; }
   .eh-text { font-size:13px; color:#888; line-height:1.5; }
   .eh-text strong { color:#fff; }
+
+  /* ── 바텀탭 ── */
+  .bottom-tab-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: rgba(20,20,20,0.97);
+    border-top: 1px solid #2a2a2a;
+    display: flex; padding: 10px 0 28px;
+    z-index: 500;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  .tab-item {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; gap: 3px;
+    cursor: pointer; padding: 4px 0;
+    background: none; border: none; color: inherit;
+  }
+  .tab-item-label { font-size: 10px; color: #555; font-weight: 500; letter-spacing: -0.2px; }
+  .tab-item.active .tab-item-label { color: #fff; }
+  .tab-item-dot { width: 4px; height: 4px; border-radius: 50%; background: transparent; margin-bottom: 1px; }
+  .tab-item.active .tab-item-dot { background: #fff; }
+
+  .more-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:2000; display:none; align-items:flex-end; }
+  .more-overlay.active { display:flex; }
+  .more-sheet { background:#1a1a1a; border-radius:20px 20px 0 0; width:100%; padding:20px 20px 36px; }
+  .more-handle { width:40px; height:4px; background:#333; border-radius:2px; margin:0 auto 18px; }
+  .more-sec-title { font-size:11px; color:#555; font-weight:600; letter-spacing:0.05em; padding:0 2px 10px; }
+  .more-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:16px; }
+  .more-grid-item {
+    background:#242424; border-radius:10px;
+    padding:12px 6px; text-align:center;
+    font-size:13px; font-weight:500; color:#ddd;
+    cursor:pointer; border:none;
+    font-family:-apple-system,'Apple SD Gothic Neo',sans-serif;
+  }
+  .more-grid-item:active { background:#2e2e2e; color:#fff; }
+
+  /* 월별상세 접기/펼치기 */
+  .ml-toggle-btn {
+    width: 100%; background: #1a1a1a; border: none;
+    border-radius: 12px; color: #888; font-size: 13px;
+    padding: 14px; cursor: pointer; margin-top: 8px;
+    font-family: -apple-system, sans-serif;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .ml-toggle-btn:active { background: #2a2a2a; }
+  .ml-toggle-arrow { font-size: 11px; transition: transform 0.2s; }
+  .ml-toggle-arrow.open { transform: rotate(180deg); }
+
 </style>
 </head>
 <body>
@@ -109,6 +158,10 @@
 <div class="month-list">
   <div class="ml-title">월별 상세</div>
   <div id="monthDetailList"></div>
+  <button class="ml-toggle-btn" id="mlToggleBtn" onclick="toggleMonthList()">
+    <span id="mlToggleText">이전 내역 더 보기</span>
+    <span class="ml-toggle-arrow" id="mlToggleArrow">▼</span>
+  </button>
 </div>
 
 <script>
@@ -320,16 +373,26 @@ function renderSummary(){
 }
 
 /* 월별 목록 */
+let mlExpanded = false;
+
 function renderMonthList(){
-  document.getElementById('monthDetailList').innerHTML=[...monthData].reverse().map(d=>{
-    const isCur=d.y===CY&&d.m===CM;
+  const memos = loadMemos ? loadMemos() : {};
+  const allMonths = [...monthData].reverse(); // 최신순
+  const displayMonths = mlExpanded ? allMonths : allMonths.slice(0, 3);
+
+  document.getElementById('monthDetailList').innerHTML = displayMonths.map(d => {
+    const isCur = d.y===CY && d.m===CM;
+    const prev = monthData[monthData.indexOf(monthData.find(x=>x.y===d.y&&x.m===d.m))-1];
+    const diff = prev && d.hasRealData && prev.hasRealData ? d.net - prev.net : null;
+    const memo = memos[d.mk || `${d.y}-${String(d.m).padStart(2,'0')}`] || '';
+
     return `
       <div class="ml-item">
         <div class="ml-header">
           <span class="ml-month">${d.y}년 ${d.m}월${isCur?' <span style="font-size:11px;color:#007aff;background:#007aff22;padding:2px 6px;border-radius:6px">이번달</span>':''}</span>
           <span class="ml-net ${d.net>=0?'pos':'neg'}">${d.net<0?'-':''}${fmt(d.net)}</span>
         </div>
-        ${d.hasRealData?`
+        ${d.hasRealData ? `
         <div class="ml-row">
           <div class="ml-row-label"><div class="ml-row-dot" style="background:#4ade80"></div>자산</div>
           <div class="ml-row-value">${d.asset.toLocaleString('ko-KR')}원</div>
@@ -338,12 +401,39 @@ function renderMonthList(){
           <div class="ml-row-label"><div class="ml-row-dot" style="background:#6366f1"></div>부채</div>
           <div class="ml-row-value">-${d.debt.toLocaleString('ko-KR')}원</div>
         </div>
-        <div class="ml-row">
-          <div class="ml-row-label"><div class="ml-row-dot" style="background:#4da3ff"></div>수입</div>
-          <div class="ml-row-value">${d.income.toLocaleString('ko-KR')}원</div>
-        </div>`:`<div class="ml-nodata">계좌 잔액을 입력하면 표시돼요</div>`}
+        ${diff !== null ? `
+        <div class="ml-row" style="margin-top:4px;padding-top:6px;border-top:0.5px solid #2a2a2a">
+          <div class="ml-row-label" style="color:#555">전월 대비</div>
+          <div class="ml-row-value" style="color:${diff>=0?'#4ade80':'#f87171'}">${diff>=0?'+':''}${fmtShort(diff)}</div>
+        </div>` : ''}
+        ${memo ? `<div style="font-size:12px;color:#888;margin-top:8px;padding-top:8px;border-top:0.5px solid #2a2a2a;line-height:1.6">📝 ${memo}</div>` : ''}
+        ` : `<div class="ml-nodata">계좌 잔액을 입력하면 표시돼요</div>`}
       </div>`;
   }).join('');
+
+  // 토글 버튼 상태
+  const btn = document.getElementById('mlToggleBtn');
+  const arrow = document.getElementById('mlToggleArrow');
+  const text = document.getElementById('mlToggleText');
+  if (allMonths.length <= 3) {
+    btn.style.display = 'none';
+  } else {
+    btn.style.display = 'flex';
+    text.textContent = mlExpanded ? '접기' : `이전 ${allMonths.length - 3}개월 더 보기`;
+    arrow.className = 'ml-toggle-arrow' + (mlExpanded ? ' open' : '');
+  }
+}
+
+function toggleMonthList(){
+  mlExpanded = !mlExpanded;
+  renderMonthList();
+  if (!mlExpanded) {
+    document.querySelector('.month-list').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+function loadMemos(){
+  try { return JSON.parse(localStorage.getItem('af_monthly_memos')||'{}'); } catch { return {}; }
 }
 
 function switchView(v){
@@ -354,6 +444,54 @@ function switchView(v){
 }
 
 renderAll();
+</script>
+
+<!-- 바텀탭 -->
+<div class="bottom-tab-bar">
+  <button class="tab-item" onclick="location.href='asset_manager_mobile.html'">
+    <div class="tab-item-dot"></div>
+    <div class="tab-item-label">홈</div>
+  </button>
+  <button class="tab-item" onclick="location.href='account_page.html'">
+    <div class="tab-item-dot"></div>
+    <div class="tab-item-label">계좌</div>
+  </button>
+  <button class="tab-item" onclick="location.href='investment_page.html'">
+    <div class="tab-item-dot"></div>
+    <div class="tab-item-label">투자</div>
+  </button>
+  <button class="tab-item active">
+    <div class="tab-item-dot"></div>
+    <div class="tab-item-label">추이</div>
+  </button>
+  <button class="tab-item" onclick="openMoreSheet()">
+    <div class="tab-item-dot"></div>
+    <div class="tab-item-label">더보기</div>
+  </button>
+</div>
+
+<!-- 더보기 시트 -->
+<div class="more-overlay" id="moreOverlay" onclick="if(event.target===this)closeMoreSheet()">
+  <div class="more-sheet">
+    <div class="more-handle"></div>
+    <div class="more-sec-title">관리 항목</div>
+    <div class="more-grid">
+      <button class="more-grid-item" onclick="location.href='loan_page.html'">대출</button>
+      <button class="more-grid-item" onclick="location.href='realestate_page.html'">부동산</button>
+      <button class="more-grid-item" onclick="location.href='car_page.html'">자동차</button>
+      <button class="more-grid-item" onclick="location.href='card_page.html'">카드</button>
+    </div>
+    <div class="more-sec-title">설정·분석</div>
+    <div class="more-grid">
+      <button class="more-grid-item" onclick="location.href='income_page.html'">수입</button>
+      <button class="more-grid-item" onclick="location.href='expense_page.html'">고정지출</button>
+      <button class="more-grid-item" onclick="location.href='goal_page.html';closeMoreSheet()">목표관리</button>
+    </div>
+  </div>
+</div>
+<script>
+function openMoreSheet(){ document.getElementById('moreOverlay').classList.add('active'); }
+function closeMoreSheet(){ document.getElementById('moreOverlay').classList.remove('active'); }
 </script>
 </body>
 </html>

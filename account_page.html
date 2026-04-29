@@ -6,9 +6,37 @@
 <title>계좌 관리 - AssetFlow</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  body { background:#1a1a1a; color:#fff; font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Noto Sans KR',sans-serif; min-height:100vh; padding-bottom:100px; }
+  body { background:#1a1a1a; color:#fff; font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Noto Sans KR',sans-serif; min-height:100vh; padding-bottom: 200px; }
 
   .header { display:flex; align-items:center; padding:16px 20px; position:sticky; top:0; background:#1a1a1a; z-index:100; }
+  .header-title { flex:1; }
+  .memo-icon-btn {
+    background:none; border:none; color:#555; cursor:pointer;
+    padding:6px; border-radius:8px; display:flex; align-items:center;
+    transition:color 0.15s;
+  }
+  .memo-icon-btn:active { color:#fff; background:#2a2a2a; }
+  .memo-icon-btn.has-memo { color:#4da3ff; }
+
+  /* 메모 모달 */
+  .acc-memo-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:1000; display:none; align-items:flex-end; }
+  .acc-memo-overlay.active { display:flex; }
+  .acc-memo-sheet { background:#1e1e1e; border-radius:20px 20px 0 0; width:100%; padding:20px 20px 44px; }
+  .acc-memo-handle { width:40px; height:4px; background:#444; border-radius:2px; margin:0 auto 20px; }
+  .acc-memo-title { font-size:16px; font-weight:600; margin-bottom:4px; }
+  .acc-memo-sub { font-size:13px; color:#555; margin-bottom:16px; }
+  .acc-memo-textarea {
+    width:100%; background:#2a2a2a; border:1px solid #333; border-radius:12px;
+    color:#fff; font-size:15px; padding:14px; outline:none; resize:none;
+    font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;
+    line-height:1.6; min-height:110px;
+  }
+  .acc-memo-textarea:focus { border-color:#555; }
+  .acc-memo-textarea::placeholder { color:#444; }
+  .acc-memo-hint { font-size:12px; color:#555; margin-top:8px; margin-bottom:16px; line-height:1.5; }
+  .acc-memo-btns { display:flex; gap:10px; }
+  .acc-memo-cancel { flex:1; background:#333; border:none; border-radius:10px; color:#fff; font-size:15px; padding:13px; cursor:pointer; }
+  .acc-memo-save { flex:1; background:#fff; border:none; border-radius:10px; color:#000; font-size:15px; font-weight:600; padding:13px; cursor:pointer; }
   .back-btn { background:none; border:none; color:#fff; font-size:22px; cursor:pointer; padding:4px 8px 4px 0; line-height:1; }
   .header-title { font-size:17px; font-weight:600; margin-left:4px; }
 
@@ -20,7 +48,7 @@
   /* 총 자산 */
   .total-card { margin:0 20px 20px; background:#242424; border-radius:16px; padding:20px; }
   .tac-label  { font-size:13px; color:#888; margin-bottom:6px; }
-  .tac-amount { font-size:26px; font-weight:700; color:#fff; letter-spacing:-0.5px; white-space:nowrap; }
+  .tac-amount { font-size:26px; font-weight:700; color:#fff; letter-spacing:-0.3px; white-space:nowrap; font-family:-apple-system, ui-rounded, 'Apple SD Gothic Neo', sans-serif;}
   .tac-sub    { font-size:13px; color:#666; margin-top:4px; }
 
   /* 카테고리 탭 */
@@ -42,7 +70,7 @@
   .section-header { display:flex; align-items:center; justify-content:space-between; padding:20px 20px 8px; }
   .section-title { font-size:13px; color:#888; font-weight:500; }
   .section-total { font-size:13px; color:#888; }
-  .section-total-inline { font-size:26px; font-weight:700; color:#fff; letter-spacing:-0.5px; }
+  .section-total-inline { font-size:26px; font-weight:700; color:#fff; letter-spacing:-0.3px; font-family:-apple-system, ui-rounded, 'Apple SD Gothic Neo', sans-serif;}
 
   /* 계좌 아이템 */
   .account-list { padding:0 20px; }
@@ -69,20 +97,20 @@
   .acc-info { flex:1; min-width:0; }
   .acc-name { font-size:15px; font-weight:600; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:2px; letter-spacing:-0.2px; }
   .acc-sub  { font-size:12px; color:#888; }
-  .acc-amount-wrap { text-align:right; flex-shrink:0; margin-left:8px; }
-  .acc-amount { font-size:15px; font-weight:600; color:#fff; white-space:nowrap; }
+  .acc-amount-wrap { text-align:right; flex-shrink:0; margin-left:8px; font-family:-apple-system, ui-rounded, 'Apple SD Gothic Neo', sans-serif;}
+  .acc-amount { font-size:15px; font-weight:600; color:#fff; white-space:nowrap; font-family:-apple-system, ui-rounded, 'Apple SD Gothic Neo', sans-serif;}
   .acc-input-btn { flex-shrink:0; margin-left:12px; background:#2e2e2e; border:1px solid #3a3a3a; border-radius:8px; color:#aaa; font-size:13px; font-weight:500; padding:6px 14px; pointer-events:none; white-space:nowrap; }
   .empty-section { text-align:center; padding:40px 0; color:#444; font-size:14px; }
 
   /* 하단 */
-  .bottom-nav { position:fixed; bottom:0; left:0; right:0; background:rgba(26,26,26,0.97); backdrop-filter:blur(10px); padding:12px 20px 28px; }
+  .bottom-nav { position:fixed; bottom:70px; left:0; right:0; background:rgba(26,26,26,0.97); backdrop-filter:blur(10px); padding:12px 20px 28px; }
   .nav-btn { width:100%; background:#2e2e2e; border:none; border-radius:12px; color:#fff; font-size:14px; font-weight:500; padding:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; }
   .nav-btn:active { background:#383838; }
 
   /* 월 선택 시트 */
-  .sheet-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:300; align-items:flex-end; }
+  .sheet-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:600; align-items:flex-end; }
   .sheet-overlay.active { display:flex; }
-  .sheet-inner { background:#242424; border-radius:24px 24px 0 0; width:100%; max-height:80vh; overflow-y:auto; padding:20px 20px 40px; animation:slideUp 0.25s ease; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; transition:transform 0.2s ease; }
+  .sheet-inner { background:#242424; border-radius:24px 24px 0 0; width:100%; max-height:80vh; overflow-y:auto; padding:20px 20px 86px; animation:slideUp 0.25s ease; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; transition:transform 0.2s ease; }
   @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
   .sheet-handle { width:36px; height:4px; background:#444; border-radius:2px; margin:0 auto 20px; }
   .sheet-title  { font-size:16px; font-weight:700; margin-bottom:20px; }
@@ -98,13 +126,13 @@
   .m-chip.sel .m-dot { color:#4da3ff; }
 
   /* 편집 모달 */
-  .edit-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:200; align-items:flex-end; }
-  .edit-overlay.active { display:flex; }
-  .edit-sheet { background:#242424; border-radius:24px 24px 0 0; width:100%; max-height:85vh; overflow-y:auto; padding:20px 20px 40px; animation:slideUp 0.28s ease; transition:transform 0.2s ease; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
+  .fs-overlay-legacy { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:400; align-items:flex-end; }
+  .fs-overlay-legacy.active { display:flex; }
+  .fs-body-legacy { background:#2e2e2e; border-radius:24px 24px 0 0; width:100%; max-height:85vh; overflow-y:auto; padding:20px 20px 86px; animation:slideUp 0.28s ease; transition:transform 0.2s ease; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
   .modal-handle { width:36px; height:4px; background:#444; border-radius:2px; margin:0 auto 20px; cursor:grab; }
   .modal-handle:active { cursor:grabbing; }
-  .modal-title  { font-size:18px; font-weight:700; margin-bottom:24px; }
-  .edit-list { display:flex; flex-direction:column; gap:10px; margin-bottom:4px; }
+    .modal-title { font-size:17px; font-weight:700; margin-bottom:20px; color:#fff; }
+    .edit-list { display:flex; flex-direction:column; gap:10px; margin-bottom:4px; }
   .edit-item { background:#2e2e2e; border-radius:14px; padding:14px 16px; display:flex; align-items:center; gap:12px; }
   .ei-info { flex:1; min-width:0; }
   .ei-name { font-size:14px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -145,13 +173,182 @@
   .trs-btns  { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
   .trs-cancel  { background:#2a2a2a; border:none; border-radius:12px; color:#aaa; font-size:15px; padding:14px; cursor:pointer; }
   .trs-confirm { background:#f8717122; border:2px solid #f87171; border-radius:12px; color:#f87171; font-size:15px; font-weight:700; padding:14px; cursor:pointer; }
+
+  /* ── 풀스크린 편집 ── */
+  .fs-overlay {
+    display: none; position: fixed; inset: 0; z-index: 300;
+    background: #1a1a1a;
+    transform: translateY(100%);
+    transition: transform 0.38s cubic-bezier(0.32,0.72,0,1);
+    overflow-y: auto; overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  .fs-overlay.active {
+    display: block;
+    transform: translateY(0);
+  }
+  .fs-header {
+    display: flex; align-items: center; justify-content: center;
+    padding: 16px 20px 12px;
+    position: sticky; top: 0; background: #1a1a1a; z-index: 10;
+    border-bottom: 0.5px solid #2a2a2a;
+  }
+  .fs-title {
+    font-size: 15px; font-weight: 600; color: #fff;
+    font-family: -apple-system, sans-serif;
+    flex: 1; text-align: center;
+  }
+  .fs-body { padding: 20px 20px 100px; }
+  /* 추가/저장 버튼 */
+  .btn-add, .btn-add-acc, .btn-add-card, .btn-submit {
+    background: #007aff !important; color: #fff !important;
+    border: none; border-radius: 14px;
+    font-size: 15px; font-weight: 600; padding: 16px;
+    cursor: pointer; width: 100%; margin-top: 8px;
+    font-family: -apple-system, sans-serif;
+  }
+  .btn-add:active, .btn-add-acc:active, .btn-add-card:active, .btn-submit:active {
+    opacity: 0.85;
+  }
+  /* 취소 버튼 */
+  .btn-cancel, .btn-cancel-half {
+    background: #2e2e2e !important; color: #888 !important;
+    border: none; border-radius: 14px;
+    font-size: 15px; padding: 14px;
+    cursor: pointer; width: 100%; margin-top: 6px;
+    font-family: -apple-system, sans-serif;
+  }
+
+
+  /* ── 바텀탭 ── */
+  .bottom-tab-bar {
+    position:fixed; bottom:0; left:0; right:0;
+    background:rgba(20,20,20,0.97);
+    border-top:1px solid #2a2a2a;
+    display:flex; padding:10px 0 28px;
+    z-index:200;
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+  }
+  .tab-item {
+    flex:1; display:flex; flex-direction:column;
+    align-items:center; gap:3px;
+    cursor:pointer; padding:4px 0;
+    background:none; border:none; color:inherit;
+  }
+  .tab-item-label { font-size:10px; color:#555; font-weight:500; letter-spacing:-0.2px; }
+  .tab-item.active .tab-item-label { color:#fff; }
+  .tab-item-dot { width:4px; height:4px; border-radius:50%; background:transparent; margin-bottom:1px; }
+  .tab-item.active .tab-item-dot { background:#fff; }
+
+  .more-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:2000; display:none; align-items:flex-end; }
+  .more-overlay.active { display:flex; }
+  .more-sheet { background:#1a1a1a; border-radius:20px 20px 0 0; width:100%; padding:20px 20px 36px; }
+  .more-handle { width:40px; height:4px; background:#333; border-radius:2px; margin:0 auto 18px; }
+  .more-sec-title { font-size:11px; color:#555; font-weight:600; letter-spacing:0.05em; padding:0 2px 10px; }
+  .more-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:16px; }
+  .more-grid-item {
+    background:#242424; border-radius:10px;
+    padding:12px 6px; text-align:center;
+    font-size:13px; font-weight:500; color:#ddd;
+    cursor:pointer; border:none;
+    font-family:-apple-system,'Apple SD Gothic Neo',sans-serif;
+  }
+  .more-grid-item:active { background:#2e2e2e; color:#fff; }
+
+
+  /* ── 바텀탭 ── */
+  .bottom-tab-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: rgba(15,15,15,0.98);
+    border-top: 1px solid #222;
+    display: flex; padding: 10px 0 28px;
+    z-index: 1500;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  .tab-item {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; gap: 3px;
+    cursor: pointer; padding: 4px 0;
+    background: none; border: none; color: inherit;
+  }
+  .tab-item-label { font-size: 10px; color: #555; font-weight: 500; letter-spacing: -0.2px; }
+  .tab-item.active .tab-item-label { color: #fff; }
+  .tab-item-dot { width: 4px; height: 4px; border-radius: 50%; background: transparent; margin-bottom: 1px; }
+  .tab-item.active .tab-item-dot { background: #fff; }
+  .more-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:2000; display:none; align-items:flex-end; }
+  .more-overlay.active { display:flex; }
+  .more-sheet { background:#1a1a1a; border-radius:20px 20px 0 0; width:100%; padding:20px 20px 36px; }
+  .more-handle { width:40px; height:4px; background:#333; border-radius:2px; margin:0 auto 18px; }
+  .more-sec-title { font-size:11px; color:#555; font-weight:600; letter-spacing:0.05em; padding:0 2px 10px; }
+  .more-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:16px; }
+  .more-grid-item {
+    background:#242424; border-radius:10px;
+    padding:12px 6px; text-align:center;
+    font-size:13px; font-weight:500; color:#ddd;
+    cursor:pointer; border:none;
+    font-family:-apple-system,'Apple SD Gothic Neo',sans-serif;
+  }
+  .more-grid-item:active { background:#2e2e2e; color:#fff; }
+
+
+  /* ── 토스트 알림 ── */
+  .toast-msg {
+    position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(10px);
+    background: rgba(50,50,50,0.97); color: #fff;
+    font-size: 13px; font-weight: 500;
+    padding: 11px 20px; border-radius: 20px;
+    white-space: nowrap; z-index: 9999;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.2s, transform 0.2s;
+    font-family: -apple-system, sans-serif;
+  }
+  .toast-msg.show {
+    opacity: 1; transform: translateX(-50%) translateY(0);
+  }
+  /* ── 인라인 확인 (confirm 대체) ── */
+  .confirm-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    z-index: 9000; display: none; align-items: center; justify-content: center; padding: 0 40px;
+  }
+  .confirm-overlay.active { display: flex; }
+  .confirm-box {
+    background: #242424; border-radius: 16px; padding: 24px 20px 16px; width: 100%; max-width: 300px;
+  }
+  .confirm-msg { font-size: 15px; color: #fff; text-align: center; margin-bottom: 20px; line-height: 1.5; font-family: -apple-system, sans-serif; }
+  .confirm-btns { display: flex; gap: 8px; }
+  .confirm-cancel { flex: 1; background: #333; border: none; border-radius: 10px; color: #888; font-size: 15px; padding: 12px; cursor: pointer; font-family: -apple-system, sans-serif; }
+  .confirm-ok { flex: 1; background: #f87171; border: none; border-radius: 10px; color: #fff; font-size: 15px; font-weight: 600; padding: 12px; cursor: pointer; font-family: -apple-system, sans-serif; }
+
+
+  /* ── 사용자 뱃지 ── */
+  .user-badge {
+    font-size: 11px; font-weight: 500;
+    padding: 3px 8px; border-radius: 10px;
+    background: rgba(77,163,255,0.15);
+    color: #4da3ff; margin-left: 6px;
+    display: none;
+  }
+  .user-badge.show { display: inline-block; }
+
 </style>
 </head>
 <body>
 
 <div class="header">
-  <button class="back-btn" onclick="location.href='asset_manager_mobile.html'">‹</button>
-  <span class="header-title">계좌</span>
+  <button class="back-btn" onclick="history.back()">‹</button>
+  <span class="header-title">계좌</span><span class="user-badge" id="userBadge"></span>
+  <button class="memo-icon-btn" onclick="openAccountMemo()" id="memoIconBtn" title="이번 달 메모">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="14 2 14 8 20 8"/>
+      <line x1="16" y1="13" x2="8" y2="13"/>
+      <line x1="16" y1="17" x2="8" y2="17"/>
+      <polyline points="10 9 9 9 8 9"/>
+    </svg>
+  </button>
 </div>
 
 <!-- 월 선택 -->
@@ -174,13 +371,12 @@
 
 <!-- 하단 -->
 <div class="bottom-nav">
-  <button class="nav-btn" onclick="openEditModal()">⚙️ 자산 편집하기</button>
+  <button class="nav-btn" onclick="openEditModal()">계좌 편집하기</button>
 </div>
 
 <!-- 월 선택 시트 -->
 <div class="sheet-overlay" id="monthSheet" onclick="if(event.target===this)closeMonthSheet()">
   <div class="sheet-inner">
-    <div class="sheet-handle"></div>
     <div class="sheet-title">월 선택</div>
     <div class="year-row">
       <button class="year-nav" id="yearPrev" onclick="changeYear(-1)">‹</button>
@@ -207,7 +403,6 @@
 <!-- 은행/증권사 선택 시트 -->
 <div class="sheet-overlay" id="bankSheet" onclick="if(event.target===this)closeBankSheet()">
   <div class="sheet-inner">
-    <div class="sheet-handle"></div>
     <div class="sheet-title">은행/증권사/거래소 선택</div>
     
     <div style="margin-bottom:12px">
@@ -226,21 +421,45 @@
     </div>
     
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
-      <button style="background:#2a2a2a;border:none;border-radius:10px;color:#aaa;font-size:14px;padding:12px;cursor:pointer" onclick="selectDirectInput()">✏️ 직접입력</button>
-      <button style="background:#333;border:none;border-radius:10px;color:#aaa;font-size:14px;padding:12px;cursor:pointer" onclick="closeBankSheet()">취소</button>
+      <button style="background:#2e2e2e;border:none;border-radius:12px;color:#888;font-size:14px;padding:14px;cursor:pointer;width:100%;font-family:-apple-system,sans-serif;" onclick="selectDirectInput()">✏️ 직접입력</button>
+      <button style="background:#2e2e2e;border:none;border-radius:12px;color:#888;font-size:14px;padding:14px;cursor:pointer;width:100%;font-family:-apple-system,sans-serif;" onclick="closeBankSheet()">취소</button>
     </div>
   </div>
 </div>
 
 <!-- 편집 모달 -->
-<div class="edit-overlay" id="editOverlay" onclick="if(event.target===this)closeEditModal()">
-  <div class="edit-sheet">
-    <div class="modal-handle"></div>
-    <div id="editContent"></div>
+<div class="fs-overlay" id="fsOverlay" >
+  <div class="fs-body">
+    <div class="fs-header">
+    <div class="fs-title">계좌 편집</div>
+    
+  </div>
+  <div id="editContent"></div>
   </div>
 </div>
 
 <script>
+
+/* ── 토스트 & 확인 다이얼로그 ── */
+function showToast(msg, duration=2000){
+  const el = document.getElementById('toastMsg');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(()=> el.classList.remove('show'), duration);
+}
+let confirmResolve = null;
+function showConfirm(msg){
+  return new Promise(resolve => {
+    document.getElementById('confirmMsg').textContent = msg;
+    document.getElementById('confirmOverlay').classList.add('active');
+    confirmResolve = (result) => {
+      document.getElementById('confirmOverlay').classList.remove('active');
+      resolve(result);
+    };
+  });
+}
+
 /* ── 사용자 prefix ── */
 function getPrefix(){ return localStorage.getItem('af_active_prefix')||'u1_'; }
 function pk(key){ return getPrefix()+key; }
@@ -539,12 +758,12 @@ function renderSheetGrid(){
     return `<button class="m-chip ${isSel?'sel':''} ${future?'future':''}" onclick="pickMonth(${m})">${m}월<div class="m-dot">${hasDot?'●':''}</div></button>`;
   }).join('');
 }
-function pickMonth(m){ selY=sheetY; selM=m; closeMonthSheet(); renderPage(); }
+function pickMonth(m){ selY=sheetY; selM=m; closeMonthSheet(); renderPage(); updateMemoIcon(); }
 
 /* ── 편집 모달 ── */
 function openEditModal(){ 
   showEditMain(); 
-  document.getElementById('editOverlay').classList.add('active');
+  document.getElementById('fsOverlay').classList.add('active');
   // iOS body 스크롤 차단
   document.body.style.overflow = 'hidden';
   document.body.style.position = 'fixed';
@@ -552,8 +771,8 @@ function openEditModal(){
   document.body.style.top = `-${window.scrollY}px`;
 }
 function closeEditModal(){ 
-  const overlay = document.getElementById('editOverlay');
-  const sheet = overlay?.querySelector('.edit-sheet');
+  const overlay = document.getElementById('fsOverlay');
+  const sheet = overlay?.querySelector('.fs-body-legacy');
   
   // transform 초기화
   if(sheet){
@@ -630,8 +849,7 @@ function showEditMain(){
   }
 
   document.getElementById('editContent').innerHTML = `
-    <div class="modal-title">계좌 편집 · ${selM}월</div>
-    <div class="edit-list">${listHtml||'<div style="color:#555;font-size:13px">등록된 계좌가 없어요</div>'}${hiddenHtml}</div>
+    <div class="edit-list">${listHtml||'<div style="color:#555;font-size:13px;text-align:center;padding:40px 0">등록된 계좌가 없어요</div>'}${hiddenHtml}</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px">
       <button class="btn-add-acc" style="margin-top:0" onclick="showAddForm()">＋ 계좌 추가하기</button>
       <button onclick="closeEditModal()" style="background:#2e2e2e;border:none;border-radius:14px;color:#aaa;font-size:14px;font-weight:500;padding:16px;cursor:pointer">취소</button>
@@ -750,8 +968,9 @@ function saveBalance(id){
     saveCashflow(cashflow);
   }
 
-  closeEditModal(); 
+  closeEditModal();
   renderPage();
+  showToast(`${selY}년 ${selM}월 잔고가 저장됐어요`);
 }
 
 /* 계좌 정보 수정 */
@@ -836,8 +1055,8 @@ function addAccount(){
   const balance = parseInt(balanceStr)||0;
   const cat     = document.querySelector('#typeGrid .type-btn.active')?.dataset.cat||'checking';
   const yieldPct= null;
-  if(!name){alert('계좌명을 입력해주세요.');return;}
-  if(!bank || bank==='선택하기'){alert('은행/증권사를 선택해주세요.');return;}
+  if(!name){showToast('계좌명을 입력해주세요.');return;}
+  if(!bank || bank==='선택하기'){showToast('은행/증권사를 선택해주세요.');return;}
   
   const id = Date.now();
   
@@ -885,7 +1104,7 @@ function addAccount(){
   saveAccounts(accounts);
   // 이번 달 잔고 저장
   if(balance>0){ const mk=monthKey(selY,selM); if(!history[mk])history[mk]={}; history[mk][id]=balance; saveHistory(history); }
-  showEditMain(); renderPage();
+  showEditMain(); renderPage(); showToast('저장됐어요');
 }
 
 function showEditForm(id){
@@ -951,8 +1170,8 @@ function updateAccount(id){
   const color = bankBtn.dataset.color || '#888888';
   const cat=document.querySelector('#typeGrid .type-btn.active')?.dataset.cat||'checking';
   const yieldPct=null;
-  if(!name){alert('계좌명을 입력해주세요.');return;}
-  if(!bank || bank==='선택하기'){alert('은행/증권사를 선택해주세요.');return;}
+  if(!name){showToast('계좌명을 입력해주세요.');return;}
+  if(!bank || bank==='선택하기'){showToast('은행/증권사를 선택해주세요.');return;}
   
   const idx=accounts.findIndex(x=>x.id===id);
   if(idx===-1) return;
@@ -992,17 +1211,17 @@ function updateAccount(id){
     accounts[idx].startDate = startDate;
   }
   
-  saveAccounts(accounts); showEditMain(); renderPage();
+  saveAccounts(accounts); showEditMain(); renderPage(); showToast('계좌가 저장됐어요');
 }
 
 function restoreAccount(id){
   const mk = monthKey(selY, selM);
   if(hidden[mk]) hidden[mk] = hidden[mk].filter(x=>x!==id);
   saveHidden(hidden);
-  showEditMain(); renderPage();
+  showEditMain(); renderPage(); showToast('저장됐어요');
 }
 
-function deleteAccount(id){
+async function deleteAccount(id){
   const a = accounts.find(x=>x.id===id);
   if(!a) return;
   openTrashModal(
@@ -1013,14 +1232,14 @@ function deleteAccount(id){
       Object.keys(history).forEach(mk=>{ delete history[mk][id]; });
       Object.keys(hidden).forEach(mk=>{ hidden[mk]=hidden[mk].filter(x=>x!==id); });
       saveAccounts(accounts); saveHistory(history); saveHidden(hidden);
-      showEditMain(); renderPage();
+      showEditMain(); renderPage(); showToast('저장됐어요');
     },
     ()=>{ // 이번달 숨기기
       const mk = monthKey(selY, selM);
       if(!hidden[mk]) hidden[mk]=[];
       if(!hidden[mk].includes(id)) hidden[mk].push(id);
       saveHidden(hidden);
-      showEditMain(); renderPage();
+      showEditMain(); renderPage(); showToast('저장됐어요');
     }
   );
 }
@@ -1115,7 +1334,7 @@ function confirmHide(){ if(_hideCb)_hideCb(); closeTrashModal(); }
 function openMonthTrash(){
   const mk = monthKey(selY, selM);
   const hasData = accounts.some(a=>(history[mk]||{})[a.id]>0);
-  if(!hasData){ alert(selM+'월에 입력된 잔고가 없어요.'); return; }
+  if(!hasData){ showToast(selM+'월에 입력된 잔고가 없어요.'); return; }
   openTrashModal(
     selM+'월 잔고 초기화',
     `<strong>${selY}년 ${selM}월</strong>에 입력된<br>모든 계좌 잔고가 삭제돼요.`,
@@ -1131,8 +1350,8 @@ function openMonthTrash(){
 // 편집 모달
 (function(){
   let startY=0, currentY=0, isDragging=false;
-  const overlay = document.getElementById('editOverlay');
-  const sheet   = overlay?.querySelector('.edit-sheet');
+  const overlay = document.getElementById('fsOverlay');
+  const sheet   = overlay?.querySelector('.fs-body-legacy');
   const handle  = overlay?.querySelector('.modal-handle');
   if(!handle||!sheet||!overlay) return;
 
@@ -1202,7 +1421,171 @@ function openMonthTrash(){
   document.addEventListener('mouseup',   onEnd);
 })();
 
+/* ════════ 월별 메모 ════════ */
+const MEMO_KEY = 'af_monthly_memos';
+
+function memoMK(y, m) {
+  return `${y}-${String(m).padStart(2,'0')}`;
+}
+function loadMemos() {
+  try { return JSON.parse(localStorage.getItem(MEMO_KEY)||'{}'); } catch { return {}; }
+}
+function updateMemoIcon() {
+  const memos = loadMemos();
+  const mk = memoMK(selY, selM);
+  const btn = document.getElementById('memoIconBtn');
+  if (!btn) return;
+  if (memos[mk]) btn.classList.add('has-memo');
+  else btn.classList.remove('has-memo');
+}
+function openAccountMemo() {
+  const memos = loadMemos();
+  const mk = memoMK(selY, selM);
+  const now = new Date();
+  const isCurrentMonth = (selY === now.getFullYear() && selM === now.getMonth()+1);
+  document.getElementById('accMemoTitle').textContent = `${selY}년 ${selM}월 메모`;
+  document.getElementById('accMemoTextarea').value = memos[mk] || '';
+  document.getElementById('accMemoOverlay').classList.add('active');
+  setTimeout(()=>document.getElementById('accMemoTextarea').focus(), 200);
+}
+function closeAccountMemo() {
+  document.getElementById('accMemoOverlay').classList.remove('active');
+}
+function saveAccountMemo() {
+  const text = document.getElementById('accMemoTextarea').value.trim();
+  const mk = memoMK(selY, selM);
+  const memos = loadMemos();
+  if (text) memos[mk] = text;
+  else delete memos[mk];
+  localStorage.setItem(MEMO_KEY, JSON.stringify(memos));
+  closeAccountMemo();
+  updateMemoIcon();
+}
+
+
 init();
+updateMemoIcon();
 </script>
+<!-- 월별 메모 모달 -->
+<div class="acc-memo-overlay" id="accMemoOverlay" onclick="if(event.target===this)closeAccountMemo()">
+  <div class="acc-memo-sheet">
+    <div class="acc-memo-handle"></div>
+    <div class="acc-memo-title" id="accMemoTitle">이번 달 메모</div>
+    <div class="acc-memo-sub">큰 지출이나 특이사항을 간단히 기록하세요</div>
+    <textarea class="acc-memo-textarea" id="accMemoTextarea" placeholder="예) 냉장고 교체 120만, 제주 여행 80만" maxlength="300"></textarea>
+    <div class="acc-memo-hint">대시보드와 추이 페이지에서도 확인할 수 있어요</div>
+    <div class="acc-memo-btns">
+      <button class="acc-memo-cancel" onclick="closeAccountMemo()">취소</button>
+      <button class="acc-memo-save" onclick="saveAccountMemo()">저장</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- 바텀탭 -->
+<div class="bottom-tab-bar">
+  <button class="tab-item " onclick="location.href='asset_manager_mobile.html'">
+    <div class="tab-item-dot"></div>
+    <div class="tab-item-label">홈</div>
+  </button>
+  <button class="tab-item active" >
+    <div class="tab-item-dot"></div>
+    <div class="tab-item-label">계좌</div>
+  </button>
+  <button class="tab-item " onclick="location.href='investment_page.html'">
+    <div class="tab-item-dot"></div>
+    <div class="tab-item-label">투자</div>
+  </button>
+  <button class="tab-item " onclick="location.href='trend_page.html'">
+    <div class="tab-item-dot"></div>
+    <div class="tab-item-label">추이</div>
+  </button>
+  <button class="tab-item " onclick="openMoreSheet()">
+    <div class="tab-item-dot"></div>
+    <div class="tab-item-label">더보기</div>
+  </button>
+</div>
+
+<!-- 더보기 시트 -->
+<div class="more-overlay" id="moreOverlay" onclick="if(event.target===this)closeMoreSheet()">
+  <div class="more-sheet">
+    <div class="more-handle"></div>
+    <div class="more-sec-title">관리 항목</div>
+    <div class="more-grid">
+      <button class="more-grid-item" onclick="location.href='loan_page.html'">대출</button>
+      <button class="more-grid-item" onclick="location.href='realestate_page.html'">부동산</button>
+      <button class="more-grid-item" onclick="location.href='car_page.html'">자동차</button>
+      <button class="more-grid-item" onclick="location.href='card_page.html'">카드</button>
+    </div>
+    <div class="more-sec-title">설정·분석</div>
+    <div class="more-grid">
+      <button class="more-grid-item" onclick="location.href='income_page.html'">수입</button>
+      <button class="more-grid-item" onclick="location.href='expense_page.html'">고정지출</button>
+      <button class="more-grid-item" onclick="location.href='goal_page.html';closeMoreSheet()">목표관리</button>
+    </div>
+  </div>
+</div>
+<script>
+function openMoreSheet(){ document.getElementById('moreOverlay').classList.add('active'); }
+function closeMoreSheet(){ document.getElementById('moreOverlay').classList.remove('active'); }
+</script>
+
+<div class="bottom-tab-bar">
+  <button class="tab-item " onclick="location.href='asset_manager_mobile.html'">
+    <div class="tab-item-dot"></div>
+    <div class="tab-item-label">홈</div>
+  </button>
+  <button class="tab-item active" onclick="location.href='account_page.html'">
+    <div class="tab-item-dot"></div>
+    <div class="tab-item-label">계좌</div>
+  </button>
+  <button class="tab-item " onclick="location.href='investment_page.html'">
+    <div class="tab-item-dot"></div>
+    <div class="tab-item-label">투자</div>
+  </button>
+  <button class="tab-item " onclick="location.href='trend_page.html'">
+    <div class="tab-item-dot"></div>
+    <div class="tab-item-label">추이</div>
+  </button>
+  <button class="tab-item " onclick="openMoreSheet()">
+    <div class="tab-item-dot"></div>
+    <div class="tab-item-label">더보기</div>
+  </button>
+</div>
+<div class="more-overlay" id="moreOverlay" onclick="if(event.target===this)closeMoreSheet()">
+  <div class="more-sheet">
+    <div class="more-handle"></div>
+    <div class="more-sec-title">관리 항목</div>
+    <div class="more-grid">
+      <button class="more-grid-item" onclick="location.href='loan_page.html'">대출</button>
+      <button class="more-grid-item" onclick="location.href='realestate_page.html'">부동산</button>
+      <button class="more-grid-item" onclick="location.href='car_page.html'">자동차</button>
+      <button class="more-grid-item" onclick="location.href='card_page.html'">카드</button>
+    </div>
+    <div class="more-sec-title">설정·분석</div>
+    <div class="more-grid">
+      <button class="more-grid-item" onclick="location.href='income_page.html'">수입</button>
+      <button class="more-grid-item" onclick="location.href='expense_page.html'">고정지출</button>
+      <button class="more-grid-item" onclick="location.href='goal_page.html';closeMoreSheet()">목표관리</button>
+    </div>
+  </div>
+</div>
+<script>
+function openMoreSheet(){ document.getElementById('moreOverlay').classList.add('active'); }
+function closeMoreSheet(){ document.getElementById('moreOverlay').classList.remove('active'); }
+</script>
+
+<!-- 토스트 -->
+<div class="toast-msg" id="toastMsg"></div>
+<!-- 확인 다이얼로그 -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <div class="confirm-msg" id="confirmMsg"></div>
+    <div class="confirm-btns">
+      <button class="confirm-cancel" onclick="confirmResolve(false)">취소</button>
+      <button class="confirm-ok" onclick="confirmResolve(true)">삭제</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>

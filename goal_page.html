@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>목표관리 - AssetFlow</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body {
+    background:#1a1a1a; color:#fff;
+    font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;
+    min-height:100vh; padding-bottom:200px;
+  }
+
+  .header { display:flex; align-items:center; padding:16px 20px; position:sticky; top:0; background:#1a1a1a; z-index:100; }
+  .back-btn { background:none; border:none; color:#fff; font-size:22px; cursor:pointer; padding:4px 8px 4px 0; }
+  .header-title { font-size:17px; font-weight:600; }
+
+  /* 요약 카드 */
+  .summary-bar { margin:0 20px 20px; background:#1a1a1a; border-radius:16px; padding:18px 20px; display:flex; justify-content:space-between; }
+  .sb-item { text-align:center; }
+  .sb-label { font-size:12px; color:#666; margin-bottom:4px; }
+  .sb-value { font-size:16px; font-weight:700; font-family:-apple-system, ui-rounded, 'Apple SD Gothic Neo', sans-serif;}
+
+  /* 목표 카드 */
+  .goal-list { padding:0 20px; display:flex; flex-direction:column; gap:16px; }
+  .goal-card { background:#1a1a1a; border-radius:20px; padding:20px; }
+  .gc-top { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:14px; }
+  .gc-emoji { font-size:28px; margin-right:12px; }
+  .gc-info { flex:1; }
+  .gc-name { font-size:16px; font-weight:700; margin-bottom:4px; }
+  .gc-period { font-size:12px; color:#666; }
+  .gc-dday { font-size:12px; font-weight:600; padding:4px 10px; border-radius:20px; background:#2a2a2a; color:#aaa; white-space:nowrap; }
+  .gc-dday.soon { color:#f59e0b; background:rgba(245,158,11,0.15); }
+  .gc-dday.done { color:#4ade80; background:rgba(74,222,128,0.15); }
+
+  /* 진행률 */
+  .gc-amounts { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px; font-family:-apple-system, ui-rounded, 'Apple SD Gothic Neo', sans-serif;}
+  .gc-current { font-size:22px; font-weight:700; color:#fff; font-family:-apple-system, ui-rounded, 'Apple SD Gothic Neo', sans-serif;}
+  .gc-target { font-size:13px; color:#555; }
+  .gc-bar-bg { height:10px; background:#2a2a2a; border-radius:5px; overflow:hidden; margin-bottom:8px; }
+  .gc-bar-fill { height:100%; border-radius:5px; transition:width 0.5s ease; }
+  .gc-pct-row { display:flex; justify-content:space-between; font-size:12px; color:#666; }
+  .gc-pct { font-weight:600; }
+
+  /* 연결 계좌 */
+  .gc-accounts { margin-top:14px; padding-top:14px; border-top:1px solid #2a2a2a; display:flex; flex-wrap:wrap; gap:6px; }
+  .gc-acc-chip { background:#2a2a2a; border-radius:8px; padding:5px 10px; font-size:12px; color:#aaa; }
+  .gc-acc-none { font-size:12px; color:#555; font-style:italic; }
+
+  /* 편집 버튼 */
+  .gc-actions { margin-top:14px; display:flex; gap:8px; }
+  .gc-btn { flex:1; background:#2a2a2a; border:none; border-radius:10px; color:#aaa; font-size:13px; padding:10px; cursor:pointer; }
+  .gc-btn.del { color:#f87171; }
+
+  /* 빈 상태 */
+  .empty-state { text-align:center; padding:80px 20px; }
+  .empty-icon { font-size:48px; margin-bottom:16px; }
+  .empty-text { font-size:15px; color:#555; line-height:1.7; }
+
+  /* 하단 버튼 */
+  .bottom-nav { position:fixed; bottom:70px; left:0; right:0; background:rgba(0,0,0,0.97); backdrop-filter:blur(10px); padding:12px 20px 28px; }
+  .nav-btn { width:100%; background:#007aff; border:none; border-radius:12px; color:#fff; font-size:15px; font-weight:600; padding:14px; cursor:pointer; }
+
+  /* 모달 공통 */
+  .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:400; align-items:flex-end; }
+  .overlay.active { display:flex; }
+  .sheet { background:#1e1e1e; border-radius:24px 24px 0 0; width:100%; max-height:90vh; overflow-y:auto; padding:20px 20px 86px; }
+  .sheet-handle { width:36px; height:4px; background:#444; border-radius:2px; margin:0 auto 20px; }
+    .modal-title { font-size:17px; font-weight:700; margin-bottom:20px; color:#fff; }
+
+  /* 폼 */
+  .f-row { display:flex; flex-direction:column; gap:4px; margin-bottom:16px; }
+  .f-label { font-size:13px; color:#888; margin-bottom:4px; }
+  .f-input { width:100%; background:#2a2a2a; border:1px solid #333; border-radius:10px; color:#fff; font-size:15px; padding:13px 14px; outline:none; -webkit-appearance:none; }
+  .f-input:focus { border-color:#007aff; }
+
+  /* 이모지 선택 */
+  .emoji-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:8px; margin-bottom:20px; }
+  .emoji-btn { background:#2a2a2a; border:2px solid transparent; border-radius:12px; font-size:22px; padding:10px 0; cursor:pointer; text-align:center; }
+  .emoji-btn.active { border-color:#007aff; background:rgba(0,122,255,0.1); }
+
+  /* 계좌 선택 */
+  .acc-select-list { display:flex; flex-direction:column; gap:8px; margin-bottom:20px; }
+  .acc-select-item { display:flex; align-items:center; justify-content:space-between; background:#2a2a2a; border-radius:12px; padding:14px 16px; cursor:pointer; }
+  .acc-select-left { display:flex; align-items:center; gap:10px; }
+  .acc-icon { width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:#fff; }
+  .acc-name { font-size:14px; font-weight:500; }
+  .acc-cat { font-size:12px; color:#666; }
+  .acc-check { width:22px; height:22px; border-radius:50%; border:2px solid #444; display:flex; align-items:center; justify-content:center; transition:all 0.15s; }
+  .acc-check.checked { border-color:#007aff; background:#007aff; }
+  .acc-check.checked::after { content:'✓'; font-size:11px; color:#fff; font-weight:700; }
+  .acc-balance { font-size:12px; color:#888; margin-top:2px; }
+
+  /* 버튼 */
+  .btn-submit { width:100%; background:#007aff; border:none; border-radius:12px; color:#fff; font-size:15px; font-weight:600; padding:15px; cursor:pointer; margin-top:8px; }
+  .btn-cancel { width:100%; background:#2a2a2a; border:none; border-radius:12px; color:#aaa; font-size:15px; padding:14px; cursor:pointer; margin-top:8px; }
+
+  /* 색상 선택 */
+  .color-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:8px; margin-bottom:20px; }
+  .color-btn { height:36px; border-radius:10px; border:2px solid transparent; cursor:pointer; transition:all 0.15s; }
+  .color-btn.active { border-color:#fff; transform:scale(1.1); }
+
+  .section-sep { font-size:12px; color:#555; font-weight:600; padding:4px 0 8px; border-top:1px solid #2a2a2a; margin-top:4px; margin-bottom:4px; }
+
+  /* 기간 선택 버튼 */
+  .period-btns { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:12px; }
+  .period-btn { background:#2a2a2a; border:2px solid transparent; border-radius:10px; color:#aaa; font-size:13px; padding:10px 4px; cursor:pointer; text-align:center; transition:all 0.15s; }
+  .period-btn.active { border-color:#007aff; color:#007aff; background:rgba(0,122,255,0.08); }
+
+  /* 저장/취소 버튼 좌우 배치 */
+  .btn-row { display:flex; gap:8px; margin-top:8px; }
+  .btn-row .btn-submit, .btn-row .btn-cancel { flex:1; margin-top:0; }
+
+  /* ── 풀스크린 편집 ── */
+  .fs-overlay {
+    display: none; position: fixed; inset: 0; z-index: 300;
+    background: #1a1a1a;
+    transform: translateY(100%);
+    transition: transform 0.38s cubic-bezier(0.32,0.72,0,1);
+    overflow-y: auto; overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  .fs-overlay.active {
+    display: block;
+    transform: translateY(0);
+  }
+  .fs-header {
+    display: flex; align-items: center; justify-content: center;
+    padding: 16px 20px 12px;
+    position: sticky; top: 0; background: #1a1a1a; z-index: 10;
+    border-bottom: 0.5px solid #2a2a2a;
+  }
+  .fs-title {
+    font-size: 15px; font-weight: 600; color: #fff;
+    font-family: -apple-system, sans-serif;
+    flex: 1; text-align: center;
+  }
+  .fs-body { padding: 20px 20px 100px; }
+  /* 추가/저장 버튼 */
+  .btn-add, .btn-add-acc, .btn-add-card, .btn-submit {
+    background: #007aff !important; color: #fff !important;
+    border: none; border-radius: 14px;
+    font-size: 15px; font-weight: 600; padding: 16px;
+    cursor: pointer; width: 100%; margin-top: 8px;
+    font-family: -apple-system, sans-serif;
+  }
+  .btn-add:active, .btn-add-acc:active, .btn-add-card:active, .btn-submit:active {
+    opacity: 0.85;
+  }
+  /* 취소 버튼 */
+  .btn-cancel, .btn-cancel-half {
+    background: #2e2e2e !important; color: #888 !important;
+    border: none; border-radius: 14px;
+    font-size: 15px; padding: 14px;
+    cursor: pointer; width: 100%; margin-top: 6px;
+    font-family: -apple-system, sans-serif;
+  }
+
+
+  /* ── 바텀탭 ── */
+  .bottom-tab-bar {
+    position:fixed; bottom:0; left:0; right:0;
+    background:rgba(20,20,20,0.97);
+    border-top:1px solid #2a2a2a;
+    display:flex; padding:10px 0 28px;
+    z-index:200;
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+  }
+  .tab-item {
+    flex:1; display:flex; flex-direction:column;
+    align-items:center; gap:3px;
+    cursor:pointer; padding:4px 0;
+    background:none; border:none; color:inherit;
+  }
+  .tab-item-label { font-size:10px; color:#555; font-weight:500; letter-spacing:-0.2px; }
+  .tab-item.active .tab-item-label { color:#fff; }
+  .tab-item-dot { width:4px; height:4px; border-radius:50%; background:transparent; margin-bottom:1px; }
+  .tab-item.active .tab-item-dot { background:#fff; }
+
+  .more-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:2000; display:none; align-items:flex-end; }
+  .more-overlay.active { display:flex; }
+  .more-sheet { background:#1a1a1a; border-radius:20px 20px 0 0; width:100%; padding:20px 20px 36px; }
+  .more-handle { width:40px; height:4px; background:#333; border-radius:2px; margin:0 auto 18px; }
+  .more-sec-title { font-size:11px; color:#555; font-weight:600; letter-spacing:0.05em; padding:0 2px 10px; }
+  .more-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:16px; }
+  .more-grid-item {
+    background:#242424; border-radius:10px;
+    padding:12px 6px; text-align:center;
+    font-size:13px; font-weight:500; color:#ddd;
+    cursor:pointer; border:none;
+    font-family:-apple-system,'Apple SD Gothic Neo',sans-serif;
+  }
+  .more-grid-item:active { background:#2e2e2e; color:#fff; }
+
+
+  /* ── 바텀탭 ── */
+  .bottom-tab-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: rgba(15,15,15,0.98);
+    border-top: 1px solid #222;
+    display: flex; padding: 10px 0 28px;
+    z-index: 1500;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  .tab-item {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; gap: 3px;
+    cursor: pointer; padding: 4px 0;
+    background: none; border: none; color: inherit;
+  }
+  .tab-item-label { font-size: 10px; color: #555; font-weight: 500; letter-spacing: -0.2px; }
+  .tab-item.active .tab-item-label { color: #fff; }
+  .tab-item-dot { width: 4px; height: 4px; border-radius: 50%; background: transparent; margin-bottom: 1px; }
+  .tab-item.active .tab-item-dot { background: #fff; }
+  .more-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:2000; display:none; align-items:flex-end; }
+  .more-overlay.active { display:flex; }
+  .more-sheet { background:#1a1a1a; border-radius:20px 20px 0 0; width:100%; padding:20px 20px 36px; }
+  .more-handle { width:40px; height:4px; background:#333; border-radius:2px; margin:0 auto 18px; }
+  .more-sec-title { font-size:11px; color:#555; font-weight:600; letter-spacing:0.05em; padding:0 2px 10px; }
+  .more-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:16px; }
+  .more-grid-item {
+    background:#242424; border-radius:10px;
+    padding:12px 6px; text-align:center;
+    font-size:13px; font-weight:500; color:#ddd;
+    cursor:pointer; border:none;
+    font-family:-apple-system,'Apple SD Gothic Neo',sans-serif;
+  }
+  .more-grid-item:active { background:#2e2e2e; color:#fff; }
+
+
+  /* ── 토스트 알림 ── */
+  .toast-msg {
+    position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(10px);
+    background: rgba(50,50,50,0.97); color: #fff;
+    font-size: 13px; font-weight: 500;
+    padding: 11px 20px; border-radius: 20px;
+    white-space: nowrap; z-index: 9999;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.2s, transform 0.2s;
+    font-family: -apple-system, sans-serif;
+  }
+  .toast-msg.show {
+    opacity: 1; transform: translateX(-50%) translateY(0);
+  }
+  /* ── 인라인 확인 (confirm 대체) ── */
+  .confirm-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    z-index: 9000; display: none; align-items: center; justify-content: center; padding: 0 40px;
+  }
+  .confirm-overlay.active { display: flex; }
+  .confirm-box {
+    background: #242424; border-radius: 16px; padding: 24px 20px 16px; width: 100%; max-width: 300px;
+  }
+  .confirm-msg { font-size: 15px; color: #fff; text-align: center; margin-bottom: 20px; line-height: 1.5; font-family: -apple-system, sans-serif; }
+  .confirm-btns { display: flex; gap: 8px; }
+  .confirm-cancel { flex: 1; background: #333; border: none; border-radius: 10px; color: #888; font-size: 15px; padding: 12px; cursor: pointer; font-family: -apple-system, sans-serif; }
+  .confirm-ok { flex: 1; background: #f87171; border: none; border-radius: 10px; color: #fff; font-size: 15px; font-weight: 600; padding: 12px; cursor: pointer; font-family: -apple-system, sans-serif; }
+
+
+  /* ── 사용자 뱃지 ── */
+  .user-badge {
+    font-size: 11px; font-weight: 500;
+    padding: 3px 8px; border-radius: 10px;
+    background: rgba(77,163,255,0.15);
+    color: #4da3ff; margin-left: 6px;
+    display: none;
+  }
+  .user-badge.show { display: inline-block; }
+
+</style>
+</head>
+<body>
+
+<div class="header">
+  <button class="back-btn" onclick="history.back()">‹</button>
+  <span class="header-title">목표 관리</span><span class="user-badge" id="userBadge"></span>
+</div>
+
+<div class="summary-bar" id="summaryBar" style="display:none">
+  <div class="sb-item">
+    <div class="sb-label">목표 수</div>
+    <div class="sb-value" id="sbCount">0개</div>
+  </div>
+  <div class="sb-item">
+    <div class="sb-label">평균 달성률</div>
+    <div class="sb-value" id="sbAvg" style="color:#4ade80">0%</div>
+  </div>
+  <div class="sb-item">
+    <div class="sb-label">목표 총액</div>
+    <div class="sb-value" id="sbTotal">0억</div>
+  </div>
+</div>
+
+<div class="goal-list" id="goalList"></div>
+
+<div class="bottom-nav">
+  <button class="nav-btn" onclick="openAddModal()">+ 목표 추가</button>
+</div>
+
+<!-- 목표 추가/수정 모달 -->
+<div class="overlay" id="fsOverlay">
+  <div class="sheet">
+    <div id="editContent"></div>
+  </div>
+</div>
+
+<script>
+
+/* ── 토스트 & 확인 다이얼로그 ── */
+function showToast(msg, duration=2000){
+  const el = document.getElementById('toastMsg');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(()=> el.classList.remove('show'), duration);
+}
+let confirmResolve = null;
+function showConfirm(msg){
+  return new Promise(resolve => {
+    document.getElementById('confirmMsg').textContent = msg;
+    document.getElementById('confirmOverlay').classList.add('active');
+    confirmResolve = (result) => {
+      document.getElementById('confirmOverlay').classList.remove('active');
+      resolve(result);
+    };
+  });
+}
+
+const CY = new Date().getFullYear();
+const CM = new Date().getMonth() + 1;
+
+function getPrefix(){ return localStorage.getItem('af_active_prefix') || 'u1_'; }
+function pk(key){ return getPrefix() + key; }
+function monthKey(y,m){ return `${y}-${String(m).padStart(2,'0')}`; }
+
+function loadGoals(){ try{ return JSON.parse(localStorage.getItem(pk('af_goals'))||'[]'); } catch{ return []; } }
+function saveGoals(d){ localStorage.setItem(pk('af_goals'), JSON.stringify(d)); }
+
+function loadAccounts(){ try{ return JSON.parse(localStorage.getItem(pk('af_accounts'))||'[]'); } catch{ return []; } }
+function loadHistory(){ try{ return JSON.parse(localStorage.getItem(pk('af_accounts_history'))||'{}'); } catch{ return {}; } }
+
+function fmt(n){ return Math.round(Math.abs(n)).toLocaleString('ko-KR') + '원'; }
+function fmtShort(n){
+  const abs = Math.abs(n);
+  if(abs >= 100000000) return (n/100000000).toFixed(1) + '억';
+  if(abs >= 10000) return Math.round(n/10000) + '만';
+  return n.toLocaleString('ko-KR');
+}
+
+function getAccBalance(accId){
+  const hist = loadHistory();
+  const mk = monthKey(CY, CM);
+  return (hist[mk] || {})[accId] || 0;
+}
+
+function calcDday(targetDate){
+  if(!targetDate) return null;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const target = new Date(targetDate);
+  const diff = Math.round((target - today) / 86400000);
+  return diff;
+}
+
+const EMOJIS = ['🏠','🚗','✈️','💍','🎓','👶','💻','📱','🏋️','🌏','💰','🏦','🛒','🎯','⭐','🔥'];
+const COLORS = ['#007aff','#34d399','#f59e0b','#f87171','#a78bfa','#60a5fa','#fb923c','#4ade80','#e879f9','#94a3b8','#fbbf24','#2dd4bf'];
+
+let selectedAccIds = [];
+let selectedEmoji = '🎯';
+let selectedColor = '#007aff';
+let editingId = null;
+
+function renderPage(){
+  const goals = loadGoals();
+  const accounts = loadAccounts();
+
+  // 요약바
+  const summaryBar = document.getElementById('summaryBar');
+  if(goals.length > 0){
+    summaryBar.style.display = 'flex';
+    const totalTarget = goals.reduce((s,g) => s + (g.target||0), 0);
+    const pctsArr = goals.map(g => {
+      const cur = (g.accountIds||[]).reduce((s,id) => s + getAccBalance(id), 0);
+      return g.target > 0 ? Math.min(cur/g.target*100, 100) : 0;
+    });
+    const avgPct = pctsArr.length ? Math.round(pctsArr.reduce((a,b)=>a+b,0)/pctsArr.length) : 0;
+    document.getElementById('sbCount').textContent = goals.length + '개';
+    document.getElementById('sbAvg').textContent = avgPct + '%';
+    document.getElementById('sbTotal').textContent = fmtShort(totalTarget);
+  } else {
+    summaryBar.style.display = 'none';
+  }
+
+  const el = document.getElementById('goalList');
+  if(!goals.length){
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">🎯</div><div class="empty-text">아직 목표가 없어요<br>첫 번째 목표를 추가해보세요</div></div>`;
+    return;
+  }
+
+  el.innerHTML = goals.map(g => {
+    const cur = (g.accountIds||[]).reduce((s,id) => s + getAccBalance(id), 0);
+    const pct = g.target > 0 ? Math.min(Math.round(cur/g.target*100), 100) : 0;
+    const dday = calcDday(g.targetDate);
+    let ddayText = '기간 미설정';
+    let ddayClass = '';
+    if(dday !== null){
+      if(dday < 0){ ddayText = '기간 종료'; ddayClass = 'done'; }
+      else if(dday === 0){ ddayText = 'D-Day!'; ddayClass = 'done'; }
+      else if(dday <= 30){ ddayText = `D-${dday}`; ddayClass = 'soon'; }
+      else { ddayText = `D-${dday}`; }
+    }
+    if(pct >= 100){ ddayText = '🎉 달성!'; ddayClass = 'done'; }
+
+    const connAccs = (g.accountIds||[]).map(id => {
+      const acc = accounts.find(a => a.id === id);
+      return acc ? `<span class="gc-acc-chip">${acc.name}</span>` : '';
+    }).filter(Boolean).join('');
+
+    const startY = g.startDate ? g.startDate.slice(0,7) : '—';
+    const endY = g.targetDate ? g.targetDate.slice(0,7) : '—';
+
+    return `
+      <div class="goal-card">
+        <div class="gc-top">
+          <div style="display:flex;align-items:flex-start;flex:1">
+            <div class="gc-emoji">${g.emoji||'🎯'}</div>
+            <div class="gc-info">
+              <div class="gc-name">${g.name}</div>
+              <div class="gc-period">${startY} → ${endY}</div>
+            </div>
+          </div>
+          <div class="gc-dday ${ddayClass}">${ddayText}</div>
+        </div>
+
+        <div class="gc-amounts">
+          <div class="gc-current">${fmtShort(cur)}</div>
+          <div class="gc-target">/ ${fmtShort(g.target||0)}</div>
+        </div>
+        <div class="gc-bar-bg">
+          <div class="gc-bar-fill" style="width:${pct}%;background:${g.color||'#007aff'}"></div>
+        </div>
+        <div class="gc-pct-row">
+          <span class="gc-pct" style="color:${g.color||'#007aff'}">${pct}%</span>
+          <span>${fmtShort(Math.max((g.target||0)-cur,0))} 남음</span>
+        </div>
+
+        <div class="gc-accounts">
+          ${connAccs || '<span class="gc-acc-none">계좌 미연결 — 수정에서 연결하면 자동 계산돼요</span>'}
+        </div>
+
+        <div class="gc-actions">
+          <button class="gc-btn" onclick="openEditModal('${g.id}')">✏️ 수정</button>
+          <button class="gc-btn del" onclick="deleteGoal('${g.id}')">삭제</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function openAddModal(){
+  editingId = null;
+  selectedAccIds = [];
+  selectedEmoji = '🎯';
+  selectedColor = '#007aff';
+  renderForm(null);
+  document.getElementById('fsOverlay').classList.add('active');
+}
+
+function openEditModal(id){
+  const goals = loadGoals();
+  const g = goals.find(x => x.id === id);
+  if(!g) return;
+  editingId = id;
+  selectedAccIds = [...(g.accountIds||[])];
+  selectedEmoji = g.emoji || '🎯';
+  selectedColor = g.color || '#007aff';
+  renderForm(g);
+  document.getElementById('fsOverlay').classList.add('active');
+}
+
+function closeModal(){
+  document.getElementById('fsOverlay').classList.remove('active');
+}
+
+let selectedPeriod = null; // '6m','1y','2y','custom'
+
+function calcEndDate(startDate, period){
+  if(!startDate || !period || period === 'custom') return '';
+  const d = new Date(startDate);
+  if(period === '6m') d.setMonth(d.getMonth() + 6);
+  else if(period === '1y') d.setFullYear(d.getFullYear() + 1);
+  else if(period === '2y') d.setFullYear(d.getFullYear() + 2);
+  return d.toISOString().slice(0,10);
+}
+
+function detectPeriod(startDate, endDate){
+  if(!startDate || !endDate) return 'custom';
+  const s = new Date(startDate);
+  const e = new Date(endDate);
+  const s6 = new Date(startDate); s6.setMonth(s6.getMonth()+6);
+  const s1 = new Date(startDate); s1.setFullYear(s1.getFullYear()+1);
+  const s2 = new Date(startDate); s2.setFullYear(s2.getFullYear()+2);
+  if(e.toISOString().slice(0,10) === s6.toISOString().slice(0,10)) return '6m';
+  if(e.toISOString().slice(0,10) === s1.toISOString().slice(0,10)) return '1y';
+  if(e.toISOString().slice(0,10) === s2.toISOString().slice(0,10)) return '2y';
+  return 'custom';
+}
+
+function pickPeriod(period){
+  selectedPeriod = period;
+  document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.querySelector(`.period-btn[data-period="${period}"]`);
+  if(btn) btn.classList.add('active');
+
+  const fEnd = document.getElementById('fEnd');
+  const fStart = document.getElementById('fStart');
+  if(period === 'custom'){
+    fEnd.removeAttribute('readonly');
+    fEnd.style.opacity = '1';
+    fEnd.focus();
+  } else {
+    fEnd.setAttribute('readonly', true);
+    fEnd.style.opacity = '0.5';
+    fEnd.value = calcEndDate(fStart.value, period);
+  }
+}
+
+function onStartChange(){
+  if(selectedPeriod && selectedPeriod !== 'custom'){
+    const fEnd = document.getElementById('fEnd');
+    fEnd.value = calcEndDate(document.getElementById('fStart').value, selectedPeriod);
+  }
+}
+
+function formatTargetInput(input){
+  let val = input.value.replace(/,/g,'');
+  if(val && !isNaN(val) && val !== ''){
+    input.value = Number(val).toLocaleString('ko-KR');
+  }
+}
+
+function renderForm(g){
+  const accounts = loadAccounts();
+  const isEdit = !!g;
+  const today = new Date().toISOString().slice(0,10);
+
+  // 기간 감지 (수정 시)
+  if(isEdit && g.startDate && g.targetDate){
+    selectedPeriod = detectPeriod(g.startDate, g.targetDate);
+  } else {
+    selectedPeriod = null;
+  }
+
+  const emojiHTML = EMOJIS.map(e =>
+    `<button class="emoji-btn ${e===selectedEmoji?'active':''}" onclick="pickEmoji('${e}',this)">${e}</button>`
+  ).join('');
+
+  const colorHTML = COLORS.map(c =>
+    `<div class="color-btn ${c===selectedColor?'active':''}" style="background:${c}" onclick="pickColor('${c}',this)"></div>`
+  ).join('');
+
+  const catLabels = {checking:'입출금', savings:'저축·파킹', securities:'증권·CMA', pension:'연금·IRP', crypto:'가상화폐'};
+
+  // selectedAccIds 기준으로 체크 (클로저 캡처 문제 방지)
+  const checkedIds = [...selectedAccIds];
+
+  const accHTML = accounts.length ? accounts.map(a => {
+    const bal = getAccBalance(a.id);
+    const checked = checkedIds.includes(a.id);
+    const bgColor = a.color || '#333';
+    return `
+      <div class="acc-select-item" onclick="toggleAcc('${a.id}')">
+        <div class="acc-select-left">
+          <div class="acc-icon" style="background:${bgColor}">${(a.bank||a.name||'?').slice(0,2)}</div>
+          <div>
+            <div class="acc-name">${a.name}</div>
+            <div class="acc-cat">${catLabels[a.cat]||a.cat} · ${fmt(bal)}</div>
+          </div>
+        </div>
+        <div class="acc-check ${checked?'checked':''}" id="chk_${a.id}"></div>
+      </div>`;
+  }).join('') : '<div style="color:#555;font-size:13px;text-align:center;padding:40px 0">등록된 계좌가 없어요 (계좌 페이지에서 추가하세요)</div>';
+
+  const targetFmt = g?.target ? Number(g.target).toLocaleString('ko-KR') : '';
+  const isCustom = selectedPeriod === 'custom' || selectedPeriod === null;
+  const endReadonly = !isCustom ? 'readonly style="opacity:0.5"' : '';
+
+  const periods = [{key:'6m',label:'6개월'},{key:'1y',label:'1년'},{key:'2y',label:'2년'},{key:'custom',label:'직접지정'}];
+  const periodHTML = periods.map(p =>
+    `<button class="period-btn ${selectedPeriod===p.key?'active':''}" data-period="${p.key}" onclick="pickPeriod('${p.key}')">${p.label}</button>`
+  ).join('');
+
+  document.getElementById('editContent').innerHTML = `
+    <div class="modal-title">${isEdit?'목표 수정':'목표 추가'}</div>
+
+    <div class="section-sep">아이콘</div>
+    <div class="emoji-grid">${emojiHTML}</div>
+
+    <div class="section-sep">색상</div>
+    <div class="color-grid">${colorHTML}</div>
+
+    <div class="section-sep">기본 정보</div>
+    <div class="f-row">
+      <div class="f-label">목표 이름</div>
+      <input class="f-input" id="fName" type="text" placeholder="예) 내 집 마련" value="${g?.name||''}">
+    </div>
+    <div class="f-row">
+      <div class="f-label">목표 금액 (원)</div>
+      <input class="f-input" id="fTarget" type="text" inputmode="numeric" placeholder="0" value="${targetFmt}" oninput="formatTargetInput(this)">
+    </div>
+    <div class="f-row">
+      <div class="f-label">시작일</div>
+      <input class="f-input" id="fStart" type="date" value="${g?.startDate||today}" onchange="onStartChange()">
+    </div>
+    <div class="f-row">
+      <div class="f-label">목표 기간</div>
+      <div class="period-btns">${periodHTML}</div>
+      <div class="f-label" style="margin-top:4px">목표 달성일</div>
+      <input class="f-input" id="fEnd" type="date" value="${g?.targetDate||''}" ${endReadonly}>
+    </div>
+
+    <div class="section-sep" style="margin-top:8px">연결할 계좌 선택</div>
+    <div class="acc-select-list">${accHTML}</div>
+
+    <div class="btn-row">
+      <button class="btn-cancel" onclick="closeModal()">취소</button>
+      <button class="btn-submit" onclick="saveGoal()">${isEdit?'저장하기':'추가하기'}</button>
+    </div>
+  `;
+}
+
+function pickEmoji(e, btn){
+  selectedEmoji = e;
+  document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function pickColor(c, el){
+  selectedColor = c;
+  document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function toggleAcc(id){
+  const chk = document.getElementById('chk_' + id);
+  if(selectedAccIds.includes(id)){
+    selectedAccIds = selectedAccIds.filter(x => x !== id);
+    if(chk) chk.classList.remove('checked');
+  } else {
+    selectedAccIds.push(id);
+    if(chk) chk.classList.add('checked');
+  }
+}
+
+function saveGoal(){
+  const name = document.getElementById('fName').value.trim();
+  const rawTarget = document.getElementById('fTarget').value.replace(/,/g,'');
+  const target = parseInt(rawTarget) || 0;
+  const startDate = document.getElementById('fStart').value;
+  const targetDate = document.getElementById('fEnd').value;
+
+  if(!name){ showToast('목표 이름을 입력해주세요.'); return; }
+  if(target <= 0){ showToast('목표 금액을 입력해주세요.'); return; }
+
+  const goals = loadGoals();
+  if(editingId){
+    const idx = goals.findIndex(g => g.id === editingId);
+    if(idx !== -1){
+      goals[idx] = { ...goals[idx], name, target, startDate, targetDate, emoji: selectedEmoji, color: selectedColor, accountIds: selectedAccIds };
+    }
+  } else {
+    goals.push({ id: Date.now().toString(), name, target, startDate, targetDate, emoji: selectedEmoji, color: selectedColor, accountIds: selectedAccIds });
+  }
+  saveGoals(goals);
+  closeModal();
+  renderPage();
+  showToast('저장됐어요');
+}
+
+async function deleteGoal(id){
+  if(!await showConfirm('이 목표를 삭제할까요?')) return;
+  const goals = loadGoals().filter(g => g.id !== id);
+  saveGoals(goals);
+  renderPage();
+}
+
+// 스와이프 닫기 제거 (풀스크린 전환)
+
+renderPage();
+
+/* ── 사용자 뱃지 ── */
+(function(){
+  const prefix = localStorage.getItem('af_active_prefix') || 'u1_';
+  const u1name = localStorage.getItem('af_u1_name') || '나';
+  const u2name = localStorage.getItem('af_u2_name') || '상대방';
+  const badge = document.getElementById('userBadge');
+  if(!badge) return;
+  if(prefix === 'u1_'){ badge.textContent = u1name; badge.classList.add('show'); }
+  else if(prefix === 'u2_'){ badge.textContent = u2name; badge.classList.add('show'); }
+})();
+
+</script>
+
+<!-- 바텀탭 -->
+<div class="bottom-tab-bar">
+  <button class="tab-item " onclick="location.href='asset_manager_mobile.html'">
+    <div class="tab-item-dot"></div>
+    <div class="tab-item-label">홈</div>
+  </button>
+  <button class="tab-item " onclick="location.href='account_page.html'">
+    <div class="tab-item-dot"></div>
+    <div class="tab-item-label">계좌</div>
+  </button>
+  <button class="tab-item " onclick="location.href='investment_page.html'">
+    <div class="tab-item-dot"></div>
+    <div class="tab-item-label">투자</div>
+  </button>
+  <button class="tab-item " onclick="location.href='trend_page.html'">
+    <div class="tab-item-dot"></div>
+    <div class="tab-item-label">추이</div>
+  </button>
+  <button class="tab-item active" onclick="openMoreSheet()">
+    <div class="tab-item-dot"></div>
+    <div class="tab-item-label">더보기</div>
+  </button>
+</div>
+
+<!-- 더보기 시트 -->
+<div class="more-overlay" id="moreOverlay" onclick="if(event.target===this)closeMoreSheet()">
+  <div class="more-sheet">
+    <div class="more-handle"></div>
+    <div class="more-sec-title">관리 항목</div>
+    <div class="more-grid">
+      <button class="more-grid-item" onclick="location.href='loan_page.html'">대출</button>
+      <button class="more-grid-item" onclick="location.href='realestate_page.html'">부동산</button>
+      <button class="more-grid-item" onclick="location.href='car_page.html'">자동차</button>
+      <button class="more-grid-item" onclick="location.href='card_page.html'">카드</button>
+    </div>
+    <div class="more-sec-title">설정·분석</div>
+    <div class="more-grid">
+      <button class="more-grid-item" onclick="location.href='income_page.html'">수입</button>
+      <button class="more-grid-item" onclick="location.href='expense_page.html'">고정지출</button>
+      <button class="more-grid-item" onclick="location.href='goal_page.html';closeMoreSheet()">목표관리</button>
+    </div>
+  </div>
+</div>
+<script>
+function openMoreSheet(){ document.getElementById('moreOverlay').classList.add('active'); }
+function closeMoreSheet(){ document.getElementById('moreOverlay').classList.remove('active'); }
+</script>
+
+<div class="bottom-tab-bar">
+  <button class="tab-item " onclick="location.href='asset_manager_mobile.html'">
+    <div class="tab-item-dot"></div>
+    <div class="tab-item-label">홈</div>
+  </button>
+  <button class="tab-item " onclick="location.href='account_page.html'">
+    <div class="tab-item-dot"></div>
+    <div class="tab-item-label">계좌</div>
+  </button>
+  <button class="tab-item " onclick="location.href='investment_page.html'">
+    <div class="tab-item-dot"></div>
+    <div class="tab-item-label">투자</div>
+  </button>
+  <button class="tab-item " onclick="location.href='trend_page.html'">
+    <div class="tab-item-dot"></div>
+    <div class="tab-item-label">추이</div>
+  </button>
+  <button class="tab-item active" onclick="openMoreSheet()">
+    <div class="tab-item-dot"></div>
+    <div class="tab-item-label">더보기</div>
+  </button>
+</div>
+<div class="more-overlay" id="moreOverlay" onclick="if(event.target===this)closeMoreSheet()">
+  <div class="more-sheet">
+    <div class="more-handle"></div>
+    <div class="more-sec-title">관리 항목</div>
+    <div class="more-grid">
+      <button class="more-grid-item" onclick="location.href='loan_page.html'">대출</button>
+      <button class="more-grid-item" onclick="location.href='realestate_page.html'">부동산</button>
+      <button class="more-grid-item" onclick="location.href='car_page.html'">자동차</button>
+      <button class="more-grid-item" onclick="location.href='card_page.html'">카드</button>
+    </div>
+    <div class="more-sec-title">설정·분석</div>
+    <div class="more-grid">
+      <button class="more-grid-item" onclick="location.href='income_page.html'">수입</button>
+      <button class="more-grid-item" onclick="location.href='expense_page.html'">고정지출</button>
+      <button class="more-grid-item" onclick="location.href='goal_page.html';closeMoreSheet()">목표관리</button>
+    </div>
+  </div>
+</div>
+<script>
+function openMoreSheet(){ document.getElementById('moreOverlay').classList.add('active'); }
+function closeMoreSheet(){ document.getElementById('moreOverlay').classList.remove('active'); }
+</script>
+
+<!-- 토스트 -->
+<div class="toast-msg" id="toastMsg"></div>
+<!-- 확인 다이얼로그 -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <div class="confirm-msg" id="confirmMsg"></div>
+    <div class="confirm-btns">
+      <button class="confirm-cancel" onclick="confirmResolve(false)">취소</button>
+      <button class="confirm-ok" onclick="confirmResolve(true)">삭제</button>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  const prefix = localStorage.getItem('af_active_prefix')||'u1_';
+  const u1name = localStorage.getItem('af_name_u1')||'사용자1';
+  const u2name = localStorage.getItem('af_name_u2')||'사용자2';
+  const badge = document.getElementById('userBadge');
+  if(!badge) return;
+  if(prefix==='u1_'){ badge.textContent=u1name; badge.classList.add('show'); }
+  else if(prefix==='u2_'){ badge.textContent=u2name; badge.classList.add('show'); }
+})();
+</script>
+</body>
+</html>

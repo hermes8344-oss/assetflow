@@ -10,8 +10,85 @@
   body {
     background:#000; color:#fff;
     font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;
-    min-height:100vh; padding-bottom:40px;
+    min-height:100vh; padding-bottom:80px;
   }
+
+  /* ── 바텀탭 ── */
+  .bottom-tab-bar {
+    position:fixed; bottom:0; left:0; right:0;
+    background:rgba(0,0,0,0.95);
+    border-top:1px solid #1e1e1e;
+    display:flex; padding:10px 0 28px;
+    z-index:500;
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+  }
+  .tab-item {
+    flex:1; display:flex; flex-direction:column;
+    align-items:center; gap:3px;
+    cursor:pointer; padding:4px 0;
+    background:none; border:none; color:inherit;
+  }
+  .tab-item-label {
+    font-size:10px; color:#555; font-weight:500;
+    letter-spacing:-0.2px;
+  }
+  .tab-item.active .tab-item-label { color:#fff; }
+  .tab-item-dot {
+    width:4px; height:4px; border-radius:50%;
+    background:transparent;
+    margin-bottom:1px;
+  }
+  .tab-item.active .tab-item-dot { background:#fff; }
+
+  /* ── 더보기 시트 ── */
+  .more-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:600; display:none; align-items:flex-end; }
+  .more-overlay.active { display:flex; }
+  .more-sheet { background:#1a1a1a; border-radius:20px 20px 0 0; width:100%; padding:20px 20px 48px; animation:slideUp 0.25s ease; }
+  @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+  .more-handle { width:40px; height:4px; background:#333; border-radius:2px; margin:0 auto 20px; }
+  .more-title { font-size:11px; color:#555; font-weight:600; letter-spacing:0.04em; padding:0 4px 8px; }
+  .more-list { background:#242424; border-radius:14px; overflow:hidden; margin-bottom:2px; }
+  .more-item {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:15px 16px; cursor:pointer; border-bottom:1px solid #1a1a1a;
+  }
+  .more-item:last-child { border-bottom:none; }
+  .more-item:active { background:#2e2e2e; }
+  .more-item-label { font-size:15px; color:#eee; font-weight:500; }
+  .more-item-arrow { font-size:18px; color:#444; }
+
+  /* ── 월별 메모 ── */
+  .memo-card { margin:0 20px 20px; background:#242424; border-radius:16px; padding:18px; }
+  .memo-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+  .memo-title { font-size:13px; color:#888; font-weight:500; }
+  .memo-month { font-size:13px; color:#555; }
+  .memo-content { font-size:14px; color:#ccc; line-height:1.6; min-height:20px; }
+  .memo-content.empty { color:#444; }
+  .memo-edit-btn {
+    background:none; border:none; color:#555; font-size:13px;
+    cursor:pointer; padding:2px 6px; border-radius:6px;
+  }
+  .memo-edit-btn:active { background:#333; }
+
+  /* ── 메모 모달 ── */
+  .memo-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:1000; display:none; align-items:flex-end; }
+  .memo-overlay.active { display:flex; }
+  .memo-sheet { background:#1e1e1e; border-radius:20px 20px 0 0; width:100%; padding:20px 20px 40px; }
+  .memo-sheet-handle { width:40px; height:4px; background:#444; border-radius:2px; margin:0 auto 20px; }
+  .memo-sheet-title { font-size:16px; font-weight:600; margin-bottom:6px; }
+  .memo-sheet-sub { font-size:13px; color:#666; margin-bottom:16px; }
+  .memo-textarea {
+    width:100%; background:#2a2a2a; border:1px solid #333; border-radius:12px;
+    color:#fff; font-size:15px; padding:14px; outline:none; resize:none;
+    font-family:inherit; line-height:1.6; min-height:120px;
+  }
+  .memo-textarea:focus { border-color:#555; }
+  .memo-textarea::placeholder { color:#444; }
+  .memo-hint { font-size:12px; color:#555; margin-top:8px; margin-bottom:16px; line-height:1.5; }
+  .memo-btn-row { display:flex; gap:10px; }
+  .memo-cancel { flex:1; background:#333; border:none; border-radius:10px; color:#fff; font-size:15px; padding:13px; cursor:pointer; }
+  .memo-save { flex:1; background:#fff; border:none; border-radius:10px; color:#000; font-size:15px; font-weight:600; padding:13px; cursor:pointer; }
 
   /* ── 헤더 ── */
   .header { padding:16px 20px; display:flex; align-items:center; justify-content:space-between; }
@@ -33,7 +110,7 @@
 
   /* ── 순자산 카드 ── */
   .networth-card { margin:0 20px 20px; background:#1a1a1a; border-radius:20px; padding:24px; }
-  .nw-amount { font-size:36px; font-weight:700; letter-spacing:-1px; margin-bottom:8px; color:#fff; }
+  .nw-amount { font-size:36px; font-weight:700; letter-spacing:-0.3px; margin-bottom:8px; color:#fff; font-family:-apple-system, ui-rounded, 'Apple SD Gothic Neo', sans-serif;}
   .nw-change { font-size:13px; display:flex; align-items:center; gap:4px; color:#4ade80; }
   .nw-change.neg { color:#f87171; }
   .nw-change::before { content:'▲'; font-size:12px; margin-right:2px; }
@@ -55,7 +132,7 @@
   .ad-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
   .ad-row:last-child { margin-bottom:0; }
   .ad-label { font-size:13px; color:#888; }
-  .ad-amount { font-size:18px; font-weight:600; }
+  .ad-amount { font-size:18px; font-weight:600; font-family:-apple-system, ui-rounded, 'Apple SD Gothic Neo', sans-serif;}
 
   /* ── 자산 구성 카드 ── */
   .composition-card { margin:0 20px 24px; background:#242424; border-radius:16px; padding:20px; }
@@ -64,7 +141,7 @@
   .comp-toggle { background:#2a2a2a; border:none; border-radius:12px; color:#666; font-size:11px; padding:6px 12px; cursor:pointer; transition:all 0.15s; }
   .comp-toggle.active { background:#333; color:#aaa; }
   .comp-total-label { font-size:13px; color:#888; margin-bottom:6px; }
-  .comp-total-amount { font-size:28px; font-weight:700; letter-spacing:-0.5px; margin-bottom:20px; }
+  .comp-total-amount { font-size:28px; font-weight:700; letter-spacing:-0.3px; margin-bottom:20px; font-family:-apple-system, ui-rounded, 'Apple SD Gothic Neo', sans-serif;}
   .comp-bar-wrap { margin-bottom:24px; }
   .comp-bar { display:flex; height:20px; border-radius:10px; overflow:hidden; }
   .comp-bar-seg { height:100%; transition:width 0.3s; }
@@ -74,7 +151,7 @@
   .comp-item-left { display:flex; align-items:center; gap:8px; }
   .comp-item-bar { width:4px; height:20px; border-radius:2px; }
   .comp-item-name { font-size:14px; font-weight:500; color:#fff; }
-  .comp-item-amount { font-size:16px; font-weight:600; color:#fff; }
+  .comp-item-amount { font-size:16px; font-weight:600; color:#fff; font-family:-apple-system, ui-rounded, 'Apple SD Gothic Neo', sans-serif;}
   .comp-item-footer { display:flex; align-items:center; justify-content:space-between; padding-left:12px; }
   .comp-item-ratio { font-size:13px; color:#888; }
   .comp-item-change { font-size:13px; color:#666; }
@@ -113,7 +190,7 @@
   .summary-row { display:flex; justify-content:space-between; margin-bottom:10px; }
   .summary-row:last-child { margin-bottom:0; }
   .sm-label { font-size:13px; color:#888; }
-  .sm-value { font-size:14px; font-weight:600; }
+  .sm-value { font-size:14px; font-weight:600; font-family:-apple-system, ui-rounded, 'Apple SD Gothic Neo', sans-serif;}
 
   /* ── 이름 설정 모달 ── */
   .name-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:2000; display:none; align-items:flex-end; }
@@ -146,62 +223,24 @@
   .rs-confirm { background:#f87171; color:#fff; }
   .rs-step2 { display:none; }
 
-  /* ── 온보딩 ── */
-  .ob-overlay { position:fixed; inset:0; background:#000; z-index:9000; display:none; flex-direction:column; }
-  .ob-overlay.active { display:flex; }
-  .ob-header { display:flex; align-items:center; justify-content:space-between; padding:20px 20px 0; }
-  .ob-skip { background:none; border:none; color:#555; font-size:14px; cursor:pointer; }
-  .ob-steps { display:flex; gap:6px; padding:0 20px; margin-top:16px; }
-  .ob-step-dot { flex:1; height:3px; border-radius:2px; background:#2a2a2a; transition:background 0.3s; }
-  .ob-step-dot.active { background:#007aff; }
-  .ob-step-dot.done { background:#34d399; }
-  .ob-body { flex:1; display:flex; flex-direction:column; padding:32px 24px 24px; overflow-y:auto; }
-  .ob-emoji { font-size:52px; margin-bottom:20px; }
-  .ob-title { font-size:24px; font-weight:700; margin-bottom:10px; line-height:1.3; }
-  .ob-desc { font-size:15px; color:#888; line-height:1.6; margin-bottom:32px; }
-  .ob-user-count { display:flex; gap:12px; margin-bottom:32px; }
-  .ob-uc-btn { flex:1; background:#1a1a1a; border:2px solid #2a2a2a; border-radius:16px; padding:20px 12px; text-align:center; cursor:pointer; transition:all 0.15s; }
-  .ob-uc-btn.active { border-color:#007aff; background:rgba(0,122,255,0.08); }
-  .ob-uc-icon { font-size:32px; margin-bottom:8px; }
-  .ob-uc-label { font-size:14px; font-weight:600; color:#fff; }
-  .ob-uc-sub { font-size:12px; color:#666; margin-top:4px; }
-  .ob-form { display:flex; flex-direction:column; gap:14px; margin-bottom:24px; }
-  .ob-label { font-size:13px; color:#888; margin-bottom:4px; }
-  .ob-input { width:100%; background:#1a1a1a; border:1px solid #2a2a2a; border-radius:12px; color:#fff; font-size:16px; padding:14px; outline:none; }
-  .ob-input:focus { border-color:#007aff; }
-  .ob-user-tab { display:flex; gap:8px; margin-bottom:20px; }
-  .ob-tab-btn { flex:1; background:#1a1a1a; border:2px solid transparent; border-radius:12px; color:#666; font-size:14px; font-weight:500; padding:10px; cursor:pointer; }
-  .ob-tab-btn.active { border-color:#007aff; color:#007aff; }
-  .ob-bottom { padding:0 24px 40px; display:flex; gap:10px; }
-  .ob-next-btn { flex:1; background:#007aff; border:none; border-radius:14px; color:#fff; font-size:16px; font-weight:600; padding:16px; cursor:pointer; }
-  .ob-next-btn:active { opacity:0.85; }
-  .ob-prev-btn { background:#1a1a1a; border:1px solid #2a2a2a; border-radius:14px; color:#aaa; font-size:16px; font-weight:500; padding:16px 20px; cursor:pointer; white-space:nowrap; }
-  .ob-prev-btn:active { opacity:0.7; }
-  .ob-checklist { display:flex; flex-direction:column; gap:12px; margin-bottom:24px; }
-  .ob-check-item { display:flex; align-items:center; gap:14px; background:#1a1a1a; border-radius:14px; padding:16px; }
-  .ob-check-icon { font-size:24px; width:40px; text-align:center; }
-  .ob-check-info { flex:1; }
-  .ob-check-title { font-size:14px; font-weight:600; margin-bottom:2px; }
-  .ob-check-sub { font-size:12px; color:#666; }
-  .ob-check-status { font-size:18px; }
+  .more-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:2000; display:none; align-items:flex-end; }
+  .more-overlay.active { display:flex; }
+  .more-sheet { background:#1a1a1a; border-radius:20px 20px 0 0; width:100%; padding:20px 20px 36px; }
+  .more-handle { width:40px; height:4px; background:#333; border-radius:2px; margin:0 auto 18px; }
+  .more-sec-title { font-size:11px; color:#555; font-weight:600; letter-spacing:0.05em; padding:0 2px 10px; }
+  .more-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:16px; }
+  .more-grid-item {
+    background:#242424; border-radius:10px;
+    padding:12px 6px; text-align:center;
+    font-size:13px; font-weight:500; color:#ddd;
+    cursor:pointer; border:none;
+    font-family:-apple-system,'Apple SD Gothic Neo',sans-serif;
+  }
+  .more-grid-item:active { background:#2e2e2e; color:#fff; }
+
 </style>
 </head>
 <body>
-
-
-<!-- 온보딩 오버레이 -->
-<div class="ob-overlay" id="obOverlay">
-  <div class="ob-header">
-    <div style="font-size:15px;font-weight:700;color:#fff">AssetFlow</div>
-    <button class="ob-skip" onclick="skipOnboarding()">건너뛰기</button>
-  </div>
-  <div class="ob-steps" id="obSteps"></div>
-  <div class="ob-body" id="obBody"></div>
-  <div class="ob-bottom">
-    <button class="ob-prev-btn" id="obPrevBtn" onclick="obPrev()" style="display:none">이전</button>
-    <button class="ob-next-btn" id="obNextBtn" onclick="obNext()">다음</button>
-  </div>
-</div>
 
 <!-- 헤더 -->
 <div class="header">
@@ -214,7 +253,6 @@
   </div>
   <div class="header-right">
     <button class="header-icon-btn" onclick="openNameModal()">✏️</button>
-    <button class="header-icon-btn" onclick="startOnboarding()">⚙️</button>
     <button class="header-icon-btn" onclick="openResetModal()">🗑️</button>
   </div>
 </div>
@@ -225,22 +263,8 @@
   <div class="nw-change" id="networthChange">전월 대비 +0원</div>
 </div>
 
-<!-- 목표 퀵뷰 (임시 숨김 - 나중에 goal_page 완성 후 활성화) -->
-<!--
-<div class="goal-quick">
-  <div class="gq-header">
-    <div class="gq-title">🏠 주택자금 모으기</div>
-    <div class="gq-detail" onclick="location.href='goal_page.html'">자세히 →</div>
-  </div>
-  <div class="gq-progress-bg">
-    <div class="gq-progress-bar" style="width:43.8%"></div>
-  </div>
-  <div class="gq-info">
-    <div class="gq-current">87,500,000원 (43.8%)</div>
-    <div class="gq-target">목표: 200,000,000원</div>
-  </div>
-</div>
--->
+<!-- 목표 퀵뷰 (동적 렌더링) -->
+<div id="goalQuickView"></div>
 
 <!-- 자산/부채 요약 -->
 <div class="asset-debt-card">
@@ -271,45 +295,7 @@
   <div class="comp-list" id="compList"></div>
 </div>
 
-<!-- 자산 그리드 -->
-<div class="section-title">자산 관리</div>
-<div class="asset-grid">
-  <div class="asset-card" onclick="goGrid('account_page.html')">
-    <div class="ac-label">계좌</div>
-  </div>
-  <div class="asset-card" onclick="goGrid('card_page.html')">
-    <div class="ac-label">카드</div>
-  </div>
-  <div class="asset-card" onclick="goGrid('investment_page.html')">
-    <div class="ac-label">투자</div>
-  </div>
-  <div class="asset-card" onclick="goGrid('loan_page.html')">
-    <div class="ac-label">대출</div>
-  </div>
-  <div class="asset-card" onclick="goGrid('car_page.html')">
-    <div class="ac-label">자동차</div>
-  </div>
-  <div class="asset-card" onclick="goGrid('realestate_page.html')">
-    <div class="ac-label">부동산</div>
-  </div>
-</div>
 
-<!-- 분석 그리드 -->
-<div class="section-title">분석</div>
-<div class="analysis-grid">
-  <div class="asset-card" onclick="goGrid('income_page.html')">
-    <div class="ac-label">수입</div>
-  </div>
-  <div class="asset-card" onclick="goGrid('expense_page.html')">
-    <div class="ac-label">고정지출</div>
-  </div>
-  <div class="asset-card" onclick="goGrid('trend_page.html')">
-    <div class="ac-label">월별추이</div>
-  </div>
-  <div class="asset-card" onclick="location.href='goal_page.html'">
-    <div class="ac-label">목표관리</div>
-  </div>
-</div>
 
 <!-- 이번 달 요약 -->
 <div class="summary-card">
@@ -324,6 +310,77 @@
   <div class="summary-row">
     <div class="sm-label">저축 가능액</div>
     <div class="sm-value" id="summarySaving" style="color:#4ade80">—</div>
+  </div>
+</div>
+
+<!-- 월별 메모 -->
+<div class="memo-card">
+  <div class="memo-header">
+    <div class="memo-title">이번 달 메모</div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div class="memo-month" id="memoMonthLabel"></div>
+      <button class="memo-edit-btn" onclick="openMemoModal()">편집</button>
+    </div>
+  </div>
+  <div class="memo-content" id="memoContent"></div>
+</div>
+
+<!-- 바텀 탭 -->
+<div class="bottom-tab-bar">
+  <button class="tab-item active" onclick="tabGo('home')">
+    <div class="tab-item-dot"></div>
+    <div class="tab-item-label">홈</div>
+  </button>
+  <button class="tab-item" onclick="tabGo('account_page.html')">
+    <div class="tab-item-dot"></div>
+    <div class="tab-item-label">계좌</div>
+  </button>
+  <button class="tab-item" onclick="tabGo('investment_page.html')">
+    <div class="tab-item-dot"></div>
+    <div class="tab-item-label">투자</div>
+  </button>
+  <button class="tab-item" onclick="tabGo('trend_page.html')">
+    <div class="tab-item-dot"></div>
+    <div class="tab-item-label">추이</div>
+  </button>
+  <button class="tab-item" onclick="openMoreSheet()">
+    <div class="tab-item-dot"></div>
+    <div class="tab-item-label">더보기</div>
+  </button>
+</div>
+
+<!-- 더보기 시트 -->
+<div class="more-overlay" id="moreOverlay" onclick="if(event.target===this)closeMoreSheet()">
+  <div class="more-sheet">
+    <div class="more-handle"></div>
+    <div class="more-sec-title">관리 항목</div>
+    <div class="more-grid">
+      <button class="more-grid-item" onclick="location.href='loan_page.html'">대출</button>
+      <button class="more-grid-item" onclick="location.href='realestate_page.html'">부동산</button>
+      <button class="more-grid-item" onclick="location.href='car_page.html'">자동차</button>
+      <button class="more-grid-item" onclick="location.href='card_page.html'">카드</button>
+    </div>
+    <div class="more-sec-title">설정·분석</div>
+    <div class="more-grid">
+      <button class="more-grid-item" onclick="location.href='income_page.html'">수입</button>
+      <button class="more-grid-item" onclick="location.href='expense_page.html'">고정지출</button>
+      <button class="more-grid-item" onclick="location.href='goal_page.html';closeMoreSheet()">목표관리</button>
+    </div>
+  </div>
+</div>
+
+<!-- 메모 모달 -->
+<div class="memo-overlay" id="memoOverlay" onclick="if(event.target===this)closeMemoModal()">
+  <div class="memo-sheet">
+    <div class="memo-sheet-handle"></div>
+    <div class="memo-sheet-title" id="memoSheetTitle">이번 달 메모</div>
+    <div class="memo-sheet-sub">큰 지출이나 특이사항을 간단히 기록하세요</div>
+    <textarea class="memo-textarea" id="memoTextarea" placeholder="예) 냉장고 교체 120만, 제주 여행 80만" maxlength="300"></textarea>
+    <div class="memo-hint">월별로 저장돼요. 추이 페이지에서도 확인할 수 있어요.</div>
+    <div class="memo-btn-row">
+      <button class="memo-cancel" onclick="closeMemoModal()">취소</button>
+      <button class="memo-save" onclick="saveMemo()">저장</button>
+    </div>
   </div>
 </div>
 
@@ -490,44 +547,6 @@ function calcAssetsForPrefix(p) {
   };
 }
 
-// 전월 데이터 계산 함수
-function calcPrevAssetsForPrefix(p) {
-  const prevY = CM === 1 ? CY - 1 : CY;
-  const prevM = CM === 1 ? 12 : CM - 1;
-  const prevMk = monthKey(prevY, prevM);
-
-  const accList = safe(p + 'af_accounts');
-  const accHist = safeObj(p + 'af_accounts_history');
-  const prevMonthHist = accHist[prevMk] || {};
-
-  let accTotal = 0, accSecur = 0, accPension = 0, crypto = 0;
-  accList.forEach(a => {
-    const bal = prevMonthHist[a.id] || 0;
-    if (a.cat === 'checking' || a.cat === 'saving') accTotal += bal;
-    else if (a.cat === 'securities') accSecur += bal;
-    else if (a.cat === 'pension') accPension += bal;
-    else if (a.cat === 'crypto') crypto += bal;
-  });
-
-  const invList = safe(p + 'af_invest');
-  const inv = invList.reduce((s, x) => s + (x.balance || 0), 0);
-
-  const cars = safe(p + 'af_cars');
-
-  const reList = safe(p + 'af_realestate');
-  const reHist = safeObj(p + 'af_re_history');
-  const prevReMk = reHist[prevMk] || {};
-  let reTotal = 0;
-  reList.forEach(r => {
-    const price = prevReMk[r.id] || 0;
-    reTotal += price;
-  });
-
-  return {
-    accTotal, accSecur, accPension, inv, crypto, reTotal, cars
-  };
-}
-
 function calcIncomeForPrefix(p) {
   const meta = safe(p + 'af_inc_meta');
   const spend = safeObj(p + 'af_inc_spend');
@@ -646,24 +665,6 @@ function render() {
   const { accTotal, accSecur, accPension, inv, crypto, reTotal, reRentDebt,
     invGain, loan, insMo, total, net, cars, income, expense } = D;
 
-  // 전월 데이터 계산
-  let prevData = { accTotal: 0, accSecur: 0, accPension: 0, inv: 0, crypto: 0, reTotal: 0, cars: [] };
-  if (currentUser === 'all') {
-    const p1 = calcPrevAssetsForPrefix('u1_');
-    const p2 = calcPrevAssetsForPrefix('u2_');
-    prevData = {
-      accTotal: p1.accTotal + p2.accTotal,
-      accSecur: p1.accSecur + p2.accSecur,
-      accPension: p1.accPension + p2.accPension,
-      inv: p1.inv + p2.inv,
-      crypto: p1.crypto + p2.crypto,
-      reTotal: p1.reTotal + p2.reTotal,
-      cars: p1.cars
-    };
-  } else {
-    prevData = calcPrevAssetsForPrefix(currentUser + '_');
-  }
-
   // 순자산 카드
   document.getElementById('networthAmount').textContent = fmt(net);
   const changeEl = document.getElementById('networthChange');
@@ -678,21 +679,12 @@ function render() {
   // 자산 구성
   document.getElementById('compTotalAmount').textContent = fmt(total);
 
-  // 전월 대비 변동값 계산
-  const checkingChange = accTotal - prevData.accTotal;
-  const investmentChange = (inv + accSecur + accPension) - (prevData.inv + prevData.accSecur + prevData.accPension);
-  const realestateChange = reTotal - prevData.reTotal;
-  const carVal = cars.reduce((s, c) => s + (c.purchasePrice || 0), 0);
-  const prevCarVal = prevData.cars.reduce((s, c) => s + (c.purchasePrice || 0), 0);
-  const carChange = carVal - prevCarVal;
-  const cryptoChange = crypto - prevData.crypto;
-
   const categories = [
-    { key: 'checking', name: '입출금', color: '#4f8ef7', amount: accTotal, change: checkingChange },
-    { key: 'investment', name: '투자', color: '#10b981', amount: inv + accSecur + accPension, change: investmentChange },
-    { key: 'realestate', name: '부동산', color: '#f59e0b', amount: reTotal, change: realestateChange },
-    { key: 'car', name: '자동차', color: '#6366f1', amount: carVal, change: carChange },
-    { key: 'crypto', name: '가상화폐', color: '#f7931a', amount: crypto, change: cryptoChange }
+    { key: 'checking', name: '입출금', color: '#4f8ef7', amount: accTotal, change: 0 },
+    { key: 'investment', name: '투자', color: '#10b981', amount: inv + accSecur + accPension, change: invGain },
+    { key: 'realestate', name: '부동산', color: '#f59e0b', amount: reTotal, change: 0 },
+    { key: 'car', name: '자동차', color: '#6366f1', amount: cars.reduce((s, c) => s + (c.purchasePrice || 0), 0), change: 0 },
+    { key: 'crypto', name: '가상화폐', color: '#f7931a', amount: crypto, change: 0 }
   ].filter(c => visibleCategories[c.key] && c.amount > 0);
 
   const visibleTotal = categories.reduce((s, c) => s + c.amount, 0);
@@ -735,23 +727,20 @@ function render() {
 }
 
 function switchUser(user) {
-  const count = parseInt(localStorage.getItem('af_user_count')||'2');
-  // 싱글모드에서 u2/all 접근 차단
-  if(count === 1 && user !== 'u1') user = 'u1';
   currentUser = user;
   localStorage.setItem('af_current_user', user);
-
+  
   // 버튼 활성화
   document.getElementById('btnU1').classList.toggle('active', user === 'u1');
   document.getElementById('btnU2').classList.toggle('active', user === 'u2');
   document.getElementById('btnAll').classList.toggle('active', user === 'all');
-
+  
   // 이름 업데이트
   const n1 = localStorage.getItem('af_name_u1') || '사용자1';
   const n2 = localStorage.getItem('af_name_u2') || '사용자2';
   document.getElementById('btnU1').textContent = n1;
   document.getElementById('btnU2').textContent = n2;
-
+  
   render();
 }
 
@@ -779,6 +768,38 @@ function saveNames() {
   localStorage.setItem('af_name_u2', n2);
   closeNameModal();
   switchUser(currentUser);
+}
+
+/* ── 목표 퀵뷰 ── */
+function renderGoalQuickView(){
+  const container = document.getElementById('goalQuickView');
+  if(!container) return;
+
+  const _prefix = localStorage.getItem('af_active_prefix') || 'u1_';
+  const goals = JSON.parse(localStorage.getItem(_prefix + 'af_goals')||'[]');
+  const active = goals.filter(g=>!g.done);
+  if(!active.length){ container.innerHTML=''; return; }
+
+  // 진행률 가장 높은 목표 1개 표시
+  const g = active.sort((a,b)=>(b.current/b.target)-(a.current/a.target))[0];
+  const pct = g.target>0 ? Math.min((g.current/g.target)*100,100) : 0;
+
+  const fmt = n => Math.round(n).toLocaleString('ko-KR');
+
+  container.innerHTML = `
+    <div class="goal-quick">
+      <div class="gq-header">
+        <div class="gq-title">${g.name}</div>
+        <div class="gq-detail" onclick="location.href='goal_page.html'">자세히 →</div>
+      </div>
+      <div class="gq-progress-bg">
+        <div class="gq-progress-bar" style="width:${pct.toFixed(1)}%"></div>
+      </div>
+      <div class="gq-info">
+        <div class="gq-current">${fmt(g.current)}원 (${pct.toFixed(1)}%)</div>
+        <div class="gq-target">목표: ${fmt(g.target)}원</div>
+      </div>
+    </div>`;
 }
 
 /* ════════ 초기화 ════════ */
@@ -839,275 +860,85 @@ function executeReset() {
   render();
 }
 
-/* ════════ 초기화 ════════ */
-loadVisibleCategories();
-switchUser(currentUser);
 
-/* ════════ 온보딩 ════════ */
-const OB_STEPS = ['users','names','accounts','income','card','expense','done'];
-// 사용자 수에 따라 steps 변동
-let obUserCount = 1;
-let obStep = 0;
-let obCurrentNamingUser = 'u1'; // 이름설정 단계에서 현재 탭
+/* ════════ 월별 메모 ════════ */
+const MEMO_KEY = 'af_monthly_memos';
 
-function getTotalSteps(){ return OB_STEPS.length; }
-
-function startOnboarding(){
-  obStep = 0;
-  document.getElementById('obOverlay').classList.add('active');
-  renderObStep();
+function memoMonthKey() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
 }
 
-function obPrev(){
-  if(obStep <= 0) return;
-  obStep--;
-  renderObStep();
+function loadMemos() {
+  try { return JSON.parse(localStorage.getItem(MEMO_KEY)||'{}'); } catch { return {}; }
 }
 
-function skipOnboarding(){
-  document.getElementById('obOverlay').classList.remove('active');
-  localStorage.setItem('af_onboarding_done','1');
-  const count = parseInt(localStorage.getItem('af_user_count')||'2');
-  applyUserCount(count);
-  switchUser(currentUser);
-}
-
-function obNext(){
-  const step = OB_STEPS[obStep];
-
-  // 사용자 수 선택 단계
-  if(step === 'users'){
-    obStep++;
-    renderObStep();
-    return;
+function renderMemo() {
+  const mk = memoMonthKey();
+  const now = new Date();
+  const label = `${now.getFullYear()}년 ${now.getMonth()+1}월`;
+  document.getElementById('memoMonthLabel').textContent = label;
+  const memos = loadMemos();
+  const text = memos[mk] || '';
+  const el = document.getElementById('memoContent');
+  if (text) {
+    el.textContent = text;
+    el.className = 'memo-content';
+  } else {
+    el.textContent = '기록된 메모가 없어요';
+    el.className = 'memo-content empty';
   }
-
-  // 이름 설정 단계
-  if(step === 'names'){
-    const n1 = document.getElementById('obName1')?.value.trim() || '사용자1';
-    localStorage.setItem('af_name_u1', n1);
-    if(obUserCount === 2){
-      const n2 = document.getElementById('obName2')?.value.trim() || '사용자2';
-      localStorage.setItem('af_name_u2', n2);
-    }
-    obStep++;
-    renderObStep();
-    switchUser(currentUser);
-    return;
-  }
-
-  // 나머지 단계
-  obStep++;
-  if(obStep >= OB_STEPS.length){
-    skipOnboarding();
-    return;
-  }
-  renderObStep();
 }
 
-function obGoPage(page){
-  localStorage.setItem('af_active_prefix', (currentUser === 'all' ? 'u1_' : currentUser + '_'));
-  skipOnboarding();
+function openMemoModal() {
+  const mk = memoMonthKey();
+  const now = new Date();
+  document.getElementById('memoSheetTitle').textContent =
+    `${now.getFullYear()}년 ${now.getMonth()+1}월 메모`;
+  const memos = loadMemos();
+  document.getElementById('memoTextarea').value = memos[mk] || '';
+  document.getElementById('memoOverlay').classList.add('active');
+  setTimeout(() => document.getElementById('memoTextarea').focus(), 200);
+}
+
+function closeMemoModal() {
+  document.getElementById('memoOverlay').classList.remove('active');
+}
+
+function saveMemo() {
+  const mk = memoMonthKey();
+  const text = document.getElementById('memoTextarea').value.trim();
+  const memos = loadMemos();
+  if (text) memos[mk] = text;
+  else delete memos[mk];
+  localStorage.setItem(MEMO_KEY, JSON.stringify(memos));
+  closeMemoModal();
+  renderMemo();
+}
+
+/* ════════ 바텀 탭 네비게이션 ════════ */
+function tabGo(page) {
+  if (page === 'home') return;
+  const prefix = currentUser === 'all' ? 'u1_' : currentUser + '_';
+  localStorage.setItem('af_active_prefix', prefix);
   location.href = page;
 }
 
-function setObUserCount(n){
-  obUserCount = n;
-  localStorage.setItem('af_user_count', String(n));
-  applyUserCount(n);
-  document.querySelectorAll('.ob-uc-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('obUC' + n).classList.add('active');
+function openMoreSheet() {
+  document.getElementById('moreOverlay').classList.add('active');
+}
+function closeMoreSheet() {
+  document.getElementById('moreOverlay').classList.remove('active');
 }
 
-function applyUserCount(n){
-  const u2 = document.getElementById('btnU2');
-  const all = document.getElementById('btnAll');
-  if(n === 1){
-    u2.style.display = 'none';
-    all.style.display = 'none';
-    // 싱글이면 강제로 u1으로
-    if(currentUser !== 'u1'){
-      currentUser = 'u1';
-      localStorage.setItem('af_current_user','u1');
-    }
-  } else {
-    u2.style.display = '';
-    all.style.display = '';
-  }
-}
+/* ── 목표 퀵뷰 ── */
 
-function renderObStepDots(){
-  const total = OB_STEPS.length;
-  document.getElementById('obSteps').innerHTML = OB_STEPS.map((_, i) => {
-    let cls = '';
-    if(i < obStep) cls = 'done';
-    else if(i === obStep) cls = 'active';
-    return `<div class="ob-step-dot ${cls}"></div>`;
-  }).join('');
-}
 
-function renderObStep(){
-  renderObStepDots();
-  const step = OB_STEPS[obStep];
-  const body = document.getElementById('obBody');
-  const nextBtn = document.getElementById('obNextBtn');
-  const prevBtn = document.getElementById('obPrevBtn');
-
-  nextBtn.textContent = (obStep >= OB_STEPS.length - 1) ? '시작하기 🎉' : '다음';
-  prevBtn.style.display = obStep > 0 ? '' : 'none';
-
-  if(step === 'users'){
-    body.innerHTML = `
-      <div class="ob-emoji">👋</div>
-      <div class="ob-title">AssetFlow에<br>오신 걸 환영해요!</div>
-      <div class="ob-desc">먼저 몇 명이 함께 사용할지 알려주세요</div>
-      <div class="ob-user-count">
-        <div class="ob-uc-btn active" id="obUC1" onclick="setObUserCount(1)">
-          <div class="ob-uc-icon">🙋</div>
-          <div class="ob-uc-label">나 혼자</div>
-          <div class="ob-uc-sub">싱글 모드</div>
-        </div>
-        <div class="ob-uc-btn" id="obUC2" onclick="setObUserCount(2)">
-          <div class="ob-uc-icon">👫</div>
-          <div class="ob-uc-label">2명 함께</div>
-          <div class="ob-uc-sub">커플·부부 모드</div>
-        </div>
-      </div>`;
-    return;
-  }
-
-  if(step === 'names'){
-    const u2field = obUserCount === 2 ? `
-      <div>
-        <div class="ob-label">사용자2 이름</div>
-        <input class="ob-input" id="obName2" type="text" placeholder="예) 배우자" maxlength="6" value="${localStorage.getItem('af_name_u2')||''}">
-      </div>` : '';
-    body.innerHTML = `
-      <div class="ob-emoji">✏️</div>
-      <div class="ob-title">이름을 설정해요</div>
-      <div class="ob-desc">상단 탭에 표시될 이름이에요</div>
-      <div class="ob-form">
-        <div>
-          <div class="ob-label">사용자1 이름</div>
-          <input class="ob-input" id="obName1" type="text" placeholder="예) 나" maxlength="6" value="${localStorage.getItem('af_name_u1')||''}">
-        </div>
-        ${u2field}
-      </div>`;
-    return;
-  }
-
-  if(step === 'accounts'){
-    body.innerHTML = `
-      <div class="ob-emoji">🏦</div>
-      <div class="ob-title">계좌를 등록해요</div>
-      <div class="ob-desc">보유 계좌를 추가하면<br>자산 현황이 대시보드에 표시돼요</div>
-      <div class="ob-checklist">
-        <div class="ob-check-item" onclick="obGoPage('account_page.html')" style="cursor:pointer;border:1px solid #2a2a2a">
-          <div class="ob-check-icon">📝</div>
-          <div class="ob-check-info">
-            <div class="ob-check-title">계좌 추가하러 가기</div>
-            <div class="ob-check-sub">입출금·저축·증권·연금 계좌</div>
-          </div>
-          <div class="ob-check-status" style="color:#007aff">→</div>
-        </div>
-      </div>
-      <div style="font-size:13px;color:#555;text-align:center">나중에 추가하려면 아래 [다음]을 누르세요</div>`;
-    return;
-  }
-
-  if(step === 'income'){
-    body.innerHTML = `
-      <div class="ob-emoji">💰</div>
-      <div class="ob-title">수입을 등록해요</div>
-      <div class="ob-desc">월급·사업수입 등을 등록하면<br>이번 달 저축 가능액을 계산해줘요</div>
-      <div class="ob-checklist">
-        <div class="ob-check-item" onclick="obGoPage('income_page.html')" style="cursor:pointer;border:1px solid #2a2a2a">
-          <div class="ob-check-icon">💳</div>
-          <div class="ob-check-info">
-            <div class="ob-check-title">수입 항목 추가하러 가기</div>
-            <div class="ob-check-sub">급여·사업수입·금융수입 등</div>
-          </div>
-          <div class="ob-check-status" style="color:#007aff">→</div>
-        </div>
-      </div>
-      <div style="font-size:13px;color:#555;text-align:center">나중에 추가하려면 아래 [다음]을 누르세요</div>`;
-    return;
-  }
-
-  if(step === 'card'){
-    body.innerHTML = `
-      <div class="ob-emoji">💳</div>
-      <div class="ob-title">카드 지출을 등록해요</div>
-      <div class="ob-desc">매달 카드 지출을 입력하면<br>월별 소비 패턴을 파악할 수 있어요</div>
-      <div class="ob-checklist">
-        <div class="ob-check-item" onclick="obGoPage('card_page.html')" style="cursor:pointer;border:1px solid #2a2a2a">
-          <div class="ob-check-icon">🗂️</div>
-          <div class="ob-check-info">
-            <div class="ob-check-title">카드 추가하러 가기</div>
-            <div class="ob-check-sub">신용·체크카드 등록 후 월별 지출 입력</div>
-          </div>
-          <div class="ob-check-status" style="color:#007aff">→</div>
-        </div>
-      </div>
-      <div style="font-size:13px;color:#555;text-align:center">나중에 추가하려면 아래 [다음]을 누르세요</div>`;
-    return;
-  }
-
-  if(step === 'expense'){
-    body.innerHTML = `
-      <div class="ob-emoji">📋</div>
-      <div class="ob-title">고정지출을 등록해요</div>
-      <div class="ob-desc">구독·보험·관리비 등 매달 나가는<br>고정 지출을 등록해두세요</div>
-      <div class="ob-checklist">
-        <div class="ob-check-item" onclick="obGoPage('expense_page.html')" style="cursor:pointer;border:1px solid #2a2a2a">
-          <div class="ob-check-icon">🔄</div>
-          <div class="ob-check-info">
-            <div class="ob-check-title">고정지출 추가하러 가기</div>
-            <div class="ob-check-sub">월정액·연간 비정기 지출</div>
-          </div>
-          <div class="ob-check-status" style="color:#007aff">→</div>
-        </div>
-      </div>
-      <div style="font-size:13px;color:#555;text-align:center">나중에 추가하려면 아래 [다음]을 누르세요</div>`;
-    return;
-  }
-
-  if(step === 'done'){
-    body.innerHTML = `
-      <div class="ob-emoji">🎉</div>
-      <div class="ob-title">준비 완료!</div>
-      <div class="ob-desc">이제 AssetFlow를 시작할 수 있어요.<br>나머지 항목(투자·대출·부동산·자동차)은<br>대시보드에서 언제든 추가할 수 있어요.</div>
-      <div class="ob-checklist">
-        <div class="ob-check-item">
-          <div class="ob-check-icon">💡</div>
-          <div class="ob-check-info">
-            <div class="ob-check-title">매달 잔고 업데이트</div>
-            <div class="ob-check-sub">계좌 페이지에서 이번 달 잔고를 입력하면<br>전월 대비 증감이 자동으로 계산돼요</div>
-          </div>
-        </div>
-        <div class="ob-check-item">
-          <div class="ob-check-icon">⚙️</div>
-          <div class="ob-check-info">
-            <div class="ob-check-title">온보딩 다시 보기</div>
-            <div class="ob-check-sub">상단 ⚙️ 버튼으로 언제든 다시 볼 수 있어요</div>
-          </div>
-        </div>
-      </div>`;
-    nextBtn.textContent = '대시보드 시작하기 🎉';
-    return;
-  }
-}
-
-// 최초 실행 감지
-window.addEventListener('load', () => {
-  const done = localStorage.getItem('af_onboarding_done');
-  const savedCount = parseInt(localStorage.getItem('af_user_count')||'2');
-  applyUserCount(savedCount);
-  if(!done){
-    setTimeout(() => startOnboarding(), 300);
-  }
-});
-
+/* ════════ 초기화 ════════ */
+loadVisibleCategories();
+switchUser(currentUser);
+renderMemo();
+renderGoalQuickView();
 </script>
 
 </body>
