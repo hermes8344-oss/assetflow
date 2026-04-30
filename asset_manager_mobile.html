@@ -5,10 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>AssetFlow</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script src="theme.js"></script>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   body {
-    background:#000; color:#fff;
+    background:#1a1a1a; color:#fff;
     font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;
     min-height:100vh; padding-bottom:80px;
   }
@@ -16,7 +17,7 @@
   /* ── 바텀탭 ── */
   .bottom-tab-bar {
     position:fixed; bottom:0; left:0; right:0;
-    background:rgba(0,0,0,0.95);
+    background:rgba(26,26,26,0.97);
     border-top:1px solid #1e1e1e;
     display:flex; padding:10px 0 28px;
     z-index:500;
@@ -30,7 +31,7 @@
     background:none; border:none; color:inherit;
   }
   .tab-item-label {
-    font-size:10px; color:#555; font-weight:500;
+    font-size:12px; color:#555; font-weight:500;
     letter-spacing:-0.2px;
   }
   .tab-item.active .tab-item-label { color:#fff; }
@@ -108,13 +109,44 @@
     display:flex; align-items:center; justify-content:center;
   }
 
+  /* ── 설정 시트 ── */
+  .settings-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:2000; display:none; align-items:flex-end; }
+  .settings-overlay.active { display:flex; }
+  .settings-sheet { background:#1e1e1e; border-radius:20px 20px 0 0; width:100%; padding:20px 20px 40px; }
+  .settings-handle { width:40px; height:4px; background:#444; border-radius:2px; margin:0 auto 20px; }
+  .settings-title { font-size:16px; font-weight:600; text-align:center; margin-bottom:20px; }
+  .settings-list { display:flex; flex-direction:column; gap:10px; margin-bottom:16px; }
+  .settings-item {
+    display:flex; align-items:center; gap:14px;
+    background:#242424; border-radius:14px; padding:16px;
+    cursor:pointer; border:none; width:100%; text-align:left;
+    font-family:-apple-system,'Apple SD Gothic Neo',sans-serif;
+  }
+  .settings-item:active { background:#2e2e2e; }
+  .settings-item-icon { font-size:20px; width:28px; text-align:center; }
+  .settings-item-text { display:flex; flex-direction:column; gap:3px; }
+  .settings-item-title { font-size:15px; font-weight:500; color:#eee; }
+  .settings-item-desc { font-size:12px; color:#666; }
+  .settings-close { width:100%; background:#333; border:none; border-radius:12px; color:#fff; font-size:15px; padding:14px; cursor:pointer; margin-top:4px; }
+
   /* ── 순자산 카드 ── */
-  .networth-card { margin:0 20px 20px; background:#1a1a1a; border-radius:20px; padding:24px; }
+  .networth-card { margin:0 20px 20px; background:#242424; border-radius:20px; padding:24px; }
   .nw-amount { font-size:36px; font-weight:700; letter-spacing:-0.3px; margin-bottom:8px; color:#fff; font-family:-apple-system, ui-rounded, 'Apple SD Gothic Neo', sans-serif;}
   .nw-change { font-size:13px; display:flex; align-items:center; gap:4px; color:#4ade80; }
   .nw-change.neg { color:#f87171; }
   .nw-change::before { content:'▲'; font-size:12px; margin-right:2px; }
   .nw-change.neg::before { content:'▼'; }
+
+  /* ── 온보딩 힌트 ── */
+  .onboarding-hint { margin:0 20px 20px; background:#1e2a1e; border:1px solid #2d4a2d; border-radius:16px; padding:18px; display:none; }
+  .onboarding-hint.show { display:block; }
+  .ob-row { display:flex; align-items:flex-start; gap:12px; }
+  .ob-icon { font-size:22px; flex-shrink:0; margin-top:1px; }
+  .ob-text { flex:1; }
+  .ob-title { font-size:14px; font-weight:600; color:#4ade80; margin-bottom:5px; }
+  .ob-desc { font-size:13px; color:#888; line-height:1.6; }
+  .ob-link { display:inline-block; margin-top:10px; font-size:13px; color:#4ade80; font-weight:500; cursor:pointer; }
+  .ob-link:active { opacity:0.7; }
 
   /* ── 목표 퀵뷰 ── */
   .goal-quick { margin:0 20px 20px; background:#242424; border-radius:16px; padding:18px; }
@@ -252,8 +284,6 @@
     </div>
   </div>
   <div class="header-right">
-    <button class="header-icon-btn" onclick="openNameModal()">✏️</button>
-    <button class="header-icon-btn" onclick="openResetModal()">🗑️</button>
   </div>
 </div>
 
@@ -261,6 +291,18 @@
 <div class="networth-card">
   <div class="nw-amount" id="networthAmount">0원</div>
   <div class="nw-change" id="networthChange">전월 대비 +0원</div>
+</div>
+
+<!-- 온보딩 힌트 -->
+<div class="onboarding-hint" id="onboardingHint">
+  <div class="ob-row">
+    <div class="ob-icon">💡</div>
+    <div class="ob-text">
+      <div class="ob-title">처음이세요?</div>
+      <div class="ob-desc">계좌 페이지에서 잔고를 입력하면 순자산이 자동으로 계산돼요. 대출·부동산도 함께 등록하면 더 정확해요.</div>
+      <div class="ob-link" onclick="tabGo('account_page.html')">계좌 입력하러 가기 →</div>
+    </div>
+  </div>
 </div>
 
 <!-- 목표 퀵뷰 (동적 렌더링) -->
@@ -355,17 +397,43 @@
     <div class="more-handle"></div>
     <div class="more-sec-title">관리 항목</div>
     <div class="more-grid">
-      <button class="more-grid-item" onclick="location.href='loan_page.html'">대출</button>
-      <button class="more-grid-item" onclick="location.href='realestate_page.html'">부동산</button>
-      <button class="more-grid-item" onclick="location.href='car_page.html'">자동차</button>
-      <button class="more-grid-item" onclick="location.href='card_page.html'">카드</button>
+      <button class="more-grid-item" onclick="closeMoreSheet(); location.href='loan_page.html'">대출</button>
+      <button class="more-grid-item" onclick="closeMoreSheet(); location.href='realestate_page.html'">부동산</button>
+      <button class="more-grid-item" onclick="closeMoreSheet(); location.href='car_page.html'">자동차</button>
+      <button class="more-grid-item" onclick="closeMoreSheet(); location.href='card_page.html'">카드</button>
     </div>
     <div class="more-sec-title">설정·분석</div>
     <div class="more-grid">
-      <button class="more-grid-item" onclick="location.href='income_page.html'">수입</button>
-      <button class="more-grid-item" onclick="location.href='expense_page.html'">고정지출</button>
-      <button class="more-grid-item" onclick="location.href='goal_page.html';closeMoreSheet()">목표관리</button>
+      <button class="more-grid-item" onclick="closeMoreSheet(); location.href='income_page.html'">수입</button>
+      <button class="more-grid-item" onclick="closeMoreSheet(); location.href='expense_page.html'">고정지출</button>
+      <button class="more-grid-item" onclick="closeMoreSheet(); location.href='goal_page.html'">목표관리</button>
+      <button class="more-grid-item" onclick="closeMoreSheet(); openSettingsSheet()">설정</button>
     </div>
+  </div>
+</div>
+
+<!-- 설정 시트 -->
+<div class="settings-overlay" id="settingsOverlay" onclick="if(event.target===this)closeSettingsSheet()">
+  <div class="settings-sheet">
+    <div class="settings-handle"></div>
+    <div class="settings-title">설정</div>
+    <div class="settings-list">
+      <button class="settings-item" onclick="closeSettingsSheet(); openNameModal()">
+        <div class="settings-item-icon">✏️</div>
+        <div class="settings-item-text">
+          <div class="settings-item-title">사용자 이름 변경</div>
+          <div class="settings-item-desc">사용자1, 사용자2의 이름을 설정해요</div>
+        </div>
+      </button>
+      <button class="settings-item" onclick="closeSettingsSheet(); openResetModal()">
+        <div class="settings-item-icon">🗑️</div>
+        <div class="settings-item-text">
+          <div class="settings-item-title">데이터 초기화</div>
+          <div class="settings-item-desc">선택한 사용자의 모든 데이터를 삭제해요</div>
+        </div>
+      </button>
+    </div>
+    <button class="settings-close" onclick="closeSettingsSheet()">닫기</button>
   </div>
 </div>
 
@@ -393,7 +461,7 @@
     <div class="comp-edit-list">
       <div class="comp-edit-item" onclick="toggleCategory('checking')">
         <div class="comp-edit-item-left">
-          <div class="comp-edit-item-bar" style="background:#4f8ef7"></div>
+          <div class="comp-edit-item-bar" data-cat="checking"></div>
           <div class="comp-edit-item-name">입출금</div>
         </div>
         <div class="comp-edit-toggle active" id="toggle-checking"></div>
@@ -401,7 +469,7 @@
       
       <div class="comp-edit-item" onclick="toggleCategory('investment')">
         <div class="comp-edit-item-left">
-          <div class="comp-edit-item-bar" style="background:#10b981"></div>
+          <div class="comp-edit-item-bar" data-cat="investment"></div>
           <div class="comp-edit-item-name">투자</div>
         </div>
         <div class="comp-edit-toggle active" id="toggle-investment"></div>
@@ -409,7 +477,7 @@
       
       <div class="comp-edit-item" onclick="toggleCategory('realestate')">
         <div class="comp-edit-item-left">
-          <div class="comp-edit-item-bar" style="background:#f59e0b"></div>
+          <div class="comp-edit-item-bar" data-cat="realestate"></div>
           <div class="comp-edit-item-name">부동산</div>
         </div>
         <div class="comp-edit-toggle active" id="toggle-realestate"></div>
@@ -417,7 +485,7 @@
       
       <div class="comp-edit-item" onclick="toggleCategory('car')">
         <div class="comp-edit-item-left">
-          <div class="comp-edit-item-bar" style="background:#6366f1"></div>
+          <div class="comp-edit-item-bar" data-cat="car"></div>
           <div class="comp-edit-item-name">자동차</div>
         </div>
         <div class="comp-edit-toggle active" id="toggle-car"></div>
@@ -425,7 +493,7 @@
       
       <div class="comp-edit-item" onclick="toggleCategory('crypto')">
         <div class="comp-edit-item-left">
-          <div class="comp-edit-item-bar" style="background:#f7931a"></div>
+          <div class="comp-edit-item-bar" data-cat="crypto"></div>
           <div class="comp-edit-item-name">가상화폐</div>
         </div>
         <div class="comp-edit-toggle active" id="toggle-crypto"></div>
@@ -507,13 +575,20 @@ function calcAssetsForPrefix(p) {
   const mk = monthKey(CY, CM);
   const monthHist = accHist[mk] || {};
 
+  // 전월 계산
+  const prevDate = new Date(CY, CM - 2, 1);
+  const pmk = monthKey(prevDate.getFullYear(), prevDate.getMonth() + 1);
+  const prevHist = accHist[pmk] || {};
+
   let accTotal = 0, accSecur = 0, accPension = 0, crypto = 0;
+  let prevAccTotal = 0, prevAccSecur = 0, prevAccPension = 0, prevCrypto = 0;
   accList.forEach(a => {
     const bal = monthHist[a.id] || 0;
-    if (a.cat === 'checking' || a.cat === 'saving') accTotal += bal;
-    else if (a.cat === 'securities') accSecur += bal;
-    else if (a.cat === 'pension') accPension += bal;
-    else if (a.cat === 'crypto') crypto += bal;
+    const prevBal = prevHist[a.id] || 0;
+    if (a.cat === 'checking' || a.cat === 'saving') { accTotal += bal; prevAccTotal += prevBal; }
+    else if (a.cat === 'securities') { accSecur += bal; prevAccSecur += prevBal; }
+    else if (a.cat === 'pension') { accPension += bal; prevAccPension += prevBal; }
+    else if (a.cat === 'crypto') { crypto += bal; prevCrypto += prevBal; }
   });
 
   const invList = safe(p + 'af_invest');
@@ -531,19 +606,27 @@ function calcAssetsForPrefix(p) {
   const reList = safe(p + 'af_realestate');
   const reHist = safeObj(p + 'af_re_history');
   const reMk = reHist[mk] || {};
-  let reTotal = 0, reRentDebt = 0;
+  const prevReMk = reHist[pmk] || {};
+  let reTotal = 0, reRentDebt = 0, prevReTotal = 0, prevReRentDebt = 0;
   reList.forEach(r => {
     const price = reMk[r.id] || 0;
-    reTotal += price;
-    if (r.rentType === 'jeonse') reRentDebt += (r.rentDeposit || 0);
+    const prevPrice = prevReMk[r.id] || 0;
+    reTotal += price; prevReTotal += prevPrice;
+    if (r.rentType === 'jeonse') {
+      reRentDebt += (r.rentDeposit || 0);
+      prevReRentDebt += (r.rentDeposit || 0);
+    }
   });
 
   const total = accTotal + accSecur + accPension + inv + crypto + reTotal;
   const net = total - loan - reRentDebt;
+  const prevTotal = prevAccTotal + prevAccSecur + prevAccPension + prevCrypto + prevReTotal;
+  const prevNet = prevTotal - loan - prevReRentDebt;
+  const netChange = net - prevNet;
 
   return {
     accTotal, accSecur, accPension, inv, crypto, reTotal, reRentDebt,
-    invGain, loan, insMo, total, net, cars
+    invGain, loan, insMo, total, net, netChange, cars
   };
 }
 
@@ -576,6 +659,7 @@ function getAggregated() {
       reTotal: a1.reTotal + a2.reTotal,
       reRentDebt: a1.reRentDebt + a2.reRentDebt,
       invGain: a1.invGain + a2.invGain,
+      netChange: a1.netChange + a2.netChange,
       loan: a1.loan + a2.loan,
       insMo: a1.insMo + a2.insMo,
       total: a1.total + a2.total,
@@ -593,7 +677,7 @@ function getAggregated() {
     return {
       accTotal: a.accTotal, accSecur: a.accSecur, accPension: a.accPension,
       inv: a.inv, crypto: a.crypto, reTotal: a.reTotal, reRentDebt: a.reRentDebt,
-      invGain: a.invGain, loan: a.loan, insMo: a.insMo,
+      invGain: a.invGain, netChange: a.netChange, loan: a.loan, insMo: a.insMo,
       total: a.total, net: a.net, cars: a.cars,
       income, expense, isAll: false
     };
@@ -612,6 +696,16 @@ function fmtShort(n) {
 }
 
 /* ════════ 자산 구성 편집 ════════ */
+
+// 편집 모달 색상 바 초기화 (AF_THEME 참조)
+function initCatColors() {
+  const C = (window.AF_THEME || {asset:{}}).asset;
+  document.querySelectorAll('[data-cat]').forEach(el => {
+    const cat = el.dataset.cat;
+    if (C[cat]) el.style.background = C[cat];
+  });
+}
+
 let visibleCategories = {
   checking: true,
   investment: true,
@@ -663,14 +757,21 @@ function toggleCategory(category) {
 function render() {
   const D = getAggregated();
   const { accTotal, accSecur, accPension, inv, crypto, reTotal, reRentDebt,
-    invGain, loan, insMo, total, net, cars, income, expense } = D;
+    invGain, netChange, loan, insMo, total, net, cars, income, expense } = D;
 
   // 순자산 카드
   document.getElementById('networthAmount').textContent = fmt(net);
   const changeEl = document.getElementById('networthChange');
-  const changeText = `전월 대비 ${invGain >= 0 ? '+' : ''}${fmt(Math.abs(invGain))}`;
+  const changeText = `전월 대비 ${netChange >= 0 ? '+' : '-'}${fmt(Math.abs(netChange))}`;
   changeEl.textContent = changeText;
-  changeEl.className = 'nw-change ' + (invGain >= 0 ? '' : 'neg');
+  changeEl.className = 'nw-change ' + (netChange >= 0 ? '' : 'neg');
+
+  // 온보딩 힌트 — 모든 자산이 0일 때만 표시
+  const hintEl = document.getElementById('onboardingHint');
+  if (hintEl) {
+    const hasAnyData = total > 0 || loan > 0;
+    hintEl.classList.toggle('show', !hasAnyData);
+  }
 
   // 자산/부채 요약
   document.getElementById('totalAssetAmount').textContent = fmt(total);
@@ -679,12 +780,13 @@ function render() {
   // 자산 구성
   document.getElementById('compTotalAmount').textContent = fmt(total);
 
+  const C = (window.AF_THEME || {asset:{}}).asset;
   const categories = [
-    { key: 'checking', name: '입출금', color: '#4f8ef7', amount: accTotal, change: 0 },
-    { key: 'investment', name: '투자', color: '#10b981', amount: inv + accSecur + accPension, change: invGain },
-    { key: 'realestate', name: '부동산', color: '#f59e0b', amount: reTotal, change: 0 },
-    { key: 'car', name: '자동차', color: '#6366f1', amount: cars.reduce((s, c) => s + (c.purchasePrice || 0), 0), change: 0 },
-    { key: 'crypto', name: '가상화폐', color: '#f7931a', amount: crypto, change: 0 }
+    { key: 'checking',   name: '입출금',   color: C.checking   || '#4f8ef7', amount: accTotal, change: 0 },
+    { key: 'investment', name: '투자',     color: C.investment || '#10b981', amount: inv + accSecur + accPension, change: netChange },
+    { key: 'realestate', name: '부동산',   color: C.realestate || '#f59e0b', amount: reTotal, change: 0 },
+    { key: 'car',        name: '자동차',   color: C.car        || '#6366f1', amount: cars.reduce((s, c) => s + (c.purchasePrice || 0), 0), change: 0 },
+    { key: 'crypto',     name: '가상화폐', color: C.crypto     || '#f7931a', amount: crypto, change: 0 }
   ].filter(c => visibleCategories[c.key] && c.amount > 0);
 
   const visibleTotal = categories.reduce((s, c) => s + c.amount, 0);
@@ -723,7 +825,16 @@ function render() {
   const saving = income - expense;
   document.getElementById('summaryIncome').textContent = income > 0 ? fmtShort(income) : '미입력';
   document.getElementById('summaryExpense').textContent = expense > 0 ? fmtShort(expense) : '미입력';
-  document.getElementById('summarySaving').textContent = income > 0 ? fmtShort(saving) : '—';
+  const savingEl = document.getElementById('summarySaving');
+  if (income > 0) {
+    savingEl.textContent = fmtShort(saving);
+    savingEl.style.color = '#4ade80';
+    savingEl.style.fontSize = '';
+  } else {
+    savingEl.textContent = '수입 입력 후 계산돼요';
+    savingEl.style.color = '#555';
+    savingEl.style.fontSize = '12px';
+  }
 }
 
 function switchUser(user) {
@@ -742,12 +853,21 @@ function switchUser(user) {
   document.getElementById('btnU2').textContent = n2;
   
   render();
+  renderGoalQuickView();
 }
 
 function goGrid(page) {
   const prefix = currentUser === 'all' ? 'u1_' : currentUser + '_';
   localStorage.setItem('af_active_prefix', prefix);
   location.href = page;
+}
+
+/* ════════ 설정 시트 ════════ */
+function openSettingsSheet() {
+  document.getElementById('settingsOverlay').classList.add('active');
+}
+function closeSettingsSheet() {
+  document.getElementById('settingsOverlay').classList.remove('active');
 }
 
 /* ════════ 이름 설정 ════════ */
@@ -775,13 +895,20 @@ function renderGoalQuickView(){
   const container = document.getElementById('goalQuickView');
   if(!container) return;
 
-  const _prefix = localStorage.getItem('af_active_prefix') || 'u1_';
-  const goals = JSON.parse(localStorage.getItem(_prefix + 'af_goals')||'[]');
-  const active = goals.filter(g=>!g.done);
-  if(!active.length){ container.innerHTML=''; return; }
+  let allActive = [];
+  if(currentUser === 'all') {
+    const g1 = JSON.parse(localStorage.getItem('u1_af_goals')||'[]').filter(g=>!g.done);
+    const g2 = JSON.parse(localStorage.getItem('u2_af_goals')||'[]').filter(g=>!g.done);
+    allActive = [...g1, ...g2];
+  } else {
+    const _prefix = localStorage.getItem('af_active_prefix') || 'u1_';
+    allActive = JSON.parse(localStorage.getItem(_prefix + 'af_goals')||'[]').filter(g=>!g.done);
+  }
+
+  if(!allActive.length){ container.innerHTML=''; return; }
 
   // 진행률 가장 높은 목표 1개 표시
-  const g = active.sort((a,b)=>(b.current/b.target)-(a.current/a.target))[0];
+  const g = allActive.sort((a,b)=>(b.current/b.target)-(a.current/a.target))[0];
   const pct = g.target>0 ? Math.min((g.current/g.target)*100,100) : 0;
 
   const fmt = n => Math.round(n).toLocaleString('ko-KR');
@@ -936,6 +1063,7 @@ function closeMoreSheet() {
 
 /* ════════ 초기화 ════════ */
 loadVisibleCategories();
+initCatColors();
 switchUser(currentUser);
 renderMemo();
 renderGoalQuickView();

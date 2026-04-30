@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>목표관리 - AssetFlow</title>
+<script src="theme.js"></script>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   body {
@@ -67,7 +68,7 @@
   .overlay.active { display:flex; }
   .sheet { background:#1e1e1e; border-radius:24px 24px 0 0; width:100%; max-height:90vh; overflow-y:auto; padding:20px 20px 86px; }
   .sheet-handle { width:36px; height:4px; background:#444; border-radius:2px; margin:0 auto 20px; }
-    .modal-title { font-size:17px; font-weight:700; margin-bottom:20px; color:#fff; }
+    .modal-title { font-size:17px; font-weight:700; margin-bottom:20px; color:#fff; text-align:center; }
 
   /* 폼 */
   .f-row { display:flex; flex-direction:column; gap:4px; margin-bottom:16px; }
@@ -175,7 +176,7 @@
     cursor:pointer; padding:4px 0;
     background:none; border:none; color:inherit;
   }
-  .tab-item-label { font-size:10px; color:#555; font-weight:500; letter-spacing:-0.2px; }
+  .tab-item-label { font-size:12px; color:#555; font-weight:500; letter-spacing:-0.2px; }
   .tab-item.active .tab-item-label { color:#fff; }
   .tab-item-dot { width:4px; height:4px; border-radius:50%; background:transparent; margin-bottom:1px; }
   .tab-item.active .tab-item-dot { background:#fff; }
@@ -212,7 +213,7 @@
     cursor: pointer; padding: 4px 0;
     background: none; border: none; color: inherit;
   }
-  .tab-item-label { font-size: 10px; color: #555; font-weight: 500; letter-spacing: -0.2px; }
+  .tab-item-label { font-size: 12px; color: #555; font-weight: 500; letter-spacing: -0.2px; }
   .tab-item.active .tab-item-label { color: #fff; }
   .tab-item-dot { width: 4px; height: 4px; border-radius: 50%; background: transparent; margin-bottom: 1px; }
   .tab-item.active .tab-item-dot { background: #fff; }
@@ -271,12 +272,57 @@
   }
   .user-badge.show { display: inline-block; }
 
+
+  /* ── 설정 시트 ── */
+  .settings-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:2100; display:none; align-items:flex-end; }
+  .settings-overlay.active { display:flex; }
+  .settings-sheet { background:#1e1e1e; border-radius:20px 20px 0 0; width:100%; padding:20px 20px 40px; }
+  .settings-handle { width:40px; height:4px; background:#444; border-radius:2px; margin:0 auto 20px; }
+  .settings-title { font-size:16px; font-weight:600; text-align:center; margin-bottom:20px; }
+  .settings-list { display:flex; flex-direction:column; gap:10px; margin-bottom:16px; }
+  .settings-item { display:flex; align-items:center; gap:14px; background:#242424; border-radius:14px; padding:16px; cursor:pointer; border:none; width:100%; text-align:left; font-family:-apple-system,"Apple SD Gothic Neo",sans-serif; }
+  .settings-item:active { background:#2e2e2e; }
+  .settings-item-icon { font-size:20px; width:28px; text-align:center; }
+  .settings-item-text { display:flex; flex-direction:column; gap:3px; }
+  .settings-item-title { font-size:15px; font-weight:500; color:#eee; }
+  .settings-item-desc { font-size:12px; color:#666; }
+  .settings-close { width:100%; background:#333; border:none; border-radius:12px; color:#fff; font-size:15px; padding:14px; cursor:pointer; margin-top:4px; }
+
+  /* ── 이름 설정 모달 ── */
+  .name-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:2200; display:none; align-items:flex-end; }
+  .name-overlay.active { display:flex; }
+  .name-sheet { background:#1e1e1e; border-radius:20px 20px 0 0; width:100%; padding:20px; }
+  .ns-handle { width:40px; height:4px; background:#444; border-radius:2px; margin:0 auto 20px; }
+  .ns-title { font-size:16px; font-weight:600; text-align:center; margin-bottom:20px; }
+  .ns-form { display:flex; flex-direction:column; gap:16px; margin-bottom:20px; }
+  .ns-label { font-size:13px; color:#888; margin-bottom:6px; }
+  .ns-input { width:100%; background:#242424; border:1px solid #333; border-radius:10px; color:#fff; font-size:15px; padding:12px; }
+  .ns-input:focus { outline:none; border-color:#007aff; }
+  .ns-btn-row { display:flex; gap:10px; }
+  .ns-cancel, .ns-save { flex:1; border:none; border-radius:10px; font-size:15px; padding:12px; cursor:pointer; }
+  .ns-cancel { background:#333; color:#fff; }
+  .ns-save { background:#007aff; color:#fff; }
+  /* ── 초기화 모달 ── */
+  .reset-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:2200; display:none; align-items:center; justify-content:center; }
+  .reset-overlay.active { display:flex; }
+  .reset-sheet { background:#1e1e1e; border-radius:20px; width:90%; max-width:400px; padding:30px 24px; }
+  .rs-icon { font-size:48px; text-align:center; margin-bottom:16px; }
+  .rs-title { font-size:18px; font-weight:600; text-align:center; margin-bottom:12px; }
+  .rs-desc { font-size:14px; color:#aaa; text-align:center; line-height:1.6; margin-bottom:24px; }
+  .rs-input-wrap { margin-bottom:24px; }
+  .rs-input { width:100%; background:#242424; border:1px solid #333; border-radius:10px; color:#fff; font-size:15px; padding:12px; text-align:center; }
+  .rs-input:focus { outline:none; border-color:#007aff; }
+  .rs-btns { display:flex; gap:10px; }
+  .rs-cancel, .rs-confirm { flex:1; border:none; border-radius:10px; font-size:15px; padding:12px; cursor:pointer; }
+  .rs-cancel { background:#333; color:#fff; }
+  .rs-confirm { background:#f87171; color:#fff; }
+  .rs-step2 { display:none; }
 </style>
 </head>
 <body>
 
 <div class="header">
-  <button class="back-btn" onclick="history.back()">‹</button>
+  <button class="back-btn" onclick="location.href='asset_manager_mobile.html'">‹</button>
   <span class="header-title">목표 관리</span><span class="user-badge" id="userBadge"></span>
 </div>
 
@@ -625,8 +671,8 @@ function renderForm(g){
     <div class="acc-select-list">${accHTML}</div>
 
     <div class="btn-row">
-      <button class="btn-cancel" onclick="closeModal()">취소</button>
       <button class="btn-submit" onclick="saveGoal()">${isEdit?'저장하기':'추가하기'}</button>
+      <button class="btn-cancel" onclick="closeModal()">취소</button>
     </div>
   `;
 }
@@ -733,16 +779,17 @@ renderPage();
     <div class="more-handle"></div>
     <div class="more-sec-title">관리 항목</div>
     <div class="more-grid">
-      <button class="more-grid-item" onclick="location.href='loan_page.html'">대출</button>
-      <button class="more-grid-item" onclick="location.href='realestate_page.html'">부동산</button>
-      <button class="more-grid-item" onclick="location.href='car_page.html'">자동차</button>
-      <button class="more-grid-item" onclick="location.href='card_page.html'">카드</button>
+      <button class="more-grid-item" onclick="closeMoreSheet(); location.href='loan_page.html'">대출</button>
+      <button class="more-grid-item" onclick="closeMoreSheet(); location.href='realestate_page.html'">부동산</button>
+      <button class="more-grid-item" onclick="closeMoreSheet(); location.href='car_page.html'">자동차</button>
+      <button class="more-grid-item" onclick="closeMoreSheet(); location.href='card_page.html'">카드</button>
     </div>
     <div class="more-sec-title">설정·분석</div>
     <div class="more-grid">
-      <button class="more-grid-item" onclick="location.href='income_page.html'">수입</button>
-      <button class="more-grid-item" onclick="location.href='expense_page.html'">고정지출</button>
-      <button class="more-grid-item" onclick="location.href='goal_page.html';closeMoreSheet()">목표관리</button>
+      <button class="more-grid-item" onclick="closeMoreSheet(); location.href='income_page.html'">수입</button>
+      <button class="more-grid-item" onclick="closeMoreSheet(); location.href='expense_page.html'">고정지출</button>
+      <button class="more-grid-item" onclick="closeMoreSheet(); location.href='goal_page.html'">목표관리</button>
+      <button class="more-grid-item" onclick="closeMoreSheet(); openSettingsSheet()">설정</button>
     </div>
   </div>
 </div>
@@ -778,16 +825,17 @@ function closeMoreSheet(){ document.getElementById('moreOverlay').classList.remo
     <div class="more-handle"></div>
     <div class="more-sec-title">관리 항목</div>
     <div class="more-grid">
-      <button class="more-grid-item" onclick="location.href='loan_page.html'">대출</button>
-      <button class="more-grid-item" onclick="location.href='realestate_page.html'">부동산</button>
-      <button class="more-grid-item" onclick="location.href='car_page.html'">자동차</button>
-      <button class="more-grid-item" onclick="location.href='card_page.html'">카드</button>
+      <button class="more-grid-item" onclick="closeMoreSheet(); location.href='loan_page.html'">대출</button>
+      <button class="more-grid-item" onclick="closeMoreSheet(); location.href='realestate_page.html'">부동산</button>
+      <button class="more-grid-item" onclick="closeMoreSheet(); location.href='car_page.html'">자동차</button>
+      <button class="more-grid-item" onclick="closeMoreSheet(); location.href='card_page.html'">카드</button>
     </div>
     <div class="more-sec-title">설정·분석</div>
     <div class="more-grid">
-      <button class="more-grid-item" onclick="location.href='income_page.html'">수입</button>
-      <button class="more-grid-item" onclick="location.href='expense_page.html'">고정지출</button>
-      <button class="more-grid-item" onclick="location.href='goal_page.html';closeMoreSheet()">목표관리</button>
+      <button class="more-grid-item" onclick="closeMoreSheet(); location.href='income_page.html'">수입</button>
+      <button class="more-grid-item" onclick="closeMoreSheet(); location.href='expense_page.html'">고정지출</button>
+      <button class="more-grid-item" onclick="closeMoreSheet(); location.href='goal_page.html'">목표관리</button>
+      <button class="more-grid-item" onclick="closeMoreSheet(); openSettingsSheet()">설정</button>
     </div>
   </div>
 </div>
@@ -817,6 +865,173 @@ function closeMoreSheet(){ document.getElementById('moreOverlay').classList.remo
   if(!badge) return;
   if(prefix==='u1_'){ badge.textContent=u1name; badge.classList.add('show'); }
   else if(prefix==='u2_'){ badge.textContent=u2name; badge.classList.add('show'); }
+})();
+
+/* ── 설정 시트 ── */
+function openSettingsSheet() { document.getElementById("settingsOverlay").classList.add("active"); }
+function closeSettingsSheet() { document.getElementById("settingsOverlay").classList.remove("active"); }
+
+/* ── 이름 설정 ── */
+function openNameModal() {
+  document.getElementById('nsInput1').value = localStorage.getItem('af_name_u1') || '';
+  document.getElementById('nsInput2').value = localStorage.getItem('af_name_u2') || '';
+  document.getElementById('nameOverlay').classList.add('active');
+}
+function closeNameModal() { document.getElementById('nameOverlay').classList.remove('active'); }
+function saveNames() {
+  const n1 = document.getElementById('nsInput1').value.trim() || '사용자1';
+  const n2 = document.getElementById('nsInput2').value.trim() || '사용자2';
+  localStorage.setItem('af_name_u1', n1);
+  localStorage.setItem('af_name_u2', n2);
+  closeNameModal();
+}
+/* ── 데이터 초기화 ── */
+const _RESET_KEYS = [
+  'af_accounts','af_accounts_history','af_accounts_cashflow',
+  'af_invest','af_invest_visibility','af_loans',
+  'af_cards_meta','af_cards_spend','af_ins_meta','af_expense',
+  'af_inc_meta','af_inc_spend','af_cars','af_dividends',
+  'af_realestate','af_re_history',
+];
+function openResetModal() {
+  const prefix = localStorage.getItem('af_active_prefix') || 'u1_';
+  const u1 = localStorage.getItem('af_name_u1') || '사용자1';
+  const u2 = localStorage.getItem('af_name_u2') || '사용자2';
+  const name = prefix === 'u1_' ? u1 : u2;
+  document.getElementById('rsTargetName').textContent = name;
+  document.getElementById('rsStep1').style.display = 'block';
+  document.getElementById('rsStep2').style.display = 'none';
+  document.getElementById('resetOverlay').classList.add('active');
+}
+function closeResetModal() {
+  document.getElementById('resetOverlay').classList.remove('active');
+  document.getElementById('rsConfirmInput').value = '';
+}
+function goStep2() {
+  document.getElementById('rsStep1').style.display = 'none';
+  document.getElementById('rsStep2').style.display = 'block';
+}
+function backStep1() {
+  document.getElementById('rsStep1').style.display = 'block';
+  document.getElementById('rsStep2').style.display = 'none';
+  document.getElementById('rsConfirmInput').value = '';
+}
+function checkResetInput() {
+  const val = document.getElementById('rsConfirmInput').value.trim();
+  const btn = document.getElementById('rsFinalBtn');
+  btn.disabled = val !== '삭제';
+  btn.style.opacity = val !== '삭제' ? '0.4' : '1';
+}
+function executeReset() {
+  const prefix = localStorage.getItem('af_active_prefix') || 'u1_';
+  _RESET_KEYS.forEach(k => localStorage.removeItem(prefix + k));
+  closeResetModal();
+  closeSettingsSheet();
+  if(typeof showToast === 'function') showToast('초기화 완료');
+}
+</script>
+
+<!-- 설정 시트 -->
+<div class="settings-overlay" id="settingsOverlay" onclick="if(event.target===this)closeSettingsSheet()">
+  <div class="settings-sheet">
+    <div class="settings-handle"></div>
+    <div class="settings-title">설정</div>
+    <div class="settings-list">
+      <button class="settings-item" onclick="closeSettingsSheet(); openNameModal()">
+        <div class="settings-item-icon">✏️</div>
+        <div class="settings-item-text">
+          <div class="settings-item-title">사용자 이름 변경</div>
+          <div class="settings-item-desc">사용자1, 사용자2의 이름을 설정해요</div>
+        </div>
+      </button>
+      <button class="settings-item" onclick="closeSettingsSheet(); openResetModal()">
+        <div class="settings-item-icon">🗑️</div>
+        <div class="settings-item-text">
+          <div class="settings-item-title">데이터 초기화</div>
+          <div class="settings-item-desc">선택한 사용자의 모든 데이터를 삭제해요</div>
+        </div>
+      </button>
+    </div>
+    <button class="settings-close" onclick="closeSettingsSheet()">닫기</button>
+  </div>
+</div>
+
+<!-- 이름 설정 모달 -->
+<div class="name-overlay" id="nameOverlay" onclick="if(event.target===this)closeNameModal()">
+  <div class="name-sheet">
+    <div class="ns-handle"></div>
+    <div class="ns-title">사용자 이름 설정</div>
+    <div class="ns-form">
+      <div>
+        <div class="ns-label">사용자1 이름</div>
+        <input class="ns-input" id="nsInput1" type="text" placeholder="예) 사용자1" maxlength="6">
+      </div>
+      <div>
+        <div class="ns-label">사용자2 이름</div>
+        <input class="ns-input" id="nsInput2" type="text" placeholder="예) 사용자2" maxlength="6">
+      </div>
+    </div>
+    <div class="ns-btn-row">
+      <button class="ns-cancel" onclick="closeNameModal()">취소</button>
+      <button class="ns-save" onclick="saveNames()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 초기화 모달 -->
+<div class="reset-overlay" id="resetOverlay" onclick="if(event.target===this)closeResetModal()">
+  <div class="reset-sheet">
+    <div class="rs-icon">🗑️</div>
+    <div id="rsStep1">
+      <div class="rs-title">데이터 초기화</div>
+      <div class="rs-desc">
+        <strong id="rsTargetName">—</strong>의 모든 데이터가<br>
+        <strong>완전히 삭제</strong>돼요.<br>삭제 후 복구가 불가능해요.
+      </div>
+      <div class="rs-btns">
+        <button class="rs-cancel" onclick="closeResetModal()">취소</button>
+        <button class="rs-confirm" onclick="goStep2()">계속 진행하기</button>
+      </div>
+    </div>
+    <div id="rsStep2" class="rs-step2">
+      <div class="rs-title">정말 삭제할까요?</div>
+      <div class="rs-desc">확인을 위해 아래에 <strong>"삭제"</strong>를 입력해주세요</div>
+      <div class="rs-input-wrap">
+        <input class="rs-input" id="rsConfirmInput" type="text" placeholder="삭제" oninput="checkResetInput()">
+      </div>
+      <div class="rs-btns">
+        <button class="rs-cancel" onclick="backStep1()">뒤로</button>
+        <button class="rs-confirm" id="rsFinalBtn" onclick="executeReset()" disabled style="opacity:0.4">초기화 실행</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  function patchBackBtn(){
+    document.querySelectorAll(".back-btn").forEach(function(btn){
+      var oc = btn.getAttribute("onclick") || "";
+      if(oc.indexOf("showView") !== -1) return;
+      btn.setAttribute("onclick", "location.href='asset_manager_mobile.html'");
+    });
+  }
+  function isModalOpen(){
+    var sel = [
+      ".sheet-overlay.active",".fs-overlay-legacy.active",".category-overlay.active",
+      ".amount-overlay.active",".settings-overlay.active",".name-overlay.active",".reset-overlay.active"
+    ];
+    return sel.some(function(s){ try{ return !!document.querySelector(s); }catch(e){ return false; } });
+  }
+  function patchSwipe(){
+    var sx=0,sy=0;
+    document.addEventListener("touchstart",function(e){ sx=e.touches[0].clientX; sy=e.touches[0].clientY; },{passive:true});
+    document.addEventListener("touchend",function(e){
+      var dx=e.changedTouches[0].clientX-sx, dy=Math.abs(e.changedTouches[0].clientY-sy);
+      if(dx>50 && dy<30 && !isModalOpen()) history.back();
+    },{passive:true});
+  }
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",function(){ patchBackBtn(); patchSwipe(); });
+  else { patchBackBtn(); patchSwipe(); }
 })();
 </script>
 </body>
